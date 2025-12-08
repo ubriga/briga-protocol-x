@@ -1,312 +1,549 @@
 <!DOCTYPE html>
-<html lang="he" dir="rtl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Briga Games: Protocol X v2.0</title>
+    <title>Protocol X: v3.0 Elite</title>
     <script src="https://cdn.jsdelivr.net/npm/disable-devtool@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        :root { --main: #00f0ff; --warn: #ff0055; --bg: #050505; --panel: rgba(10,15,20,0.95); }
+        body { margin: 0; overflow: hidden; background: var(--bg); color: #fff; font-family: 'Rajdhani', sans-serif; user-select: none; }
         
-        /* === GLOBAL === */
-        body { margin: 0; overflow: hidden; background: #050505; color: #fff; font-family: 'Orbitron', sans-serif; user-select: none; }
+        /* === UI LAYOUT === */
         #gameCanvas { display: block; }
+        .screen { position: absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; background: var(--bg); z-index:10; transition:0.3s; }
         .hidden { display: none !important; }
+        .overlay { background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); }
         
-        /* === SCREENS === */
-        .screen {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95);
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            z-index: 100;
-        }
+        /* === COMPONENTS === */
+        h1 { font-size: 60px; color: var(--main); text-shadow: 0 0 20px var(--main); margin: 0; letter-spacing: 5px; text-transform: uppercase; }
+        h2 { color: #888; font-size: 18px; letter-spacing: 2px; margin-bottom: 30px; }
         
-        /* === UI === */
-        h1 { font-size: 60px; color: cyan; text-shadow: 0 0 20px cyan; margin: 0; letter-spacing: 5px; }
-        h2 { color: #ff0055; margin-bottom: 20px; }
-        input { background: rgba(0,255,255,0.1); border: 2px solid cyan; color: white; padding: 15px; font-size: 20px; text-align: center; margin: 10px; width: 300px; border-radius: 5px; }
-        button.cta {
-            background: #ff0055; color: white; border: none; padding: 15px 40px;
-            font-size: 20px; cursor: pointer; font-family: inherit; margin-top: 20px;
-            clip-path: polygon(10% 0, 100% 0, 90% 100%, 0% 100%); transition: 0.2s;
-        }
-        button.cta:hover { background: #ff2277; transform: scale(1.05); }
-        .auth-box { background: rgba(0,0,0,0.8); padding: 40px; border: 1px solid cyan; border-radius: 10px; text-align: center; }
-        .toggle-auth { color: cyan; cursor: pointer; text-decoration: underline; margin-top: 15px; font-size: 14px; }
+        .box { background: var(--panel); border: 1px solid var(--main); padding: 30px; border-radius: 5px; box-shadow: 0 0 30px rgba(0,240,255,0.1); text-align: center; min-width: 300px; }
+        input { background: rgba(0,0,0,0.5); border: 1px solid #333; color: white; padding: 10px; width: 250px; margin: 10px 0; font-family: inherit; font-size: 18px; text-align: center; transition: 0.2s; }
+        input:focus { border-color: var(--main); outline: none; }
+        
+        button { background: transparent; border: 1px solid var(--main); color: var(--main); padding: 10px 30px; font-size: 18px; cursor: pointer; font-family: inherit; font-weight: bold; transition: 0.2s; margin: 5px; text-transform: uppercase; }
+        button:hover { background: var(--main); color: #000; box-shadow: 0 0 15px var(--main); }
+        button.danger { border-color: var(--warn); color: var(--warn); }
+        button.danger:hover { background: var(--warn); color: white; box-shadow: 0 0 15px var(--warn); }
+        button.gold { border-color: gold; color: gold; }
+        button.gold:hover { background: gold; color: black; box-shadow: 0 0 15px gold; }
         
         /* === HUD === */
-        .hud { position: absolute; pointer-events: none; text-shadow: 0 0 10px cyan; z-index: 50; }
-        #scoreBoard { top: 20px; right: 20px; text-align: right; }
+        .hud-panel { position: absolute; padding: 10px 20px; background: rgba(0,0,0,0.6); border: 1px solid #333; border-radius: 5px; pointer-events: none; }
+        #top-hud { top: 20px; left: 20px; display: flex; gap: 20px; pointer-events: auto; }
+        #score-hud { top: 20px; right: 20px; text-align: right; }
+        #tactical-hud { bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; pointer-events: auto; }
         
-        #userProfile {
-            top: 20px; left: 20px; pointer-events: auto;
-            background: rgba(0,0,0,0.7); border: 1px solid #333;
-            padding: 10px; border-radius: 8px; font-size: 14px;
-            display: flex; flex-direction: column; gap: 5px;
-        }
-        #userProfile div { cursor: default; }
+        .skill-btn { width: 60px; height: 60px; border: 2px solid #333; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; background: #000; cursor: pointer; transition: 0.2s; position: relative; }
+        .skill-btn.ready { border-color: var(--main); color: var(--main); box-shadow: 0 0 10px var(--main); }
+        .skill-btn .count { position: absolute; bottom: -5px; right: -5px; background: #fff; color: #000; font-size: 12px; padding: 2px 5px; border-radius: 10px; font-weight: bold; }
         
-        #healthBarContainer { top: 20px; left: 50%; transform: translateX(-50%); width: 300px; height: 20px; border: 2px solid cyan; border-radius: 10px; overflow: hidden; background: rgba(0,0,0,0.5); }
-        #healthBar { width: 100%; height: 100%; background: linear-gradient(90deg, #ff0055, #ff5500); transition: width 0.2s; }
+        /* === ADMIN PANEL === */
+        #admin-panel { width: 80%; height: 80%; display: flex; flex-direction: column; align-items: stretch; text-align: left; }
+        .admin-tabs { display: flex; border-bottom: 1px solid #333; margin-bottom: 20px; }
+        .tab { padding: 10px 20px; cursor: pointer; color: #666; }
+        .tab.active { color: var(--main); border-bottom: 2px solid var(--main); }
         
-        /* === SHOP === */
-        #shop { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 15px; z-index: 50; pointer-events: auto; }
-        .upgrade-btn {
-            background: rgba(0,20,40,0.9); border: 1px solid cyan; color: cyan;
-            padding: 10px 15px; cursor: pointer; text-align: center; font-family: inherit;
-            min-width: 100px; border-radius: 5px; transition: 0.2s;
-        }
-        .upgrade-btn:hover { background: rgba(0,255,255,0.2); transform: translateY(-5px); }
-        .upgrade-btn.disabled { opacity: 0.5; cursor: not-allowed; border-color: #555; color: #555; }
+        .admin-content { flex: 1; overflow-y: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th, td { border-bottom: 1px solid #222; padding: 10px; text-align: left; }
+        th { color: var(--main); }
         
-        /* === LEADERBOARD === */
-        table { border-collapse: collapse; width: 80%; margin-top: 20px; color: #fff; font-size: 14px; }
-        th, td { border-bottom: 1px solid #333; padding: 10px; text-align: center; }
-        th { color: cyan; } tr:nth-child(1) td { color: gold; }
-        
-        /* === TOAST === */
-        #toast {
-            position: absolute; top: 100px; left: 50%; transform: translateX(-50%);
-            background: rgba(0,255,255,0.2); border: 1px solid cyan; padding: 10px 30px;
-            border-radius: 20px; opacity: 0; transition: opacity 0.5s; pointer-events: none; z-index: 200;
-        }
-
-        #version { position: absolute; bottom: 5px; left: 5px; font-size: 10px; color: #444; z-index: 5; }
-        #credits { position: absolute; bottom: 5px; right: 10px; font-size: 12px; color: #666; z-index: 5; text-align: right; pointer-events: auto; }
-        #credits a { color: cyan; text-decoration: none; }
+        /* === NOTIFICATIONS === */
+        #toast { position: absolute; top: 10%; left: 50%; transform: translateX(-50%); background: var(--panel); border: 1px solid var(--main); padding: 15px 40px; z-index: 200; opacity: 0; pointer-events: none; transition: 0.3s; }
     </style>
 </head>
 <body oncontextmenu="return false;">
 
-    <div id="gameCanvasWrapper"><canvas id="gameCanvas"></canvas></div>
-    <div id="toast">Message</div>
-    <div id="version">v2.0</div>
-    <div id="credits">Created by <strong>OrelAI</strong><br><a href="mailto:ubriga@gmail.com">ubriga@gmail.com</a></div>
+    <div id="toast">SYSTEM MESSAGE</div>
 
-    <!-- HUD -->
-    <div class="hud" id="userProfile">
-        <div>
-            👤 <span id="uName">Guest</span> <span id="adminBadge" style="display:none; color:gold; font-size:10px;">[ADMIN]</span>
+    <!-- GAME CANVAS -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- HUD (In-Game) -->
+    <div id="game-ui" class="hidden">
+        <div id="top-hud" class="hud-panel">
+            <div style="cursor: pointer;" onclick="app.toLobby()">🏠 EXIT</div>
+            <div style="color:var(--main)">WAVE <span id="g-wave">1</span></div>
+            <div style="color:var(--warn)">HP <span id="g-hp">100</span>%</div>
         </div>
-        <div style="color: gold;">💎 <span id="uCredits">0</span> CR</div>
-        <button onclick="auth.logout()" style="background:#333; color:#aaa; border:none; font-size:10px; cursor:pointer; margin-top:5px; width:100%;">LOGOUT</button>
-    </div>
-
-    <div class="hud" id="healthBarContainer"><div id="healthBar"></div></div>
-    <div class="hud" id="scoreBoard">
-        <div>SCORE: <span id="scoreVal">0</span></div>
-        <div style="font-size: 14px; margin-top:5px; color:#aaa;">WAVE: <span id="waveVal">1</span></div>
-    </div>
-
-    <!-- SHOP -->
-    <div id="shop" class="hidden">
-        <div class="upgrade-btn" id="btnDmg" onclick="game.buy('d')">💥 DMG<br><small id="costDmg">100</small> [1]</div>
-        <div class="upgrade-btn" id="btnSpeed" onclick="game.buy('s')">⚡ SPD<br><small id="costSpeed">150</small> [2]</div>
-        <div class="upgrade-btn" id="btnHeal" onclick="game.buy('h')">❤️ HP<br><small id="costHeal">200</small> [3]</div>
-    </div>
-
-    <!-- SCREENS -->
-    <div id="loginScreen" class="screen">
-        <div class="auth-box">
-            <h1>BRIGA GAMES</h1><h2>PROTOCOL X v2.0</h2>
-            <input type="text" id="loginUser" placeholder="Username"><br>
-            <input type="password" id="loginPass" placeholder="Password"><br>
-            <button class="cta" onclick="auth.login()">LOGIN</button>
-            <div class="toggle-auth" onclick="auth.showRegister()">New Pilot? Register Here</div>
+        <div id="score-hud" class="hud-panel">
+            <div style="font-size: 24px;" id="g-score">0</div>
+            <div style="font-size: 12px; color: #888;">SCORE</div>
         </div>
-    </div>
-
-    <div id="registerScreen" class="screen hidden">
-        <div class="auth-box">
-            <h1>NEW PILOT</h1><h2>ENLISTMENT</h2>
-            <input type="text" id="regUser" placeholder="Choose Username"><br>
-            <input type="password" id="regPass" placeholder="Choose Password"><br>
-            <button class="cta" onclick="auth.register()">REGISTER</button>
-            <div class="toggle-auth" onclick="auth.showLogin()">Back to Login</div>
-        </div>
-    </div>
-
-    <div id="menuScreen" class="screen hidden">
-        <h1>READY?</h1><h2 id="welcomeText">WELCOME</h2>
-        <div style="display:flex; gap:20px; flex-direction:column; align-items:center;">
-            <div style="display:flex; gap:20px;">
-                <button class="cta" onclick="game.start()">LAUNCH</button>
-                <button class="cta" style="background:#444;" onclick="game.showLeaderboard()">RANKINGS</button>
+        <div id="tactical-hud">
+            <div class="skill-btn" id="btn-drone" onclick="game.activateDrone()">
+                🛸
+                <span class="count" id="drone-count">0</span>
             </div>
-            <!-- ADMIN BUTTON WILL BE INJECTED HERE -->
-            <div id="adminArea"></div>
         </div>
     </div>
 
-    <div id="leaderboardScreen" class="screen hidden">
-        <h1 id="lbTitle">TOP PILOTS</h1>
-        <div style="max-height:60vh; overflow-y:auto; width:100%; display:flex; justify-content:center;">
-            <table id="lbTable"><thead><tr><th>RANK</th><th>PILOT</th><th>WAVE</th><th>SCORE</th></tr></thead><tbody id="lbBody"></tbody></table>
+    <!-- LOGIN SCREEN -->
+    <div id="screen-login" class="screen">
+        <h1>Protocol X</h1>
+        <h2>v3.0 Elite Edition</h2>
+        <div class="box">
+            <input type="text" id="inp-user" placeholder="PILOT ID"><br>
+            <input type="password" id="inp-pass" placeholder="ACCESS CODE"><br>
+            <button onclick="auth.login()">INITIALIZE</button>
+            <button class="gold" onclick="auth.register()">ENLIST</button>
         </div>
-        <button class="cta" onclick="document.getElementById('leaderboardScreen').classList.add('hidden'); document.getElementById('menuScreen').classList.remove('hidden')">BACK</button>
+        <div style="margin-top: 20px; font-size: 12px; color: #555;">SECURE SERVER CONNECTION</div>
+    </div>
+
+    <!-- LOBBY SCREEN -->
+    <div id="screen-lobby" class="screen hidden">
+        <div style="position: absolute; top: 20px; right: 20px; text-align: right;">
+            <div style="font-size: 20px; color: var(--main);">CMD. <span id="l-user">Guest</span></div>
+            <div style="color: gold;">💎 <span id="l-credits">0</span></div>
+            <button style="font-size: 12px; padding: 5px 10px; margin-top: 5px;" onclick="auth.logout()">LOGOUT</button>
+        </div>
+
+        <h1 style="font-size: 40px;">COMMAND CENTER</h1>
+        <div id="motd-box" style="margin-bottom: 20px; color: #aaa; font-style: italic;">"Welcome to v3.0"</div>
+
+        <div style="display: flex; gap: 20px;">
+            <div class="box" style="width: 250px;">
+                <h3 style="color: var(--main);">ARMORY</h3>
+                <div style="margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 10px;">
+                    <div>🛸 TACTICAL DRONE</div>
+                    <div style="font-size: 12px; color: #888;">Auto-fires for 10s</div>
+                    <button class="gold" onclick="shop.buy('consumable', 'drone_support', 500)">BUY (500)</button>
+                    <div style="font-size: 12px;">OWNED: <span id="shop-drone-count">0</span></div>
+                </div>
+                <div>
+                    <div>⚡ RAPID FIRE</div>
+                    <div style="font-size: 12px; color: #888;">Permanent Upgrade</div>
+                    <button id="btn-buy-rapid" onclick="shop.buy('permanent', 'rapid_fire', 2000)">BUY (2000)</button>
+                </div>
+            </div>
+
+            <div class="box" style="width: 200px; display: flex; flex-direction: column; justify-content: center;">
+                <button style="font-size: 24px; padding: 20px;" onclick="game.start()">LAUNCH</button>
+                <button onclick="app.redeemPopup()">REDEEM CODE</button>
+                <div id="admin-btn-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMIN PANEL -->
+    <div id="screen-admin" class="screen overlay hidden">
+        <div class="box" id="admin-panel">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2 style="margin:0; color: gold;">ADMIN CONSOLE</h2>
+                <button onclick="app.toLobby()">CLOSE</button>
+            </div>
+            
+            <div class="admin-tabs">
+                <div class="tab active" onclick="admin.tab('users')">USERS</div>
+                <div class="tab" onclick="admin.tab('coupons')">COUPONS</div>
+                <div class="tab" onclick="admin.tab('system')">SYSTEM</div>
+            </div>
+
+            <!-- USERS TAB -->
+            <div id="tab-users" class="admin-content">
+                <div style="margin-bottom: 10px;">
+                    <input type="text" id="adm-new-user" placeholder="Username" style="width: 150px;">
+                    <input type="text" id="adm-new-pass" placeholder="Password" style="width: 150px;">
+                    <button onclick="admin.createUser()">CREATE USER</button>
+                </div>
+                <table id="adm-users-table">
+                    <thead><tr><th>ID</th><th>USER</th><th>CREDITS</th><th>STATUS</th><th>ACTIONS</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <!-- COUPONS TAB -->
+            <div id="tab-coupons" class="admin-content hidden">
+                <div style="margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 10px;">
+                    <input type="text" id="adm-coup-code" placeholder="Code (Empty=Random)" style="width: 200px;">
+                    <input type="number" id="adm-coup-val" placeholder="Value" style="width: 100px;">
+                    <input type="number" id="adm-coup-uses" placeholder="Uses" style="width: 80px;" value="1">
+                    <button class="gold" onclick="admin.createCoupon()">GENERATE</button>
+                </div>
+                <table id="adm-coupons-table">
+                    <thead><tr><th>CODE</th><th>VALUE</th><th>USES</th><th>CREATOR</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            
+            <!-- SYSTEM TAB -->
+            <div id="tab-system" class="admin-content hidden">
+                <h3>MOTD (Message of the Day)</h3>
+                <input type="text" id="adm-motd" style="width: 80%;"><br>
+                <button onclick="admin.setMotd()">UPDATE MESSAGE</button>
+            </div>
+        </div>
     </div>
 
 <script>
-const API_URL = "https://ubriga.pythonanywhere.com";
-const SECRET_KEY = "BrigaProtoX_Secure_2025";
-let currentUser = null, token = localStorage.getItem('briga_token');
+/** 
+ * PROTOCOL X v3.0 ENGINE
+ */
+const API = "https://ubriga.pythonanywhere.com";
+let USER = null;
+let TOKEN = localStorage.getItem('px_token');
 
-const toast = (msg) => { const t = document.getElementById('toast'); t.innerText = msg; t.style.opacity = 1; setTimeout(() => t.style.opacity = 0, 3000); };
+// --- UTILS ---
+const toast = (msg) => {
+    const t = document.getElementById('toast');
+    t.innerText = msg; t.style.opacity = 1; t.style.top = "15%";
+    setTimeout(() => { t.style.opacity = 0; t.style.top = "10%"; }, 3000);
+};
 
-const auth = {
-    showRegister: () => { document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('registerScreen').classList.remove('hidden'); },
-    showLogin: () => { document.getElementById('registerScreen').classList.add('hidden'); document.getElementById('loginScreen').classList.remove('hidden'); },
-    logout: () => { localStorage.removeItem('briga_token'); location.reload(); },
-    login: async () => {
-        const u = document.getElementById('loginUser').value, p = document.getElementById('loginPass').value;
-        if(!u || !p) return toast("Missing credentials");
+// --- APP CONTROLLER ---
+const app = {
+    init: () => {
+        if(TOKEN) auth.validate(); // Auto login check
+        else app.show('screen-login');
+        game.resize();
+    },
+    show: (id) => {
+        document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+        document.querySelectorAll('.overlay').forEach(s => s.classList.add('hidden'));
+        document.getElementById('game-ui').classList.add('hidden');
+        document.getElementById(id).classList.remove('hidden');
+    },
+    toLobby: () => {
+        game.stop();
+        app.show('screen-lobby');
+        app.updateLobbyUI();
+    },
+    updateLobbyUI: () => {
+        document.getElementById('l-user').innerText = USER.username;
+        document.getElementById('l-credits').innerText = USER.credits;
+        document.getElementById('shop-drone-count').innerText = (USER.consumables && USER.consumables['drone_support']) || 0;
+        
+        const btnRapid = document.getElementById('btn-buy-rapid');
+        if(USER.inventory && USER.inventory['rapid_fire']) {
+            btnRapid.innerText = "OWNED";
+            btnRapid.classList.add('disabled');
+            btnRapid.onclick = null;
+        }
+
+        // Admin Button
+        const adminBox = document.getElementById('admin-btn-container');
+        adminBox.innerHTML = '';
+        if(USER.is_admin) {
+            const btn = document.createElement('button');
+            btn.className = 'gold'; btn.innerText = 'ADMIN CONSOLE';
+            btn.style.width = '100%'; btn.style.marginTop = '10px';
+            btn.onclick = () => { admin.load(); app.show('screen-admin'); };
+            adminBox.appendChild(btn);
+        }
+    },
+    redeemPopup: async () => {
+        const code = prompt("ENTER COUPON CODE:");
+        if(!code) return;
         try {
-            const res = await fetch(`${API_URL}/login`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({username: u, password: p}) });
+            const res = await fetch(`${API}/redeem_coupon`, {
+                method: 'POST', headers: {'Content-Type':'application/json', 'Authorization': `Bearer ${TOKEN}`},
+                body: JSON.stringify({code})
+            });
             const data = await res.json();
             if(data.error) return toast(data.error);
-            token = data.token; currentUser = data.user;
-            localStorage.setItem('briga_token', token); auth.postLogin();
-        } catch(e) { toast("Server Error"); }
+            toast(`Redeemed ${data.added} Credits!`);
+            USER.credits += data.added;
+            app.updateLobbyUI();
+        } catch(e) { toast("Connection Error"); }
+    }
+};
+
+// --- AUTH ---
+const auth = {
+    login: async () => {
+        const u = document.getElementById('inp-user').value;
+        const p = document.getElementById('inp-pass').value;
+        if(!u || !p) return toast("Enter ID & Access Code");
+        
+        try {
+            const res = await fetch(`${API}/login`, {
+                method: 'POST', headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({username: u, password: p})
+            });
+            const data = await res.json();
+            if(data.error) return toast(data.error);
+            
+            TOKEN = data.token;
+            USER = data.user;
+            localStorage.setItem('px_token', TOKEN);
+            document.getElementById('motd-box').innerText = `"${data.motd}"`;
+            app.toLobby();
+        } catch(e) { toast("Server Offline"); }
     },
     register: async () => {
-        const u = document.getElementById('regUser').value, p = document.getElementById('regPass').value;
-        if(!u || !p) return toast("Fill all fields");
+        const u = document.getElementById('inp-user').value;
+        const p = document.getElementById('inp-pass').value;
+        if(!u || !p) return toast("Choose ID & Password");
         try {
-            const res = await fetch(`${API_URL}/register`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({username: u, password: p}) });
+            const res = await fetch(`${API}/register`, {
+                method: 'POST', headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({username: u, password: p})
+            });
             const data = await res.json();
             if(data.error) return toast(data.error);
-            toast("Registered! Please Login."); auth.showLogin();
+            toast("Enlistment Complete. Please Login.");
         } catch(e) { toast("Registration Failed"); }
     },
-    postLogin: () => {
-        document.getElementById('loginScreen').classList.add('hidden');
-        document.getElementById('menuScreen').classList.remove('hidden');
-        document.getElementById('uName').innerText = currentUser.username;
-        document.getElementById('uCredits').innerText = currentUser.credits || 0;
-        document.getElementById('welcomeText').innerText = `WELCOME PILOT ${currentUser.username}`;
-        
-        // ADMIN BUTTON INJECTION
-        const adminArea = document.getElementById('adminArea');
-        adminArea.innerHTML = ''; // Clear prev
-        if(currentUser.is_admin) {
-            document.getElementById('adminBadge').style.display = 'inline';
-            const btn = document.createElement('button');
-            btn.className = 'cta';
-            btn.innerText = 'ADMIN PANEL';
-            btn.style.background = 'gold'; btn.style.color = 'black'; btn.style.marginTop = '10px';
-            btn.onclick = () => game.openAdmin();
-            adminArea.appendChild(btn);
-        }
+    logout: () => {
+        localStorage.removeItem('px_token');
+        location.reload();
+    },
+    validate: () => {
+        // Simple client-side check, real check happens on API calls
+        app.show('screen-login'); // Force re-login for security in v3.0 demo
     }
 };
 
-const canvas = document.getElementById('gameCanvas'), ctx = canvas.getContext('2d');
-let state = { run: false, score: 0, money: 0, wave: 1, hp: 100, frames: 0, mx: 0, my: 0, firing: false };
-let player = { x: 0, y: 0, angle: 0, lastShot: 0 };
-let upgrades = { dmg: {l:1, c:100, v:10}, spd: {l:1, c:150, v:20}, heal: {c:200} };
-let entities = { bullets: [], enemies: [], particles: [] };
+// --- SHOP ---
+const shop = {
+    buy: async (type, id, cost) => {
+        if(USER.credits < cost) return toast("Insufficient Funds");
+        try {
+            const res = await fetch(`${API}/shop/buy`, {
+                method: 'POST', headers: {'Content-Type':'application/json', 'Authorization': `Bearer ${TOKEN}`},
+                body: JSON.stringify({item_type: type, item_id: id, cost: cost})
+            });
+            const data = await res.json();
+            if(data.error) return toast(data.error);
+            
+            USER.credits = data.credits;
+            if(type === 'consumable') {
+                if(!USER.consumables) USER.consumables = {};
+                USER.consumables[id] = (USER.consumables[id] || 0) + 1;
+                toast("Item Added to Inventory");
+            } else {
+                if(!USER.inventory) USER.inventory = {};
+                USER.inventory[id] = true;
+                toast("Upgrade Installed");
+            }
+            app.updateLobbyUI();
+        } catch(e) { toast("Transaction Failed"); }
+    }
+};
 
-const shipPath = new Path2D("M20,0 L-15,12 L-10,0 L-15,-12 Z");
-const enemyPath = new Path2D("M10,0 L0,10 L-10,0 L0,-10 Z");
+// --- ADMIN ---
+const admin = {
+    load: async () => {
+        try {
+            const res = await fetch(`${API}/admin/dashboard`, { headers: {'Authorization': `Bearer ${TOKEN}`} });
+            const data = await res.json();
+            if(data.error) return toast("Access Denied");
+            
+            // Render Users
+            const uTable = document.querySelector('#adm-users-table tbody');
+            uTable.innerHTML = data.users.map(u => `
+                <tr>
+                    <td>${u.id}</td>
+                    <td>${u.username} ${u.admin?'👑':''} ${u.banned?'⛔':''}</td>
+                    <td>${u.credits}</td>
+                    <td>${u.banned ? 'BANNED' : 'ACTIVE'}</td>
+                    <td>
+                        <button class="danger" style="font-size:10px; padding:2px 5px;" onclick="admin.action('ban_user', {user_id:${u.id}, ban:${!u.banned}})">${u.banned?'UNBAN':'BAN'}</button>
+                        <button style="font-size:10px; padding:2px 5px;" onclick="admin.resetPass(${u.id})">RST PASS</button>
+                    </td>
+                </tr>`).join('');
+                
+            // Render Coupons
+            const cTable = document.querySelector('#adm-coupons-table tbody');
+            cTable.innerHTML = data.coupons.map(c => `<tr><td>${c.code}</td><td>${c.value}</td><td>${c.uses}</td><td>${c.creator}</td></tr>`).join('');
+            
+            // Render System
+            document.getElementById('adm-motd').value = data.motd;
+            
+        } catch(e) { toast("Admin Load Error"); }
+    },
+    tab: (t) => {
+        document.querySelectorAll('.admin-content').forEach(d => d.classList.add('hidden'));
+        document.getElementById(`tab-${t}`).classList.remove('hidden');
+        document.querySelectorAll('.tab').forEach(tb => tb.classList.remove('active'));
+        event.target.classList.add('active');
+    },
+    action: async (act, payload) => {
+        try {
+            const res = await fetch(`${API}/admin/action`, {
+                method: 'POST', headers: {'Content-Type':'application/json', 'Authorization': `Bearer ${TOKEN}`},
+                body: JSON.stringify({action: act, ...payload})
+            });
+            const data = await res.json();
+            if(data.error) return toast(data.error);
+            toast(data.message);
+            admin.load(); // Refresh
+        } catch(e) { toast("Action Failed"); }
+    },
+    createCoupon: () => {
+        const c = document.getElementById('adm-coup-code').value;
+        const v = document.getElementById('adm-coup-val').value;
+        const u = document.getElementById('adm-coup-uses').value;
+        if(!v) return toast("Value required");
+        admin.action('create_coupon', {code: c, value: v, uses: u});
+    },
+    createUser: () => {
+        const u = document.getElementById('adm-new-user').value;
+        const p = document.getElementById('adm-new-pass').value;
+        if(!u || !p) return toast("Fields required");
+        admin.action('create_user', {username: u, password: p});
+    },
+    resetPass: (uid) => {
+        const p = prompt("New Password:");
+        if(p) admin.action('reset_pass', {user_id: uid, new_pass: p});
+    },
+    setMotd: () => {
+        const m = document.getElementById('adm-motd').value;
+        admin.action('set_motd', {message: m});
+    }
+};
 
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-function playSound(type) {
-    if(audioCtx.state==='suspended') audioCtx.resume();
-    const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
-    osc.connect(gain); gain.connect(audioCtx.destination);
-    const now = audioCtx.currentTime;
-    if(type==='shoot') { osc.frequency.setValueAtTime(400, now); osc.frequency.exponentialRampToValueAtTime(100, now+0.1); gain.gain.setValueAtTime(0.05, now); gain.gain.exponentialRampToValueAtTime(0.001, now+0.1); osc.start(now); osc.stop(now+0.1); }
-    else { osc.type='sawtooth'; osc.frequency.setValueAtTime(150, now); gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now+0.1); osc.start(now); osc.stop(now+0.1); }
-}
+// --- GAMEPLAY ---
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+let gState = { run: false, score: 0, wave: 1, hp: 100, frames: 0, drones: [] };
+let player = { x:0, y:0 };
+let entities = { bullets:[], enemies:[], particles:[] };
 
 const game = {
+    resize: () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; },
     start: () => {
-        document.getElementById('menuScreen').classList.add('hidden'); document.getElementById('shop').classList.remove('hidden');
-        state = { run: true, score: 0, money: 0, wave: 1, hp: 100, frames: 0, mx: 0, my: 0, firing: false };
-        entities = { bullets: [], enemies: [], particles: [] }; resize(); loop();
+        app.show(''); // Clear screens
+        document.getElementById('game-ui').classList.remove('hidden');
+        gState = { run: true, score: 0, wave: 1, hp: 100, frames: 0, drones: [] };
+        entities = { bullets:[], enemies:[], particles:[] };
+        player.x = canvas.width/2; player.y = canvas.height/2;
+        
+        // Update Drone HUD
+        const dCount = (USER.consumables && USER.consumables['drone_support']) || 0;
+        document.getElementById('drone-count').innerText = dCount;
+        document.getElementById('btn-drone').classList.toggle('ready', dCount > 0);
+        
+        gameLoop();
     },
-    gameOver: async () => {
-        state.run = false; document.getElementById('shop').classList.add('hidden');
-        const raw = currentUser.username + state.score + SECRET_KEY;
-        const hash = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(raw)))).map(b => b.toString(16).padStart(2, '0')).join('');
+    stop: () => { gState.run = false; },
+    activateDrone: async () => {
+        const dCount = (USER.consumables && USER.consumables['drone_support']) || 0;
+        if(dCount <= 0) return toast("No Drones Available");
+        
+        // Server Sync
         try {
-            await fetch(`${API_URL}/submit_score`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({player: currentUser.username, score: state.score, wave: state.wave, hash: hash}) });
-            toast(`Score Saved!`);
-        } catch(e) { toast("Score Save Failed"); }
-        document.getElementById('menuScreen').classList.remove('hidden');
+            const res = await fetch(`${API}/use_consumable`, {
+                method: 'POST', headers: {'Content-Type':'application/json', 'Authorization': `Bearer ${TOKEN}`},
+                body: JSON.stringify({item_id: 'drone_support'})
+            });
+            const data = await res.json();
+            if(data.error) return toast(data.error);
+            
+            // Client Effect
+            USER.consumables['drone_support'] = data.remaining;
+            document.getElementById('drone-count').innerText = data.remaining;
+            document.getElementById('btn-drone').classList.toggle('ready', data.remaining > 0);
+            
+            // Spawn Drone
+            gState.drones.push({ x: player.x, y: player.y, timer: 600 }); // 10 seconds (60fps)
+            toast("DRONE SUPPORT ACTIVE");
+        } catch(e) { toast("Activation Error"); }
     },
-    showLeaderboard: async () => {
-        document.getElementById('menuScreen').classList.add('hidden'); document.getElementById('leaderboardScreen').classList.remove('hidden');
-        const tbody = document.getElementById('lbBody'); tbody.innerHTML = '<tr><td colspan="4">Loading...</td></tr>';
-        try {
-            const res = await fetch(`${API_URL}/leaderboard`); const data = await res.json();
-            tbody.innerHTML = ''; data.forEach(r => tbody.innerHTML += `<tr><td>#${r.rank}</td><td>${r.player}</td><td>${r.wave}</td><td>${r.score}</td></tr>`);
-        } catch(e) { tbody.innerHTML = '<tr><td colspan="4">Error</td></tr>'; }
-    },
-    openAdmin: async () => {
-        if(!currentUser || !currentUser.is_admin) return;
-        if(prompt("PIN") !== "2025") return;
-        document.getElementById('menuScreen').classList.add('hidden'); document.getElementById('leaderboardScreen').classList.remove('hidden');
-        document.getElementById('lbTitle').innerText = "ADMIN PANEL";
-        try {
-            const res = await fetch(`${API_URL}/admin/users`, { headers: {'Authorization': `Bearer ${token}`} });
-            const users = await res.json();
-            const tbody = document.getElementById('lbBody'); tbody.innerHTML = '';
-            users.forEach(u => tbody.innerHTML += `<tr><td>${u.id}</td><td>${u.username} ${u.admin?'[A]':''}</td><td>-</td><td>${u.credits} CR</td></tr>`);
-        } catch(e) { toast("Access Denied"); }
-    },
-    buy: (t) => {
-        if(t==='d' && state.money>=upgrades.dmg.c) { state.money-=upgrades.dmg.c; upgrades.dmg.v+=5; upgrades.dmg.c=Math.floor(upgrades.dmg.c*1.5); }
-        else if(t==='s' && state.money>=upgrades.spd.c) { state.money-=upgrades.spd.c; upgrades.spd.v=Math.max(5,upgrades.spd.v-2); upgrades.spd.c=Math.floor(upgrades.spd.c*1.5); }
-        else if(t==='h' && state.money>=upgrades.heal.c && state.hp<100) { state.money-=upgrades.heal.c; state.hp=Math.min(100,state.hp+25); upgrades.heal.c+=50; }
-        updateUI();
+    gameOver: () => {
+        gState.run = false;
+        fetch(`${API}/submit_score`, {
+            method: 'POST', headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({player: USER.username, score: gState.score, wave: gState.wave})
+        }).then(r=>r.json()).then(d => {
+            if(d.earned) {
+                USER.credits += d.earned;
+                alert(`MISSION FAILED\nScore: ${gState.score}\nCredits Earned: ${d.earned}`);
+            }
+            app.toLobby();
+        });
     }
 };
 
-function updateUI() {
-    document.getElementById('scoreVal').innerText = state.score; document.getElementById('waveVal').innerText = state.wave;
-    document.getElementById('healthBar').style.width = state.hp + '%';
-    document.getElementById('costDmg').innerText = upgrades.dmg.c; document.getElementById('costSpeed').innerText = upgrades.spd.c; document.getElementById('costHeal').innerText = upgrades.heal.c;
-    document.getElementById('btnDmg').classList.toggle('disabled', state.money<upgrades.dmg.c);
-    document.getElementById('btnSpeed').classList.toggle('disabled', state.money<upgrades.spd.c);
-    document.getElementById('btnHeal').classList.toggle('disabled', state.money<upgrades.heal.c);
-}
-function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; player.x = canvas.width/2; player.y = canvas.height/2; }
-window.addEventListener('resize', resize);
-window.addEventListener('mousemove', e => { state.mx=e.clientX; state.my=e.clientY; });
-window.addEventListener('mousedown', () => state.firing=true); window.addEventListener('mouseup', () => state.firing=false);
-window.addEventListener('keydown', e => { if(e.key===' ') {e.preventDefault(); state.firing=true;} if(e.key==='1') game.buy('d'); if(e.key==='2') game.buy('s'); if(e.key==='3') game.buy('h'); });
-window.addEventListener('keyup', e => { if(e.key===' ') state.firing=false; });
-
-function loop() {
-    if(!state.run) return; state.frames++;
-    ctx.fillStyle = 'rgba(5,5,5,0.3)'; ctx.fillRect(0,0,canvas.width,canvas.height);
-    const ang = Math.atan2(state.my-player.y, state.mx-player.x);
-    ctx.save(); ctx.translate(player.x, player.y); ctx.rotate(ang); ctx.strokeStyle='#0ff'; ctx.lineWidth=2; ctx.stroke(shipPath); ctx.fillStyle='rgba(0,255,255,0.1)'; ctx.fill(shipPath); ctx.restore();
+function gameLoop() {
+    if(!gState.run) return;
+    gState.frames++;
     
-    if(state.firing && state.frames-player.lastShot>upgrades.spd.v) { entities.bullets.push({x:player.x, y:player.y, vx:Math.cos(ang)*15, vy:Math.sin(ang)*15}); player.lastShot=state.frames; playSound('shoot'); }
-    if(state.frames % Math.max(20, 60-state.wave)===0) {
-        const edge=Math.floor(Math.random()*4); let ex,ey;
-        if(edge===0){ex=Math.random()*canvas.width;ey=-30;} else if(edge===1){ex=canvas.width+30;ey=Math.random()*canvas.height;} else if(edge===2){ex=Math.random()*canvas.width;ey=canvas.height+30;} else{ex=-30;ey=Math.random()*canvas.height;}
-        entities.enemies.push({x:ex, y:ey, hp:10+(state.wave*5), max:10+(state.wave*5), s:1+(state.wave*0.1)});
+    // Clear
+    ctx.fillStyle = '#050505'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    
+    // Input Handling (Simple Mouse Follow)
+    canvas.onmousemove = (e) => { player.mx = e.clientX; player.my = e.clientY; };
+    canvas.onmousedown = () => player.fire = true;
+    canvas.onmouseup = () => player.fire = false;
+    
+    // Player Logic
+    const angle = Math.atan2(player.my - player.y, player.mx - player.x);
+    ctx.save(); ctx.translate(player.x, player.y); ctx.rotate(angle);
+    ctx.strokeStyle = '#00f0ff'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(20,0); ctx.lineTo(-15,10); ctx.lineTo(-10,0); ctx.lineTo(-15,-10); ctx.closePath(); ctx.stroke();
+    ctx.restore();
+    
+    // Firing
+    const fireRate = (USER.inventory && USER.inventory['rapid_fire']) ? 5 : 10;
+    if(player.fire && gState.frames % fireRate === 0) {
+        entities.bullets.push({x:player.x, y:player.y, vx:Math.cos(angle)*15, vy:Math.sin(angle)*15});
     }
-    if(state.frames%1200===0) state.wave++;
     
-    entities.bullets.forEach((b,i) => { b.x+=b.vx; b.y+=b.vy; ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(b.x,b.y,3,0,Math.PI*2); ctx.fill(); if(b.x<0||b.x>canvas.width||b.y<0||b.y>canvas.height) entities.bullets.splice(i,1); });
-    entities.enemies.forEach((e,ei) => {
-        const dx=player.x-e.x, dy=player.y-e.y, dist=Math.sqrt(dx*dx+dy*dy);
-        e.x+=(dx/dist)*e.s; e.y+=(dy/dist)*e.s;
-        ctx.save(); ctx.translate(e.x, e.y); ctx.strokeStyle=`hsl(${state.wave*20},100%,50%)`; ctx.stroke(enemyPath); ctx.restore();
-        if(dist<20) { state.hp-=10; entities.enemies.splice(ei,1); playSound('hit'); if(state.hp<=0) game.gameOver(); }
+    // Drones Logic
+    gState.drones = gState.drones.filter(d => d.timer > 0);
+    gState.drones.forEach(d => {
+        d.timer--;
+        d.x += (player.x - d.x) * 0.1; d.y += (player.y - d.y) * 0.1 - 50; // Follow above player
+        
+        // Auto Fire
+        if(gState.frames % 15 === 0 && entities.enemies.length > 0) {
+            const target = entities.enemies[0]; // Simple targeting
+            const da = Math.atan2(target.y - d.y, target.x - d.x);
+            entities.bullets.push({x:d.x, y:d.y, vx:Math.cos(da)*15, vy:Math.sin(da)*15, color:'gold'});
+        }
+        
+        // Draw
+        ctx.fillStyle = 'gold'; ctx.beginPath(); ctx.arc(d.x, d.y, 5, 0, Math.PI*2); ctx.fill();
+        ctx.strokeStyle = 'rgba(255,215,0,0.3)'; ctx.beginPath(); ctx.arc(d.x, d.y, 10, 0, Math.PI*2); ctx.stroke();
+    });
+    
+    // Spawning
+    if(gState.frames % 50 === 0) {
+        const ex = Math.random()*canvas.width;
+        entities.enemies.push({x:ex, y:-20, hp: 10 + gState.wave});
+    }
+    
+    // Updates
+    entities.bullets.forEach((b,i) => {
+        b.x+=b.vx; b.y+=b.vy;
+        ctx.fillStyle = b.color || '#fff'; ctx.beginPath(); ctx.arc(b.x,b.y,3,0,Math.PI*2); ctx.fill();
+        if(b.x<0||b.x>canvas.width||b.y<0||b.y>canvas.height) entities.bullets.splice(i,1);
+    });
+    
+    entities.enemies.forEach((e,i) => {
+        e.y += 2 + (gState.wave*0.1);
+        ctx.strokeStyle = '#ff0055'; ctx.beginPath(); ctx.rect(e.x-10, e.y-10, 20, 20); ctx.stroke();
+        
+        if(Math.hypot(e.x-player.x, e.y-player.y) < 20) {
+            gState.hp -= 10; entities.enemies.splice(i,1);
+            if(gState.hp <= 0) game.gameOver();
+        }
+        
         entities.bullets.forEach((b,bi) => {
-            if(Math.hypot(b.x-e.x, b.y-e.y)<15) {
-                e.hp-=upgrades.dmg.v; entities.bullets.splice(bi,1);
-                if(e.hp<=0) { entities.enemies.splice(ei,1); state.score+=10*state.wave; state.money+=5; playSound('hit'); }
+            if(Math.hypot(b.x-e.x, b.y-e.y) < 20) {
+                e.hp -= 10; entities.bullets.splice(bi,1);
+                if(e.hp <= 0) {
+                    entities.enemies.splice(i,1);
+                    gState.score += 10;
+                }
             }
         });
     });
-    updateUI(); requestAnimationFrame(loop);
+    
+    // HUD Update
+    document.getElementById('g-score').innerText = gState.score;
+    document.getElementById('g-hp').innerText = gState.hp;
+    
+    requestAnimationFrame(gameLoop);
 }
-resize();
+
+// Init
+window.onload = app.init;
+window.onresize = game.resize;
 </script>
 </body>
 </html>
