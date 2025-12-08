@@ -101,4 +101,255 @@ const SECRET_KEY = "BrigaProtoX_Secure_2025"; // חייב להיות תואם ל
 // HASHING FUNCTION (Simple Implementation for Browser)
 async function sha256(message) {
     const msgBuffer = new TextEncoder().encode(message);
-    const hashBuffer = await crypto.subtle.digest('SHA-256',
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// GAME VARIABLES
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+let state = { run: false, score: 0, money: 0, wave: 1, hp: 100, frames: 0, mx: 0, my: 0, firing: false };
+let player = { x: 0, y: 0, angle: 0, lastShot: 0, name: "Guest" };
+let upgrades = { dmg: {l:1, c:100, v:10}, spd: {l:1, c:150, v:20}, heal: {c:200} };
+let entities = { bullets: [], enemies: [], particles: [] };
+
+// ASSETS (Vector Graphics)
+const shipPath = new Path2D("M20,0 L-15,12 L-10,0 L-15,-12 Z");
+const enemyPath = new Path2D("M10,0 L0,10 L-10,0 L0,-10 Z");
+
+// AUDIO (Simple Synth)
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playSound(type) {
+    if(audioCtx.state==='suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    const now = audioCtx.currentTime;
+    
+    if(type==='shoot') {
+        osc.frequency.setValueAtTime(400, now);
+        osc.frequency.exponentialRampToValueAtTime(100, now+0.1);
+        gain.gain.setValueAtTime(0.05, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now+0.1);
+        osc.start(now); osc.stop(now+0.1);
+    } else if(type==='hit') {
+        osc.type='sawtooth'; osc.frequency.setValueAtTime(150, now);
+        gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now+0.1);
+        osc.start(now); osc.stop(now+0.1);
+    }
+}
+
+// GAME OBJECT
+const game = {
+    init: function() {
+        const nameInput = document.getElementById('playerName').value.trim();
+        if(!nameInput) { alert("Please enter a name!"); return; }
+        player.name = nameInput;
+        
+        document.getElementById('menuOverlay').style.display = 'none';
+        state = { run: true, score: 0, money: 0, wave: 1, hp: 100, frames: 0, mx: 0, my: 0, firing: false };
+        entities = { bullets: [], enemies: [], particles: [] };
+        resize();
+        loop();
+    },
+
+    gameOver: async function() {
+        state.run = false;
+        
+        // שליחת ניקוד לשרת
+        const rawString = player.name + state.score + SECRET_KEY;
+        const hash = await sha256(rawString);
+        
+        try {
+            await fetch(`${API_URL}/submit_score`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    player: player.name,
+                    score: state.score,
+                    wave: state.wave,
+                    hash: hash
+                })
+            });
+            alert(`GAME OVER! Score: ${state.score}. Saved to Leaderboard.`);
+        } catch(e) {
+            console.error("Failed to submit score", e);
+            alert("Game Over. (Server Offline)");
+        }
+
+        document.getElementById('menuOverlay').style.display = 'flex';
+        this.showLeaderboard(); // Show leaderboard immediately
+    },
+
+    showLeaderboard: async function() {
+        document.getElementById('leaderboardOverlay').style.display = 'flex';
+        const tbody = document.getElementById('lbBody');
+        tbody.innerHTML = '<tr><td colspan="4">Loading data...</td></tr>';
+        
+        try {
+            const res = await fetch(`${API_URL}/leaderboard`);
+            const data = await res.json();
+            
+            tbody.innerHTML = '';
+            data.forEach(row => {
+                tbody.innerHTML += `<tr>
+                    <td>#${row.rank}</td>
+                    <td>${row.player}</td>
+                    <td>${row.wave}</td>
+                    <td>${row.score}</td>
+                </tr>`;
+            });
+        } catch(e) {
+            tbody.innerHTML = '<tr><td colspan="4" style="color:red">Server Error</td></tr>';
+        }
+    },
+
+    buy: function(type) {
+        if(type==='d' && state.money >= upgrades.dmg.c) {
+            state.money -= upgrades.dmg.c; upgrades.dmg.l++; upgrades.dmg.v+=5; upgrades.dmg.c = Math.floor(upgrades.dmg.c*1.5);
+        } else if(type==='s' && state.money >= upgrades.spd.c) {
+            state.money -= upgrades.spd.c; upgrades.spd.l++; upgrades.spd.v = Math.max(5, upgrades.spd.v-2); upgrades.spd.c = Math.floor(upgrades.spd.c*1.5);
+        } else if(type==='h' && state.money >= upgrades.heal.c && state.hp < 100) {
+            state.money -= upgrades.heal.c; state.hp = Math.min(100, state.hp+25); upgrades.heal.c += 50;
+        }
+        updateUI();
+    }
+};
+
+function updateUI() {
+    document.getElementById('scoreVal').innerText = state.score;
+    document.getElementById('moneyVal').innerText = state.money;
+    document.getElementById('waveVal').innerText = state.wave;
+    document.getElementById('healthBar').style.width = state.hp + '%';
+    
+    document.getElementById('costDmg').innerText = upgrades.dmg.c;
+    document.getElementById('costSpeed').innerText = upgrades.spd.c;
+    document.getElementById('costHeal').innerText = upgrades.heal.c;
+    
+    document.getElementById('btnDmg').classList.toggle('disabled', state.money < upgrades.dmg.c);
+    document.getElementById('btnSpeed').classList.toggle('disabled', state.money < upgrades.spd.c);
+    document.getElementById('btnHeal').classList.toggle('disabled', state.money < upgrades.heal.c);
+}
+
+function spawnEnemy() {
+    const edge = Math.floor(Math.random()*4);
+    let ex, ey;
+    if(edge===0){ ex=Math.random()*canvas.width; ey=-30; }
+    else if(edge===1){ ex=canvas.width+30; ey=Math.random()*canvas.height; }
+    else if(edge===2){ ex=Math.random()*canvas.width; ey=canvas.height+30; }
+    else { ex=-30; ey=Math.random()*canvas.height; }
+    
+    entities.enemies.push({
+        x: ex, y: ey,
+        hp: 10 + (state.wave*5),
+        maxHp: 10 + (state.wave*5),
+        speed: 1 + (state.wave*0.1),
+        radius: 15
+    });
+}
+
+function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    player.x = canvas.width/2;
+    player.y = canvas.height/2;
+}
+
+// EVENT LISTENERS - Mouse + Spacebar Auto-Fire
+window.addEventListener('resize', resize);
+window.addEventListener('mousemove', e => { state.mx=e.clientX; state.my=e.clientY; });
+window.addEventListener('mousedown', () => state.firing=true);
+window.addEventListener('mouseup', () => state.firing=false);
+window.addEventListener('keydown', (e) => {
+    if(e.key===' ') { e.preventDefault(); state.firing=true; }
+    if(e.key==='1') game.buy('d');
+    if(e.key==='2') game.buy('s');
+    if(e.key==='3') game.buy('h');
+});
+window.addEventListener('keyup', (e) => {
+    if(e.key===' ') state.firing=false;
+});
+
+function loop() {
+    if(!state.run) return;
+    state.frames++;
+    
+    // Clear
+    ctx.fillStyle = 'rgba(5,5,5,0.3)';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    
+    // Player
+    const ang = Math.atan2(state.my-player.y, state.mx-player.x);
+    ctx.save();
+    ctx.translate(player.x, player.y);
+    ctx.rotate(ang);
+    ctx.strokeStyle = '#0ff'; ctx.lineWidth=2; ctx.stroke(shipPath);
+    ctx.fillStyle = 'rgba(0,255,255,0.1)'; ctx.fill(shipPath);
+    ctx.restore();
+    
+    // Fire
+    if(state.firing && state.frames - player.lastShot > upgrades.spd.v) {
+        entities.bullets.push({x:player.x, y:player.y, vx:Math.cos(ang)*15, vy:Math.sin(ang)*15});
+        player.lastShot = state.frames;
+        playSound('shoot');
+    }
+    
+    // Spawn Logic
+    if(state.frames % Math.max(20, 60-state.wave) === 0) spawnEnemy();
+    if(state.frames % 1200 === 0) state.wave++;
+    
+    // Bullets
+    entities.bullets.forEach((b,i) => {
+        b.x+=b.vx; b.y+=b.vy;
+        ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(b.x,b.y,3,0,Math.PI*2); ctx.fill();
+        if(b.x<0||b.x>canvas.width||b.y<0||b.y>canvas.height) entities.bullets.splice(i,1);
+    });
+    
+    // Enemies
+    entities.enemies.forEach((e,ei) => {
+        const dx = player.x-e.x, dy = player.y-e.y;
+        const dist = Math.sqrt(dx*dx+dy*dy);
+        e.x += (dx/dist)*e.speed;
+        e.y += (dy/dist)*e.speed;
+        
+        // Draw Enemy
+        ctx.save();
+        ctx.translate(e.x, e.y);
+        ctx.strokeStyle = `hsl(${state.wave*20}, 100%, 50%)`;
+        ctx.stroke(enemyPath);
+        ctx.restore();
+        
+        // Collision Player
+        if(dist < 20) {
+            state.hp -= 10;
+            entities.enemies.splice(ei, 1);
+            playSound('hit');
+            if(state.hp<=0) game.gameOver();
+        }
+        
+        // Collision Bullet
+        entities.bullets.forEach((b,bi) => {
+            if(Math.hypot(b.x-e.x, b.y-e.y) < 15) {
+                e.hp -= upgrades.dmg.v;
+                entities.bullets.splice(bi,1);
+                if(e.hp<=0) {
+                    entities.enemies.splice(ei,1);
+                    state.score += 10*state.wave;
+                    state.money += 5;
+                    playSound('hit');
+                }
+            }
+        });
+    });
+    
+    updateUI();
+    requestAnimationFrame(loop);
+}
+
+// Init
+resize();
+</script>
+</body>
+</html>
+
