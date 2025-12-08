@@ -2,123 +2,248 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>Briga Games: Protocol X</title>
+    <title>Briga Games: Protocol X v2.0</title>
+    <!-- מניעת F12 וכלים -->
     <script src="https://cdn.jsdelivr.net/npm/disable-devtool@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
         
+        /* === GLOBAL STYLES === */
         body { margin: 0; overflow: hidden; background: #050505; color: #fff; font-family: 'Orbitron', sans-serif; user-select: none; }
         #gameCanvas { display: block; }
         
-        /* HUD */
+        /* === SCREENS & OVERLAYS === */
+        .screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 100; transition: opacity 0.3s;
+        }
+        .hidden { display: none !important; }
+        
+        /* === UI ELEMENTS === */
+        h1 { font-size: 60px; color: cyan; text-shadow: 0 0 20px cyan; margin: 0; letter-spacing: 5px; }
+        h2 { color: #ff0055; margin-bottom: 20px; text-transform: uppercase; }
+        
+        input {
+            background: rgba(0, 255, 255, 0.1); border: 2px solid cyan; color: white;
+            padding: 15px; font-size: 20px; text-align: center; margin: 10px;
+            font-family: inherit; width: 300px; border-radius: 5px;
+        }
+        input:focus { outline: none; box-shadow: 0 0 15px cyan; }
+        
+        button.cta {
+            background: #ff0055; color: white; border: none; padding: 15px 40px;
+            font-size: 20px; cursor: pointer; font-family: inherit; margin-top: 20px;
+            clip-path: polygon(10% 0, 100% 0, 90% 100%, 0% 100%);
+            transition: 0.2s; font-weight: bold;
+        }
+        button.cta:hover { background: #ff2277; transform: scale(1.05); box-shadow: 0 0 20px #ff0055; }
+        button.secondary { background: transparent; border: 1px solid #555; color: #aaa; margin-top: 10px; font-size: 14px; padding: 10px; cursor: pointer; }
+        
+        /* === AUTH SCREEN === */
+        .auth-box { background: rgba(0,0,0,0.8); padding: 40px; border: 1px solid cyan; border-radius: 10px; text-align: center; }
+        .toggle-auth { color: cyan; cursor: pointer; text-decoration: underline; margin-top: 15px; font-size: 14px; }
+        
+        /* === HUD === */
         .hud { position: absolute; pointer-events: none; text-shadow: 0 0 10px cyan; z-index: 10; }
         #scoreBoard { top: 20px; right: 20px; text-align: right; }
+        #userProfile { top: 20px; left: 20px; text-align: left; font-size: 14px; color: #aaa; pointer-events: auto; cursor: pointer; }
         #healthBarContainer { top: 20px; left: 50%; transform: translateX(-50%); width: 300px; height: 20px; border: 2px solid cyan; border-radius: 10px; overflow: hidden; background: rgba(0,0,0,0.5); }
         #healthBar { width: 100%; height: 100%; background: linear-gradient(90deg, #ff0055, #ff5500); transition: width 0.2s; }
         
-        /* SHOP */
-        #shop { position: absolute; bottom: 20px; left: 20px; display: flex; gap: 10px; z-index: 20; }
-        .upgrade-btn { background: rgba(0,20,40,0.9); border: 1px solid cyan; color: cyan; padding: 10px 15px; cursor: pointer; text-align: center; font-family: inherit; transition: 0.2s; min-width: 100px; }
-        .upgrade-btn:hover { background: rgba(0,255,255,0.2); transform: translateY(-3px); }
-        .upgrade-btn.disabled { opacity: 0.5; cursor: not-allowed; border-color: #555; color: #555; transform: none; }
-
-        /* SCREENS */
-        #menuOverlay, #leaderboardOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
-        #leaderboardOverlay { display: none; }
+        /* === SHOP === */
+        #shop { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 15px; z-index: 20; }
+        .upgrade-btn {
+            background: rgba(0,20,40,0.9); border: 1px solid cyan; color: cyan;
+            padding: 10px 15px; cursor: pointer; text-align: center;
+            font-family: inherit; transition: 0.2s; min-width: 100px; border-radius: 5px;
+        }
+        .upgrade-btn:hover { background: rgba(0,255,255,0.2); transform: translateY(-5px); }
+        .upgrade-btn.disabled { opacity: 0.5; cursor: not-allowed; border-color: #555; color: #555; }
         
-        h1 { font-size: 60px; color: cyan; text-shadow: 0 0 20px cyan; margin: 0; letter-spacing: 5px; }
-        input { background: transparent; border: 2px solid cyan; color: white; padding: 10px; font-size: 20px; text-align: center; margin: 20px; font-family: inherit; }
-        button.cta { background: #ff0055; color: white; border: none; padding: 15px 40px; font-size: 24px; cursor: pointer; font-family: inherit; margin-top: 10px; }
-        button.cta:hover { background: #ff2277; box-shadow: 0 0 20px #ff0055; }
-
-        /* LEADERBOARD TABLE */
-        table { border-collapse: collapse; width: 60%; margin-top: 20px; color: #fff; }
+        /* === LEADERBOARD & ADMIN === */
+        table { border-collapse: collapse; width: 80%; margin-top: 20px; color: #fff; font-size: 14px; }
         th, td { border-bottom: 1px solid #333; padding: 10px; text-align: center; }
-        th { color: cyan; font-size: 1.2em; }
-        tr:nth-child(1) td { color: gold; font-weight: bold; } /* 1st Place */
-        tr:nth-child(2) td { color: silver; } /* 2nd Place */
-        tr:nth-child(3) td { color: #cd7f32; } /* 3rd Place */
-
-        /* Version & Credits */
-        #version { position: absolute; top: 5px; left: 10px; font-size: 12px; color: #888; z-index: 30; }
-        #credits { position: absolute; bottom: 5px; left: 10px; font-size: 11px; color: #666; z-index: 30; text-align: left; }
+        th { color: cyan; }
+        tr:nth-child(1) td { color: gold; }
+        
+        /* === VERSION & CREDITS === */
+        #version { position: absolute; top: 5px; left: 5px; font-size: 10px; color: #444; z-index: 5; }
+        #credits { position: absolute; bottom: 5px; right: 10px; font-size: 12px; color: #666; z-index: 5; text-align: right; pointer-events: auto; }
         #credits a { color: cyan; text-decoration: none; }
-        #credits a:hover { text-decoration: underline; }
+        
+        /* === NOTIFICATIONS === */
+        #toast {
+            position: absolute; top: 80px; left: 50%; transform: translateX(-50%);
+            background: rgba(0, 255, 255, 0.2); border: 1px solid cyan;
+            padding: 10px 30px; border-radius: 20px; color: white;
+            opacity: 0; transition: opacity 0.5s; pointer-events: none; z-index: 200;
+        }
     </style>
 </head>
 <body oncontextmenu="return false;">
 
     <div id="gameCanvasWrapper"><canvas id="gameCanvas"></canvas></div>
 
+    <!-- NOTIFICATION TOAST -->
+    <div id="toast">Message</div>
+
     <!-- VERSION & CREDITS -->
-    <div id="version">v1.1</div>
+    <div id="version">v2.0</div>
     <div id="credits">
-        נוצר על ידי <strong>OrelAI</strong><br>
+        Created by <strong>OrelAI</strong><br>
         <a href="mailto:ubriga@gmail.com">ubriga@gmail.com</a>
     </div>
 
     <!-- HUD -->
+    <div class="hud" id="userProfile" onclick="game.openAdmin()">
+        👤 <span id="uName">Guest</span><br>
+        💎 <span id="uCredits">0</span> Credits
+    </div>
+    
     <div class="hud" id="healthBarContainer"><div id="healthBar"></div></div>
+    
     <div class="hud" id="scoreBoard">
         <div>SCORE: <span id="scoreVal">0</span></div>
-        <div style="color: gold; font-size: 18px;">CREDITS: <span id="moneyVal">0</span></div>
         <div style="font-size: 14px; margin-top:5px; color:#aaa;">WAVE: <span id="waveVal">1</span></div>
     </div>
 
     <!-- SHOP -->
-    <div id="shop">
-        <div class="upgrade-btn" id="btnDmg" onclick="game.buy('d')">DAMAGE<br><small id="costDmg">100</small> [1]</div>
-        <div class="upgrade-btn" id="btnSpeed" onclick="game.buy('s')">SPEED<br><small id="costSpeed">150</small> [2]</div>
-        <div class="upgrade-btn" id="btnHeal" onclick="game.buy('h')">REPAIR<br><small id="costHeal">200</small> [3]</div>
+    <div id="shop" class="hidden">
+        <div class="upgrade-btn" id="btnDmg" onclick="game.buy('d')">💥 DAMAGE<br><small id="costDmg">100</small> [1]</div>
+        <div class="upgrade-btn" id="btnSpeed" onclick="game.buy('s')">⚡ SPEED<br><small id="costSpeed">150</small> [2]</div>
+        <div class="upgrade-btn" id="btnHeal" onclick="game.buy('h')">❤️ REPAIR<br><small id="costHeal">200</small> [3]</div>
     </div>
 
-    <!-- START MENU -->
-    <div id="menuOverlay">
-        <h1>BRIGA GAMES</h1>
-        <h2>PROTOCOL X</h2>
-        <input type="text" id="playerName" placeholder="ENTER PILOT NAME" maxlength="12">
-        <button class="cta" onclick="game.init()">LAUNCH MISSION</button>
-        <div style="margin-top: 20px; cursor: pointer; text-decoration: underline;" onclick="game.showLeaderboard()">View Leaderboard</div>
+    <!-- LOGIN SCREEN -->
+    <div id="loginScreen" class="screen">
+        <div class="auth-box">
+            <h1>BRIGA GAMES</h1>
+            <h2>PROTOCOL X v2.0</h2>
+            <input type="text" id="loginUser" placeholder="Username" maxlength="15"><br>
+            <input type="password" id="loginPass" placeholder="Password"><br>
+            <button class="cta" onclick="auth.login()">LOGIN</button>
+            <div class="toggle-auth" onclick="auth.showRegister()">New Pilot? Register Here</div>
+        </div>
     </div>
 
-    <!-- LEADERBOARD SCREEN -->
-    <div id="leaderboardOverlay">
-        <h1>TOP PILOTS</h1>
-        <table id="lbTable">
-            <thead><tr><th>RANK</th><th>PILOT</th><th>WAVE</th><th>SCORE</th></tr></thead>
-            <tbody id="lbBody"></tbody>
-        </table>
-        <button class="cta" onclick="document.getElementById('leaderboardOverlay').style.display='none'" style="margin-top:30px;">CLOSE</button>
+    <!-- REGISTER SCREEN -->
+    <div id="registerScreen" class="screen hidden">
+        <div class="auth-box">
+            <h1>NEW PILOT</h1>
+            <h2>ENLISTMENT</h2>
+            <input type="text" id="regUser" placeholder="Choose Username"><br>
+            <input type="password" id="regPass" placeholder="Choose Password"><br>
+            <button class="cta" onclick="auth.register()">REGISTER</button>
+            <div class="toggle-auth" onclick="auth.showLogin()">Back to Login</div>
+        </div>
+    </div>
+
+    <!-- MAIN MENU -->
+    <div id="menuScreen" class="screen hidden">
+        <h1>READY?</h1>
+        <h2 id="welcomeText">WELCOME PILOT</h2>
+        <div style="display:flex; gap:20px;">
+            <button class="cta" onclick="game.start()">LAUNCH MISSION</button>
+            <button class="cta" style="background:#444;" onclick="game.showLeaderboard()">LEADERBOARD</button>
+        </div>
+    </div>
+
+    <!-- LEADERBOARD & ADMIN -->
+    <div id="leaderboardScreen" class="screen hidden">
+        <h1 id="lbTitle">TOP PILOTS</h1>
+        <div id="lbContent" style="width:100%; display:flex; justify-content:center; max-height:60vh; overflow-y:auto;">
+            <table id="lbTable"><thead><tr><th>RANK</th><th>PILOT</th><th>WAVE</th><th>SCORE</th></tr></thead><tbody id="lbBody"></tbody></table>
+        </div>
+        <button class="cta" onclick="document.getElementById('leaderboardScreen').classList.add('hidden'); document.getElementById('menuScreen').classList.remove('hidden')">BACK</button>
     </div>
 
 <script>
 /**
- * BRIGA GAMES ENGINE - FULL INTEGRATION v1.1
+ * BRIGA GAMES v2.0 ENGINE
  */
-const API_URL = "https://ubriga.pythonanywhere.com"; // כתובת השרת שלנו
-const SECRET_KEY = "BrigaProtoX_Secure_2025"; // חייב להיות תואם לשרת
+const API_URL = "https://ubriga.pythonanywhere.com";
+const SECRET_KEY = "BrigaProtoX_Secure_2025";
 
-// HASHING FUNCTION (Simple Implementation for Browser)
-async function sha256(message) {
-    const msgBuffer = new TextEncoder().encode(message);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
+// STATE
+let currentUser = null;
+let token = localStorage.getItem('briga_token');
 
-// GAME VARIABLES
+// UTILS
+const toast = (msg) => {
+    const t = document.getElementById('toast');
+    t.innerText = msg; t.style.opacity = 1;
+    setTimeout(() => t.style.opacity = 0, 3000);
+};
+
+// AUTH SYSTEM
+const auth = {
+    showRegister: () => {
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('registerScreen').classList.remove('hidden');
+    },
+    showLogin: () => {
+        document.getElementById('registerScreen').classList.add('hidden');
+        document.getElementById('loginScreen').classList.remove('hidden');
+    },
+    login: async () => {
+        const u = document.getElementById('loginUser').value;
+        const p = document.getElementById('loginPass').value;
+        if(!u || !p) return toast("Enter username & password");
+        
+        try {
+            const res = await fetch(`${API_URL}/login`, {
+                method: 'POST', headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({username: u, password: p})
+            });
+            const data = await res.json();
+            if(data.error) return toast(data.error);
+            
+            token = data.token;
+            currentUser = data.user;
+            localStorage.setItem('briga_token', token);
+            auth.postLogin();
+        } catch(e) { toast("Server Connection Error"); }
+    },
+    register: async () => {
+        const u = document.getElementById('regUser').value;
+        const p = document.getElementById('regPass').value;
+        if(!u || !p) return toast("Fill all fields");
+        
+        try {
+            const res = await fetch(`${API_URL}/register`, {
+                method: 'POST', headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({username: u, password: p})
+            });
+            const data = await res.json();
+            if(data.error) return toast(data.error);
+            toast("Registration Successful! Please Login.");
+            auth.showLogin();
+        } catch(e) { toast("Registration Failed"); }
+    },
+    postLogin: () => {
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('menuScreen').classList.remove('hidden');
+        document.getElementById('uName').innerText = currentUser.username;
+        document.getElementById('uCredits').innerText = currentUser.credits;
+        document.getElementById('welcomeText').innerText = `WELCOME, PILOT ${currentUser.username}`;
+    }
+};
+
+// GAME ENGINE
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 let state = { run: false, score: 0, money: 0, wave: 1, hp: 100, frames: 0, mx: 0, my: 0, firing: false };
-let player = { x: 0, y: 0, angle: 0, lastShot: 0, name: "Guest" };
+let player = { x: 0, y: 0, angle: 0, lastShot: 0 };
 let upgrades = { dmg: {l:1, c:100, v:10}, spd: {l:1, c:150, v:20}, heal: {c:200} };
 let entities = { bullets: [], enemies: [], particles: [] };
 
-// ASSETS (Vector Graphics)
+// ASSETS
 const shipPath = new Path2D("M20,0 L-15,12 L-10,0 L-15,-12 Z");
 const enemyPath = new Path2D("M10,0 L0,10 L-10,0 L0,-10 Z");
 
-// AUDIO (Simple Synth)
+// AUDIO
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 function playSound(type) {
     if(audioCtx.state==='suspended') audioCtx.resume();
@@ -140,77 +265,79 @@ function playSound(type) {
     }
 }
 
-// GAME OBJECT
+// GAME LOGIC
 const game = {
-    init: function() {
-        const nameInput = document.getElementById('playerName').value.trim();
-        if(!nameInput) { alert("Please enter a name!"); return; }
-        player.name = nameInput;
-        
-        document.getElementById('menuOverlay').style.display = 'none';
+    start: () => {
+        document.getElementById('menuScreen').classList.add('hidden');
+        document.getElementById('shop').classList.remove('hidden');
         state = { run: true, score: 0, money: 0, wave: 1, hp: 100, frames: 0, mx: 0, my: 0, firing: false };
         entities = { bullets: [], enemies: [], particles: [] };
-        resize();
-        loop();
+        resize(); loop();
     },
-
-    gameOver: async function() {
+    gameOver: async () => {
         state.run = false;
+        document.getElementById('shop').classList.add('hidden');
         
-        // שליחת ניקוד לשרת
-        const rawString = player.name + state.score + SECRET_KEY;
-        const hash = await sha256(rawString);
+        // Secure Score Submit
+        const rawString = currentUser.username + state.score + SECRET_KEY;
+        const msgBuffer = new TextEncoder().encode(rawString);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         
         try {
             await fetch(`${API_URL}/submit_score`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    player: player.name,
-                    score: state.score,
-                    wave: state.wave,
-                    hash: hash
-                })
+                method: 'POST', headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({player: currentUser.username, score: state.score, wave: state.wave, hash: hash})
             });
-            alert(`GAME OVER! Score: ${state.score}. Saved to Leaderboard.`);
-        } catch(e) {
-            console.error("Failed to submit score", e);
-            alert("Game Over. (Server Offline)");
-        }
+            toast(`GAME OVER! Score: ${state.score} Saved.`);
+        } catch(e) { toast("Score Save Failed (Offline)"); }
 
-        document.getElementById('menuOverlay').style.display = 'flex';
-        this.showLeaderboard(); // Show leaderboard immediately
+        document.getElementById('menuScreen').classList.remove('hidden');
     },
-
-    showLeaderboard: async function() {
-        document.getElementById('leaderboardOverlay').style.display = 'flex';
+    showLeaderboard: async () => {
+        document.getElementById('menuScreen').classList.add('hidden');
+        document.getElementById('leaderboardScreen').classList.remove('hidden');
         const tbody = document.getElementById('lbBody');
-        tbody.innerHTML = '<tr><td colspan="4">Loading data...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4">Loading...</td></tr>';
         
         try {
             const res = await fetch(`${API_URL}/leaderboard`);
             const data = await res.json();
-            
             tbody.innerHTML = '';
             data.forEach(row => {
-                tbody.innerHTML += `<tr>
-                    <td>#${row.rank}</td>
-                    <td>${row.player}</td>
-                    <td>${row.wave}</td>
-                    <td>${row.score}</td>
-                </tr>`;
+                tbody.innerHTML += `<tr><td>#${row.rank}</td><td>${row.player}</td><td>${row.wave}</td><td>${row.score}</td></tr>`;
             });
-        } catch(e) {
-            tbody.innerHTML = '<tr><td colspan="4" style="color:red">Server Error</td></tr>';
-        }
+        } catch(e) { tbody.innerHTML = '<tr><td colspan="4">Error Loading Data</td></tr>'; }
     },
-
-    buy: function(type) {
-        if(type==='d' && state.money >= upgrades.dmg.c) {
-            state.money -= upgrades.dmg.c; upgrades.dmg.l++; upgrades.dmg.v+=5; upgrades.dmg.c = Math.floor(upgrades.dmg.c*1.5);
-        } else if(type==='s' && state.money >= upgrades.spd.c) {
-            state.money -= upgrades.spd.c; upgrades.spd.l++; upgrades.spd.v = Math.max(5, upgrades.spd.v-2); upgrades.spd.c = Math.floor(upgrades.spd.c*1.5);
-        } else if(type==='h' && state.money >= upgrades.heal.c && state.hp < 100) {
+    openAdmin: async () => {
+        if(!currentUser || !currentUser.is_admin) return;
+        
+        const pin = prompt("ADMIN ACCESS: Enter PIN");
+        if(pin !== "2025") return;
+        
+        document.getElementById('menuScreen').classList.add('hidden');
+        document.getElementById('leaderboardScreen').classList.remove('hidden');
+        document.getElementById('lbTitle').innerText = "ADMIN PANEL: USERS";
+        
+        try {
+            const res = await fetch(`${API_URL}/admin/users`, {
+                headers: {'Authorization': `Bearer ${token}`}
+            });
+            const users = await res.json();
+            const tbody = document.getElementById('lbBody');
+            tbody.innerHTML = '';
+            users.forEach(u => {
+                tbody.innerHTML += `<tr><td>${u.id}</td><td>${u.username} ${u.admin?'(ADMIN)':''}</td><td>${u.games}</td><td>${u.credits} CR</td></tr>`;
+            });
+        } catch(e) { toast("Admin Access Denied"); }
+    },
+    buy: (t) => {
+        if(t==='d' && state.money >= upgrades.dmg.c) {
+            state.money -= upgrades.dmg.c; upgrades.dmg.v+=5; upgrades.dmg.c = Math.floor(upgrades.dmg.c*1.5);
+        } else if(t==='s' && state.money >= upgrades.spd.c) {
+            state.money -= upgrades.spd.c; upgrades.spd.v = Math.max(5, upgrades.spd.v-2); upgrades.spd.c = Math.floor(upgrades.spd.c*1.5);
+        } else if(t==='h' && state.money >= upgrades.heal.c && state.hp < 100) {
             state.money -= upgrades.heal.c; state.hp = Math.min(100, state.hp+25); upgrades.heal.c += 50;
         }
         updateUI();
@@ -219,7 +346,6 @@ const game = {
 
 function updateUI() {
     document.getElementById('scoreVal').innerText = state.score;
-    document.getElementById('moneyVal').innerText = state.money;
     document.getElementById('waveVal').innerText = state.wave;
     document.getElementById('healthBar').style.width = state.hp + '%';
     
@@ -232,71 +358,53 @@ function updateUI() {
     document.getElementById('btnHeal').classList.toggle('disabled', state.money < upgrades.heal.c);
 }
 
-function spawnEnemy() {
-    const edge = Math.floor(Math.random()*4);
-    let ex, ey;
-    if(edge===0){ ex=Math.random()*canvas.width; ey=-30; }
-    else if(edge===1){ ex=canvas.width+30; ey=Math.random()*canvas.height; }
-    else if(edge===2){ ex=Math.random()*canvas.width; ey=canvas.height+30; }
-    else { ex=-30; ey=Math.random()*canvas.height; }
-    
-    entities.enemies.push({
-        x: ex, y: ey,
-        hp: 10 + (state.wave*5),
-        maxHp: 10 + (state.wave*5),
-        speed: 1 + (state.wave*0.1),
-        radius: 15
-    });
-}
-
 function resize() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-    player.x = canvas.width/2;
-    player.y = canvas.height/2;
+    player.x = canvas.width/2; player.y = canvas.height/2;
 }
 
-// EVENT LISTENERS - Mouse + Spacebar Auto-Fire
+// EVENTS
 window.addEventListener('resize', resize);
 window.addEventListener('mousemove', e => { state.mx=e.clientX; state.my=e.clientY; });
 window.addEventListener('mousedown', () => state.firing=true);
 window.addEventListener('mouseup', () => state.firing=false);
 window.addEventListener('keydown', (e) => {
     if(e.key===' ') { e.preventDefault(); state.firing=true; }
-    if(e.key==='1') game.buy('d');
-    if(e.key==='2') game.buy('s');
-    if(e.key==='3') game.buy('h');
+    if(e.key==='1') game.buy('d'); if(e.key==='2') game.buy('s'); if(e.key==='3') game.buy('h');
 });
-window.addEventListener('keyup', (e) => {
-    if(e.key===' ') state.firing=false;
-});
+window.addEventListener('keyup', (e) => { if(e.key===' ') state.firing=false; });
 
+// GAME LOOP
 function loop() {
     if(!state.run) return;
     state.frames++;
     
     // Clear
-    ctx.fillStyle = 'rgba(5,5,5,0.3)';
-    ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle = 'rgba(5,5,5,0.3)'; ctx.fillRect(0,0,canvas.width,canvas.height);
     
     // Player
     const ang = Math.atan2(state.my-player.y, state.mx-player.x);
-    ctx.save();
-    ctx.translate(player.x, player.y);
-    ctx.rotate(ang);
+    ctx.save(); ctx.translate(player.x, player.y); ctx.rotate(ang);
     ctx.strokeStyle = '#0ff'; ctx.lineWidth=2; ctx.stroke(shipPath);
-    ctx.fillStyle = 'rgba(0,255,255,0.1)'; ctx.fill(shipPath);
-    ctx.restore();
+    ctx.fillStyle = 'rgba(0,255,255,0.1)'; ctx.fill(shipPath); ctx.restore();
     
     // Fire
     if(state.firing && state.frames - player.lastShot > upgrades.spd.v) {
         entities.bullets.push({x:player.x, y:player.y, vx:Math.cos(ang)*15, vy:Math.sin(ang)*15});
-        player.lastShot = state.frames;
-        playSound('shoot');
+        player.lastShot = state.frames; playSound('shoot');
     }
     
-    // Spawn Logic
-    if(state.frames % Math.max(20, 60-state.wave) === 0) spawnEnemy();
+    // Logic
+    if(state.frames % Math.max(20, 60-state.wave) === 0) {
+        const edge = Math.floor(Math.random()*4);
+        let ex, ey;
+        if(edge===0){ex=Math.random()*canvas.width;ey=-30;}
+        else if(edge===1){ex=canvas.width+30;ey=Math.random()*canvas.height;}
+        else if(edge===2){ex=Math.random()*canvas.width;ey=canvas.height+30;}
+        else{ex=-30;ey=Math.random()*canvas.height;}
+        entities.enemies.push({x:ex, y:ey, hp:10+(state.wave*5), max:10+(state.wave*5), s:1+(state.wave*0.1)});
+    }
     if(state.frames % 1200 === 0) state.wave++;
     
     // Bullets
@@ -310,44 +418,34 @@ function loop() {
     entities.enemies.forEach((e,ei) => {
         const dx = player.x-e.x, dy = player.y-e.y;
         const dist = Math.sqrt(dx*dx+dy*dy);
-        e.x += (dx/dist)*e.speed;
-        e.y += (dy/dist)*e.speed;
+        e.x += (dx/dist)*e.s; e.y += (dy/dist)*e.s;
         
-        // Draw Enemy
-        ctx.save();
-        ctx.translate(e.x, e.y);
-        ctx.strokeStyle = `hsl(${state.wave*20}, 100%, 50%)`;
-        ctx.stroke(enemyPath);
-        ctx.restore();
+        ctx.save(); ctx.translate(e.x, e.y); ctx.strokeStyle = `hsl(${state.wave*20}, 100%, 50%)`;
+        ctx.stroke(enemyPath); ctx.restore();
         
-        // Collision Player
         if(dist < 20) {
-            state.hp -= 10;
-            entities.enemies.splice(ei, 1);
-            playSound('hit');
+            state.hp -= 10; entities.enemies.splice(ei, 1); playSound('hit');
             if(state.hp<=0) game.gameOver();
         }
-        
-        // Collision Bullet
         entities.bullets.forEach((b,bi) => {
             if(Math.hypot(b.x-e.x, b.y-e.y) < 15) {
-                e.hp -= upgrades.dmg.v;
-                entities.bullets.splice(bi,1);
+                e.hp -= upgrades.dmg.v; entities.bullets.splice(bi,1);
                 if(e.hp<=0) {
-                    entities.enemies.splice(ei,1);
-                    state.score += 10*state.wave;
-                    state.money += 5;
-                    playSound('hit');
+                    entities.enemies.splice(ei,1); state.score += 10*state.wave;
+                    state.money += 5; playSound('hit');
                 }
             }
         });
     });
     
-    updateUI();
-    requestAnimationFrame(loop);
+    updateUI(); requestAnimationFrame(loop);
 }
 
-// Init
+// Check Local Login
+if(token) {
+    // Auto-login logic would go here
+    document.getElementById('loginScreen').classList.remove('hidden'); // Force login for demo
+}
 resize();
 </script>
 </body>
