@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Brigagame v5.5 STABLE</title>
+    <title>Brigagame v5.5 FIXED</title>
     
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
@@ -53,7 +53,7 @@
 
     <div id="toast" style="position:fixed; top:10%; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.9); padding:10px 40px; border:1px solid var(--main); z-index:3000; opacity:0; pointer-events:none; transition:0.3s; color:white; font-weight:bold;">MSG</div>
     
-    <div id="global-footer">DEV: <span>OrelAi</span> | CONTACT: <span style="color:gold">ubriga@gmail.com</span> | v5.5 STABLE</div>
+    <div id="global-footer">DEV: <span>OrelAi</span> | CONTACT: <span style="color:gold">ubriga@gmail.com</span> | v5.5 FIXED</div>
 
     <canvas id="gameCanvas"></canvas>
 
@@ -80,11 +80,18 @@
 
     <!-- HUD -->
     <div id="game-ui" class="hidden">
-        <div style="position:absolute; top:20px; left:20px; background:rgba(0,0,0,0.5); padding:10px; border:1px solid #444;">
-            <div style="color:var(--warn)">HP: <span id="g-hp">100</span>%</div>
-            <div style="color:#f90">HEAT: <span id="g-heat">0</span>%</div>
-            <div style="color:var(--main)">DASH: <span id="g-energy">100</span>%</div>
+        <!-- FIXED: BARS RESTORED -->
+        <div style="position:absolute; top:20px; left:20px; background:rgba(0,0,0,0.5); padding:10px; border:1px solid #444; width: 200px;">
+            <div style="margin-bottom:5px; font-size:12px; color:var(--warn)">ARMOR</div>
+            <div style="background:#333; height:10px; width:100%;"><div id="bar-hp" style="background:var(--warn); height:100%; width:100%;"></div></div>
+            
+            <div style="margin:5px 0; font-size:12px; color:#f90">HEAT</div>
+            <div style="background:#333; height:10px; width:100%;"><div id="bar-heat" style="background:#f90; height:100%; width:0%;"></div></div>
+            
+            <div style="margin-top:5px; font-size:12px; color:var(--main)">ENERGY</div>
+            <div style="background:#333; height:10px; width:100%;"><div id="bar-energy" style="background:var(--main); height:100%; width:100%;"></div></div>
         </div>
+
         <div style="position:absolute; top:20px; right:20px; text-align:right;">
             <div style="font-size:30px; font-weight:bold;"><span id="g-score">0</span></div>
             <div style="color:var(--main);">WAVE <span id="g-wave">1</span></div>
