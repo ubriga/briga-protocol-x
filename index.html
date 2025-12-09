@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Brigagame v5.3</title>
+    <title>Brigagame v5.4 FIX</title>
     
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
@@ -53,7 +53,7 @@
 
     <div id="toast" style="position:fixed; top:10%; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.9); padding:10px 40px; border:1px solid var(--main); z-index:3000; opacity:0; pointer-events:none; transition:0.3s; color:white; font-weight:bold;">MSG</div>
     
-    <div id="global-footer">DEV: <span>OrelAi</span> | CONTACT: <span style="color:gold">ubriga@gmail.com</span> | v5.3</div>
+    <div id="global-footer">DEV: <span>OrelAi</span> | CONTACT: <span style="color:gold">ubriga@gmail.com</span> | v5.4 FIX</div>
 
     <canvas id="gameCanvas"></canvas>
 
@@ -95,7 +95,7 @@
         </div>
         
         <h1 style="font-size:70px; margin:0; text-shadow:0 0 30px var(--main);">BRIGAGAME</h1>
-        <div style="color:#666; letter-spacing:5px; margin-bottom:30px;">v5.3</div>
+        <div style="color:#666; letter-spacing:5px; margin-bottom:30px;">v5.4</div>
         
         <div class="box" style="width:850px; min-height:550px;">
             <div class="tabs">
@@ -188,23 +188,25 @@
     </div>
 
 <script>
-/** BRIGAGAME v5.3 **/
+/** BRIGAGAME v5.4 FIX **/
 const API = "https://ubriga.pythonanywhere.com";
 const PIN = "1201847";
 let USER=null, TOKEN=localStorage.getItem('px_token');
 
 // ART ASSETS
 const ART = {
+    // Fixed: Added safety for arguments
     ship: (ctx, type, c, dash) => {
         ctx.save();
         if(dash) { ctx.globalAlpha=0.5; ctx.setLineDash([5,5]); }
         ctx.shadowBlur=15; ctx.shadowColor=c; ctx.strokeStyle=c; ctx.lineWidth=2; ctx.beginPath();
+        
         if(type==='golden') { // TITAN
             ctx.moveTo(0,-20); ctx.lineTo(15,10); ctx.lineTo(0,15); ctx.lineTo(-15,10); ctx.closePath();
             ctx.rect(-10,10,5,5); ctx.rect(5,10,5,5);
         } else if(type==='crimson') { // PHANTOM
             ctx.moveTo(0,-25); ctx.lineTo(10,5); ctx.lineTo(20,20); ctx.lineTo(0,10); ctx.lineTo(-20,20); ctx.lineTo(-10,5); ctx.closePath();
-        } else { // VIPER
+        } else { // VIPER (Default)
             ctx.moveTo(0,-20); ctx.lineTo(10,10); ctx.lineTo(0,5); ctx.lineTo(-10,10); ctx.closePath();
             ctx.moveTo(0,0); ctx.lineTo(20,10); ctx.moveTo(0,0); ctx.lineTo(-20,10);
         }
@@ -234,11 +236,18 @@ const app = {
     init: () => {
         if(TOKEN) auth.validate(); else app.show('screen-login');
         window.onresize = () => { canvas.width=innerWidth; canvas.height=innerHeight; };
+        
+        // GAME CONTROLS
         window.addEventListener('keydown', e => {
             if(e.code === 'Space') game.vent();
             if(e.code === 'Escape') game.togglePause();
         });
         window.addEventListener('mousedown', e => { if(e.button===2) game.dash(); });
+        // Fixed: Window level mouse tracking prevents "Freezing"
+        window.addEventListener('mousemove', e => { 
+            mouse.x = e.clientX; 
+            mouse.y = e.clientY; 
+        });
     },
     show: (id) => {
         document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
@@ -260,11 +269,10 @@ const app = {
         document.getElementById('l-credits').innerText = USER.credits;
         document.getElementById('l-drone').innerText = (USER.consumables?.drone_support)||0;
         
-        // Admin Badge Logic
+        // Admin Badge Logic (Preserved)
         const admBtn = document.getElementById('tab-admin-btn');
         if(USER.is_admin) {
             admBtn.style.display = 'block';
-            // Check for pending users silently
             try {
                 const res = await fetch(`${API}/admin/dashboard`, {headers:getHeader()});
                 const d = await res.json();
@@ -337,7 +345,7 @@ const shop = {
     }
 };
 
-// ADMIN SYSTEM
+// ADMIN SYSTEM (Preserved Intact)
 let adminData = {users:[], coupons:[]};
 const admin = {
     login: () => {
@@ -418,9 +426,11 @@ const game = {
     start: () => {
         canvas.width = innerWidth; canvas.height = innerHeight;
         g = { run: true, paused: false, score: 0, wave: 1, hp: 100, heat: 0, energy: 100, frames: 0 };
+        // Reset player to center
         player = { x: canvas.width/2, y: canvas.height/2, dashing:0, overheat:false };
         ents = { bullets:[], enemies:[], drones:[], eBullets:[], waves:[] };
         app.show(''); document.getElementById('game-ui').classList.remove('hidden');
+        // Safe access to drone count
         document.getElementById('drone-qty').innerText = (USER.consumables?.drone_support)||0;
         game.nextWave(); loop();
     },
@@ -456,19 +466,19 @@ const game = {
     vent: () => { if(g.heat>30) { ents.waves.push({x:player.x, y:player.y, r:10}); g.heat=0; player.overheat=false; document.getElementById('overheat-msg').style.display='none'; } }
 };
 
-canvas.onmousemove = e => { mouse.x = e.clientX; mouse.y = e.clientY; };
-
 function loop() {
     if(!g.run || g.paused) return;
     g.frames++;
     ctx.fillStyle='#050505'; ctx.fillRect(0,0,canvas.width,canvas.height);
 
-    // Player
+    // Fixed: Mouse tracking update
     if(player.dashing>0) { player.dashing--; player.x+=(mouse.x-player.x)*0.3; player.y+=(mouse.y-player.y)*0.3; }
     else { player.x+=(mouse.x-player.x)*0.1; player.y+=(mouse.y-player.y)*0.1; }
     
+    // Draw Player with Safety Fallback
     ctx.save(); ctx.translate(player.x, player.y);
-    const skin = SKINS[USER.inventory.active_skin||'default'];
+    const skinKey = USER.inventory.active_skin || 'default';
+    const skin = SKINS[skinKey] || SKINS['default']; // Fallback prevents crash
     ART.ship(ctx, skin.type, skin.color, player.dashing>0);
     ctx.restore();
 
@@ -504,7 +514,8 @@ function loop() {
             if(Math.random()<0.01) ents.eBullets.push({x:e.x, y:e.y+10, vx:0, vy:7, c:'#f00'});
         }
         ctx.save(); ctx.translate(e.x, e.y);
-        e.type===0 ? ART.ship(ctx, 'default', 'red') : ART.ship(ctx, 'golden', 'orange'); // Reuse ship art for enemies
+        // Fixed: Matching ART.ship arguments for enemies
+        e.type===0 ? ART.ship(ctx, 'default', 'red', false) : ART.ship(ctx, 'golden', 'orange', false);
         ctx.restore();
         if(Math.hypot(e.x-player.x, e.y-player.y)<25 && player.dashing<=0) { g.hp-=20; e.hp=0; checkDead(); }
     });
