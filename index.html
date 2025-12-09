@@ -221,7 +221,7 @@
 <script>
 /** BRIGAGAME v6.0 ELITE **/
 const API = "https://ubriga.pythonanywhere.com";
-const PIN = "1201847";
+// PIN REMOVED FOR SECURITY - HANDLED BY SERVER
 let USER=null, TOKEN=localStorage.getItem('px_token');
 
 // --- RANKS (US ARMY) ---
@@ -405,7 +405,30 @@ const shop = {
 };
 
 const admin = {
-    login: () => { if(v('adm-pin')===PIN) { document.getElementById('adm-login-view').classList.add('hidden'); document.getElementById('adm-panel').classList.remove('hidden'); admin.refresh(); } else toast("WRONG PIN"); },
+    // SECURE ADMIN LOGIN
+    login: async () => { 
+        const inputPin = v('adm-pin');
+        if(!inputPin) return toast("ENTER PIN");
+
+        try {
+            const res = await fetch(`${API}/admin/verify_pin`, {
+                method: 'POST', 
+                headers: getHeader(), 
+                body: JSON.stringify({ pin: inputPin })
+            });
+            const d = await res.json();
+            
+            if (d.status === 'success') {
+                document.getElementById('adm-login-view').classList.add('hidden'); 
+                document.getElementById('adm-panel').classList.remove('hidden'); 
+                admin.refresh(); 
+            } else {
+                toast("ACCESS DENIED");
+            }
+        } catch(e) {
+            toast("ERROR");
+        }
+    },
     subTab: (t) => { document.getElementById('adm-sub-users').classList.add('hidden'); document.getElementById('adm-sub-coupons').classList.add('hidden'); document.getElementById(`adm-sub-${t}`).classList.remove('hidden'); },
     refresh: async () => { try { const res = await fetch(`${API}/admin/dashboard`, {headers:getHeader()}); const d = await res.json(); adminData = d; admin.renderUsers(d.users); admin.renderCoupons(d.coupons); } catch(e) { toast("Load Error"); } },
     renderUsers: (list) => { document.querySelector('#adm-table-users tbody').innerHTML = list.map(u => `<tr><td>${u.id}</td><td style="color:${u.admin?'gold':'white'}">${u.username}</td><td>${u.xp||0}</td><td style="color:${u.approved?'#0f0':'#f00'}">${u.approved?'ACTIVE':'WAIT'}</td><td>${!u.approved ? `<button onclick="admin.act('approve_user',{user_id:${u.id}})" style="color:#0f0;font-size:10px;">OK</button>` : ''}${!u.admin ? `<button onclick="admin.act('ban_user',{user_id:${u.id},ban:${!u.banned}})" style="font-size:10px;">${u.banned?'UNBAN':'BAN'}</button>`:''}</td></tr>`).join(''); },
