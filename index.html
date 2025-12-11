@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Brigagame v6.0 BOSS EDITION</title>
+    <title>Brigagame v6.1 TURBO</title>
     
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
@@ -15,7 +15,7 @@
         
         #gameCanvas { display: block; position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1; }
         
-        /* SCANLINE & VIGNETTE */
+        /* SCANLINE & VIGNETTE - GPU ACCELERATED */
         body::after { content: " "; display: block; position: absolute; top: 0; left: 0; bottom: 0; right: 0; background: radial-gradient(circle, rgba(0,0,0,0) 60%, rgba(0,0,0,0.6) 100%), linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%); z-index: 5; background-size: 100% 100%, 100% 3px; pointer-events: none; }
 
         .screen { position: absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; background: var(--bg); z-index:10; transition:0.3s; }
@@ -66,13 +66,16 @@
         
         #boss-warning { position: absolute; top: 20%; left: 0; width: 100%; text-align: center; color: var(--warn); font-size: 60px; font-weight: bold; letter-spacing: 10px; text-shadow: 0 0 20px red; animation: flash 0.5s infinite; display: none; pointer-events: none; z-index: 55; }
         @keyframes flash { 0% {opacity:1;} 50% {opacity:0;} 100% {opacity:1;} }
+        
+        #fps-counter { position: fixed; bottom: 5px; right: 5px; color: #444; font-size: 10px; pointer-events: none; }
     </style>
 </head>
 <body oncontextmenu="return false;">
 
     <div id="toast" style="position:fixed; top:10%; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.9); padding:10px 40px; border:1px solid var(--main); z-index:3000; opacity:0; pointer-events:none; transition:0.3s; color:white; font-weight:bold;">MSG</div>
     
-    <div id="global-footer">DEV: <span>OrelAi</span> | CONTACT: <span style="color:gold">ubriga@gmail.com</span> | v6.0 BOSS EDITION</div>
+    <div id="global-footer">DEV: <span>OrelAi</span> | v6.1 TURBO</div>
+    <div id="fps-counter">FPS: 60</div>
 
     <canvas id="gameCanvas"></canvas>
 
@@ -138,7 +141,7 @@
         </div>
         
         <h1 style="font-size:70px; margin:0; text-shadow:0 0 30px var(--main);">BRIGAGAME</h1>
-        <div style="color:#666; letter-spacing:5px; margin-bottom:15px;">v6.0 BOSS EDITION</div>
+        <div style="color:#666; letter-spacing:5px; margin-bottom:15px;">v6.1 TURBO</div>
 
         <!-- RELEASE NOTES -->
         <div style="width: 850px; margin-bottom: 10px;">
@@ -274,7 +277,7 @@
     </div>
 
 <script>
-/** BRIGAGAME v6.0 BOSS EDITION **/
+/** BRIGAGAME v6.1 TURBO - PERFORMANCE OPTIMIZED **/
 const API = "https://ubriga.pythonanywhere.com";
 var USER=null, TOKEN=localStorage.getItem('px_token');
 var KEYS = {}; 
@@ -314,15 +317,15 @@ const sfx = {
     startMusic: () => {
         if(sfx.musicTimer) return;
         let noteIdx = 0;
-        const notes = [110, 110, 130, 110, 98, 98, 130, 146]; // Bassline A2, C3, G2 etc.
+        const notes = [110, 110, 130, 110, 98, 98, 130, 146]; // Bassline
         const speed = 250;
         sfx.musicTimer = setInterval(() => {
-            if(!g.run || g.paused) return; // Only play if game running
+            if(!g.run || g.paused) return; 
             const osc = sfx.ctx.createOscillator();
             const gain = sfx.ctx.createGain();
             osc.connect(gain); gain.connect(sfx.ctx.destination);
             osc.type = 'sawtooth';
-            osc.frequency.value = notes[noteIdx] * 0.5; // Bass oct
+            osc.frequency.value = notes[noteIdx] * 0.5;
             gain.gain.setValueAtTime(0.05, sfx.ctx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.001, sfx.ctx.currentTime + 0.2);
             osc.start(); osc.stop(sfx.ctx.currentTime + 0.2);
@@ -363,18 +366,16 @@ const sfx = {
 const ART = {
     ship: (ctx, type, c, dash, hpRatio) => {
         ctx.save();
-        // Dynamic Color based on HP
         if(hpRatio < 0.3) c = '#ff0000';
         
+        // OPTIMIZED SHADOW BLUR - Only for main ships
         ctx.shadowBlur=15; ctx.shadowColor=c; ctx.strokeStyle=c; ctx.lineWidth=2; ctx.beginPath();
         
         if(type === 'boss') {
-            // BOSS ART
             ctx.shadowBlur=30; ctx.lineWidth=4;
             ctx.moveTo(0, 40); ctx.lineTo(30, -20); ctx.lineTo(60, -40); ctx.lineTo(20, -60);
             ctx.lineTo(-20, -60); ctx.lineTo(-60, -40); ctx.lineTo(-30, -20); ctx.closePath();
             ctx.stroke();
-            // Core
             ctx.fillStyle = `rgba(255, 0, 0, ${0.5 + Math.random()*0.5})`;
             ctx.beginPath(); ctx.arc(0, -20, 10, 0, Math.PI*2); ctx.fill();
         } 
@@ -385,15 +386,13 @@ const ART = {
         else if(type==='crimson') { 
             ctx.moveTo(0,-25); ctx.lineTo(10,5); ctx.lineTo(20,20); ctx.lineTo(0,10); ctx.lineTo(-20,20); ctx.lineTo(-10,5); ctx.closePath(); 
         }
-        else { // Default Player / Enemy
+        else { 
             ctx.moveTo(0,-20); ctx.lineTo(10,10); ctx.lineTo(0,5); ctx.lineTo(-10,10); ctx.closePath(); 
-            // Wings
             ctx.moveTo(0,0); ctx.lineTo(18,12); ctx.moveTo(0,0); ctx.lineTo(-18,12);
         }
         
         ctx.stroke(); ctx.fillStyle=c; ctx.globalAlpha=0.15; ctx.fill(); 
         
-        // Engine
         if(dash) { 
             ctx.globalAlpha=1; ctx.beginPath(); ctx.moveTo(-5,10); 
             ctx.lineTo(0, 20 + Math.random()*15); ctx.lineTo(5,10); 
@@ -403,7 +402,7 @@ const ART = {
         ctx.restore();
     },
     drone: (ctx) => {
-        ctx.shadowBlur=15; ctx.shadowColor='gold'; ctx.strokeStyle='gold'; ctx.lineWidth=2; 
+        ctx.shadowBlur=5; ctx.shadowColor='gold'; ctx.strokeStyle='gold'; ctx.lineWidth=2; 
         ctx.beginPath(); ctx.arc(0,0,5,0,7); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(-10,0); ctx.lineTo(10,0); ctx.moveTo(0,-10); ctx.lineTo(0,10); ctx.stroke();
         ctx.beginPath(); ctx.arc(0,0,12,0,Math.PI*2); ctx.setLineDash([2,4]); ctx.stroke();
@@ -691,6 +690,7 @@ var shake = 0;
 var mouse = {x:0, y:0};
 var drones_active = false;
 var isManualFire = false;
+var lastTime = 0;
 
 const DIFF_DATA = [
     {}, 
@@ -704,7 +704,7 @@ const DIFF_DATA = [
 var game = {
     initStars: () => {
         stars = [];
-        for(let i=0; i<100; i++) {
+        for(let i=0; i<80; i++) { // REDUCED STAR COUNT
             stars.push({
                 x: Math.random()*innerWidth,
                 y: Math.random()*innerHeight,
@@ -734,13 +734,13 @@ var game = {
         
         app.show(''); document.getElementById('game-ui').classList.remove('hidden');
         document.getElementById('drone-qty').innerText = (USER.consumables?.drone_support)||0;
-        game.nextWave(); loop();
+        game.nextWave(); loop(0);
     },
     togglePause: () => {
         if(!g.run) return;
         g.paused = !g.paused;
         document.getElementById('screen-pause').classList.toggle('hidden', !g.paused);
-        if(!g.paused) loop();
+        if(!g.paused) loop(0);
     },
     resume: () => game.togglePause(),
     stop: () => { g.run = false; sfx.stopMusic(); document.getElementById('screen-pause').classList.add('hidden'); },
@@ -797,13 +797,14 @@ var game = {
             ents.waves.push({x:player.x, y:player.y, r:10}); 
             g.heat=0; player.overheat=false; 
             document.getElementById('overheat-msg').style.display='none'; 
-            spawnExplosion(player.x, player.y, 'cyan', 20);
+            spawnExplosion(player.x, player.y, 'cyan', 10);
         } 
     }
 };
 
 function spawnExplosion(x, y, c, count) {
-    for(let i=0; i<count; i++) {
+    // REDUCED PARTICLE COUNT FOR PERFORMANCE
+    for(let i=0; i<Math.min(count, 8); i++) {
         particles.push({
             x: x, y: y,
             vx: (Math.random()-0.5)*10, vy: (Math.random()-0.5)*10,
@@ -812,13 +813,21 @@ function spawnExplosion(x, y, c, count) {
     }
 }
 
-function loop() {
+function loop(timestamp) {
     if(!g.run || g.paused) return;
+    
+    // FPS CALC
+    const delta = timestamp - lastTime;
+    lastTime = timestamp;
+    if(g.frames % 30 === 0) document.getElementById('fps-counter').innerText = 'FPS: ' + Math.round(1000/delta);
+
     g.frames++;
     
     // Clear & Stars (Parallax)
     ctx.fillStyle='#050505'; ctx.fillRect(0,0,canvas.width,canvas.height);
     
+    // OPTIMIZED STARS: NO GLOW
+    ctx.shadowBlur = 0; 
     ctx.fillStyle = '#fff';
     stars.forEach(s => {
         s.y += s.v;
@@ -851,7 +860,6 @@ function loop() {
     ctx.save(); ctx.translate(player.x, player.y);
     const skinKey = USER.inventory.active_skin || 'default';
     const skin = SKINS[skinKey] || SKINS['default'];
-    // Shield Visual
     if(player.shield > 0) {
         ctx.beginPath(); ctx.arc(0,0,30,0,Math.PI*2); ctx.strokeStyle='cyan'; ctx.lineWidth=2; 
         ctx.setLineDash([5,5]); ctx.stroke(); ctx.setLineDash([]);
@@ -898,7 +906,8 @@ function loop() {
         if(g.heat>=100 && player.buff===0) { player.overheat=true; }
     }
 
-    // Shockwaves
+    // Shockwaves - NO GLOW
+    ctx.shadowBlur = 0; 
     ents.waves.forEach((w,i) => {
         w.r+=15; ctx.beginPath(); ctx.arc(w.x,w.y,w.r,0,7); ctx.strokeStyle='white'; ctx.lineWidth=5; ctx.stroke();
         ents.eBullets = ents.eBullets.filter(b=>Math.hypot(b.x-w.x,b.y-w.y)>w.r);
@@ -964,7 +973,7 @@ function loop() {
     // Enemy Death
     ents.enemies.forEach(e => {
         if(e.hp <= 0 && e.maxHp > 0) { 
-            spawnExplosion(e.x, e.y, 'orange', e.type===2 ? 50 : 15);
+            spawnExplosion(e.x, e.y, 'orange', e.type===2 ? 20 : 6); // REDUCED
             sfx.play('boom'); shake = 5;
             // DROP CHANCE
             if(Math.random() < 0.15) {
@@ -980,16 +989,19 @@ function loop() {
     ents.enemies = ents.enemies.filter(e=>e.hp>0);
     if(ents.enemies.length===0) { g.wave++; game.nextWave(); }
 
+    // OPTIMIZED BULLETS - GLOW RESTORED FOR VISIBILITY BUT REDUCED
     ents.bullets.forEach((b,i) => {
-        b.y+=b.vy; ctx.fillStyle=b.c; ctx.beginPath(); ctx.arc(b.x,b.y,3,0,7); ctx.fill();
-        ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.lineTo(b.x, b.y-10); ctx.strokeStyle=b.c; ctx.stroke();
+        b.y+=b.vy; ctx.fillStyle=b.c; 
+        ctx.shadowBlur=5; ctx.shadowColor=b.c; // Mild Glow
+        ctx.beginPath(); ctx.arc(b.x,b.y,3,0,7); ctx.fill();
+        ctx.shadowBlur=0; // Reset
         
         if(b.y<0) ents.bullets.splice(i,1);
         else ents.enemies.forEach(e=>{ 
             let dist = (e.type===2) ? 50 : 25;
             if(Math.hypot(b.x-e.x,b.y-e.y)<dist) { 
                 e.hp -= (b.dmg || 10); 
-                spawnExplosion(b.x, b.y, b.c, 3);
+                spawnExplosion(b.x, b.y, b.c, 2); // Tiny explosion
                 sfx.play('hit');
                 ents.bullets.splice(i,1); 
                 if(e.hp<=0) { g.score+=10 * g.diff * (e.type===2?10:1); document.getElementById('g-score').innerText=g.score; } 
@@ -998,12 +1010,16 @@ function loop() {
     });
 
     ents.eBullets.forEach((b,i) => {
-        b.y+=b.vy; ctx.fillStyle='#fff'; ctx.shadowBlur=10; ctx.shadowColor=b.c; ctx.beginPath(); ctx.arc(b.x,b.y,4,0,7); ctx.fill();
+        b.y+=b.vy; ctx.fillStyle='#fff'; 
+        ctx.shadowBlur=5; ctx.shadowColor='red'; 
+        ctx.beginPath(); ctx.arc(b.x,b.y,4,0,7); ctx.fill();
+        ctx.shadowBlur=0;
+        
         if(b.y>canvas.height) ents.eBullets.splice(i,1);
         else if(Math.hypot(b.x-player.x,b.y-player.y)<15) { 
             if(player.shield===0) {
                 g.hp-=5 * diffSet.hpMult; 
-                shake = 10; sfx.play('hit'); spawnExplosion(b.x, b.y, 'red', 5);
+                shake = 10; sfx.play('hit'); spawnExplosion(b.x, b.y, 'red', 4);
                 checkDead(); 
             }
             ents.eBullets.splice(i,1); 
@@ -1021,8 +1037,10 @@ function loop() {
         }
     });
 
+    // PARTICLES - NO GLOW (HUGE SAVINGS)
+    ctx.shadowBlur = 0;
     particles.forEach((p,i) => {
-        p.x += p.vx; p.y += p.vy; p.life -= 0.05;
+        p.x += p.vx; p.y += p.vy; p.life -= 0.1; // Faster fade
         ctx.globalAlpha = p.life; ctx.fillStyle = p.color;
         ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, 7); ctx.fill();
         if(p.life <= 0) particles.splice(i, 1);
