@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Brigagame v6.0 ELITE</title>
+    <title>Brigagame v5.7 ELITE</title>
     
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
@@ -24,7 +24,8 @@
 
         /* UI */
         .box { background: var(--panel); border: 1px solid var(--main); padding: 20px; border-radius: 4px; text-align: center; box-shadow: 0 0 25px rgba(0,240,255,0.15); position: relative; }
-        input, select { background: #111; border: 1px solid #444; color: white; padding: 8px; margin: 5px; text-align: center; font-family: inherit; font-size: 16px; width: 80%; }
+        input, select, textarea { background: #111; border: 1px solid #444; color: white; padding: 8px; margin: 5px; text-align: center; font-family: inherit; font-size: 16px; width: 80%; }
+        textarea { text-align: left; resize: none; height: 80px; }
         button { background: rgba(0,240,255,0.1); border: 1px solid var(--main); color: var(--main); padding: 8px 20px; cursor: pointer; margin: 5px; font-weight: bold; font-family: inherit; text-transform: uppercase; transition: 0.2s; }
         button:hover { background: var(--main); color: black; box-shadow: 0 0 10px var(--main); }
         button.gold { border-color: var(--gold); color: var(--gold); }
@@ -46,13 +47,21 @@
         
         .notification-dot { width: 10px; height: 10px; background: var(--warn); border-radius: 50%; display: inline-block; margin-left: 5px; box-shadow: 0 0 5px var(--warn); animation: pulse 1s infinite; }
         @keyframes pulse { 0% {opacity:0.5;} 50% {opacity:1;} 100% {opacity:0.5;} }
+        
+        /* NEWS BOX */
+        .news-box { border: 1px dashed var(--main); padding: 10px; margin-bottom: 15px; text-align: left; font-size: 13px; color: #aaa; white-space: pre-line; background: rgba(0,0,0,0.4); max-height: 100px; overflow-y: auto; }
+        
+        /* RADIOS */
+        .radio-group { display: flex; justify-content: center; gap: 20px; margin: 15px 0; }
+        .radio-group label { cursor: pointer; color: #888; transition: 0.2s; }
+        .radio-group input:checked + span { color: var(--main); font-weight: bold; text-shadow: 0 0 10px var(--main); }
     </style>
 </head>
 <body oncontextmenu="return false;">
 
     <div id="toast" style="position:fixed; top:10%; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.9); padding:10px 40px; border:1px solid var(--main); z-index:3000; opacity:0; pointer-events:none; transition:0.3s; color:white; font-weight:bold;">MSG</div>
     
-    <div id="global-footer">DEV: <span>OrelAi</span> | CONTACT: <span style="color:gold">ubriga@gmail.com</span> | v6.0 ELITE</div>
+    <div id="global-footer">DEV: <span>OrelAi</span> | CONTACT: <span style="color:gold">ubriga@gmail.com</span> | v5.7 ELITE</div>
 
     <canvas id="gameCanvas"></canvas>
 
@@ -113,9 +122,15 @@
         </div>
         
         <h1 style="font-size:70px; margin:0; text-shadow:0 0 30px var(--main);">BRIGAGAME</h1>
-        <div style="color:#666; letter-spacing:5px; margin-bottom:30px;">v6.0 ELITE</div>
+        <div style="color:#666; letter-spacing:5px; margin-bottom:15px;">v5.7 ELITE</div>
+
+        <!-- RELEASE NOTES -->
+        <div style="width: 850px; margin-bottom: 10px;">
+             <h4 style="margin:0 0 5px 0; color:var(--main); text-align:left;">LATEST INTEL</h4>
+             <div id="release-notes" class="news-box">Loading...</div>
+        </div>
         
-        <div class="box" style="width:850px; min-height:550px;">
+        <div class="box" style="width:850px; min-height:450px;">
             <div class="tabs">
                 <div class="tab active" onclick="app.tab('ops')">OPERATIONS</div>
                 <div class="tab" onclick="app.tab('armory')">ARMORY</div>
@@ -132,13 +147,20 @@
                     <div style="width:40%;">
                         <h3 style="color:var(--main);">MISSION PROTOCOL</h3>
                         <label style="color:#aaa; font-size:12px;">THREAT LEVEL</label><br>
-                        <select id="diff-select" style="margin-bottom:20px;">
+                        <select id="diff-select" style="margin-bottom:10px;">
                             <option value="1">RECRUIT (EASY)</option>
                             <option value="2" selected>SOLDIER (NORMAL)</option>
                             <option value="3">VETERAN (HARD)</option>
                             <option value="4">ELITE (INSANE)</option>
                             <option value="5">LEGEND (IMPOSSIBLE)</option>
                         </select>
+
+                        <!-- FIRE MODE TOGGLE -->
+                        <div class="radio-group">
+                            <label><input type="radio" name="firemode" value="auto" checked hidden><span>AUTO FIRE</span></label>
+                            <label><input type="radio" name="firemode" value="manual" hidden><span>MANUAL (SPACE)</span></label>
+                        </div>
+
                         <button onclick="game.start()" style="width:100%; padding:25px; font-size:24px;">LAUNCH</button>
                         <button onclick="app.redeem()" style="width:100%; margin-top:15px;">REDEEM CODE</button>
                     </div>
@@ -184,6 +206,7 @@
                     <div class="adm-sub-tabs">
                         <div class="adm-tab active" onclick="admin.subTab('users')">USERS</div>
                         <div class="adm-tab" onclick="admin.subTab('coupons')">COUPONS</div>
+                        <div class="adm-tab" onclick="admin.subTab('config')">ECONOMY & NEWS</div>
                     </div>
                     <div id="adm-sub-users" style="flex:1; display:flex; flex-direction:column;">
                         <div style="margin-bottom:10px;">
@@ -208,6 +231,15 @@
                             <table id="adm-table-coupons"><thead><tr><th>CODE</th><th>VAL</th><th>USES</th><th>EXP</th><th>ACT</th></tr></thead><tbody></tbody></table>
                         </div>
                     </div>
+                    <div id="adm-sub-config" class="hidden" style="flex:1; overflow-y:auto; padding:10px;">
+                        <h4 style="color:var(--main);">RELEASE NOTES</h4>
+                        <textarea id="conf-notes" style="width:90%; color:#fff;"></textarea>
+                        
+                        <h4 style="color:gold; margin-top:20px;">ECONOMY (BASE PRICE / STEP PRICE)</h4>
+                        <div id="conf-prices"></div>
+                        
+                        <button onclick="admin.saveConfig()" class="gold" style="width:200px; margin-top:20px;">SAVE CHANGES</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -226,9 +258,10 @@
     </div>
 
 <script>
-/** BRIGAGAME v6.0 ELITE **/
+/** BRIGAGAME v5.7 ELITE **/
 const API = "https://ubriga.pythonanywhere.com";
 let USER=null, TOKEN=localStorage.getItem('px_token');
+let KEYS = {}; // Key tracker for manual fire
 
 const RANKS = [
     {xp:0, name:"Private"}, {xp:1000, name:"Private 2"}, {xp:2500, name:"Private 1st Class"},
@@ -247,7 +280,6 @@ function getRankName(xp) {
     return r;
 }
 
-// --- ASSETS ---
 const ART = {
     ship: (ctx, type, c, dash) => {
         ctx.save();
@@ -271,8 +303,8 @@ const SKINS = {
     'golden': { name: 'TITAN', color: '#ffd700', cost: 5000, type: 'golden' }
 };
 
-// --- UPDATED INCREMENTAL UPGRADES ---
-const UPGRADES = {
+// DYNAMIC UPGRADES - Loaded from Server
+let UPGRADES = {
     'double_shot': { name: "DOUBLE SHOT", base: 10000, step: 0, max: 1, desc: "ULTIMATE: Fire 2 bullets" },
     'fire_rate': { name: "RAPID FIRE", base: 1000, step: 1000, max: 10, desc: "+10% Fire Rate / Lvl" },
     'damage': { name: "POWER CORE", base: 1000, step: 1000, max: 10, desc: "+2 Damage / Lvl" },
@@ -285,10 +317,36 @@ const v = (id) => document.getElementById(id).value;
 
 // APP
 const app = {
-    init: () => {
+    init: async () => {
+        // Fetch Config from Server
+        try {
+            const res = await fetch(`${API}/get_config`);
+            const conf = await res.json();
+            if(conf.prices) {
+                const prices = JSON.parse(conf.prices);
+                for(let k in prices) {
+                    if(UPGRADES[k]) { UPGRADES[k].base = parseInt(prices[k].base); UPGRADES[k].step = parseInt(prices[k].step); }
+                }
+            }
+            if(conf.release_notes) {
+                document.getElementById('release-notes').innerText = conf.release_notes;
+            }
+        } catch(e) { console.error("Config load failed"); }
+
         if(TOKEN) auth.validate(); else app.show('screen-login');
         window.onresize = () => { canvas.width=innerWidth; canvas.height=innerHeight; };
-        window.addEventListener('keydown', e => { if(e.code==='Space') game.vent(); if(e.code==='Escape') game.togglePause(); });
+        
+        // Input Handling
+        window.addEventListener('keydown', e => { 
+            KEYS[e.code] = true;
+            // Vent Logic: If Manual(Space=Shoot), Vent is V. If Auto, Vent is Space.
+            const manual = document.querySelector('input[name="firemode"]:checked').value === 'manual';
+            if (manual && e.code === 'KeyV') game.vent();
+            if (!manual && e.code === 'Space') game.vent();
+            
+            if(e.code==='Escape') game.togglePause(); 
+        });
+        window.addEventListener('keyup', e => { KEYS[e.code] = false; });
         window.addEventListener('mousemove', e => { mouse.x=e.clientX; mouse.y=e.clientY; });
     },
     show: (id) => {
@@ -305,6 +363,7 @@ const app = {
         const btn = document.querySelector(`.tab[onclick*="'${t}'"]`);
         if(btn) btn.classList.add('active');
         if(t==='leaderboard') app.loadLeaderboard();
+        if(t==='admin') admin.renderConfig(); // Prep config tab
     },
     updateUI: async () => {
         if(!USER) return;
@@ -325,7 +384,6 @@ const app = {
             } catch(e) {}
         }
 
-        // Skins
         const grid = document.getElementById('skin-grid'); grid.innerHTML = '';
         Object.keys(SKINS).forEach(key => {
             const s = SKINS[key];
@@ -337,7 +395,6 @@ const app = {
             grid.appendChild(card);
         });
 
-        // Upgrades (Armory) - NEW INCREMENTAL LOGIC
         const uGrid = document.getElementById('upgrade-grid'); uGrid.innerHTML = '';
         Object.keys(UPGRADES).forEach(key => {
             const u = UPGRADES[key];
@@ -446,7 +503,14 @@ const admin = {
             } else { toast("ACCESS DENIED"); }
         } catch(e) { toast("ERROR"); }
     },
-    subTab: (t) => { document.getElementById('adm-sub-users').classList.add('hidden'); document.getElementById('adm-sub-coupons').classList.add('hidden'); document.getElementById(`adm-sub-${t}`).classList.remove('hidden'); },
+    subTab: (t) => { 
+        document.querySelectorAll('.adm-sub-tabs div').forEach(d=>d.classList.remove('active'));
+        document.getElementById('adm-sub-users').classList.add('hidden'); 
+        document.getElementById('adm-sub-coupons').classList.add('hidden'); 
+        document.getElementById('adm-sub-config').classList.add('hidden');
+        
+        document.getElementById(`adm-sub-${t}`).classList.remove('hidden'); 
+    },
     refresh: async () => { try { const res = await fetch(`${API}/admin/dashboard`, {headers:getHeader()}); const d = await res.json(); adminData = d; admin.renderUsers(d.users); admin.renderCoupons(d.coupons); } catch(e) { toast("Load Error"); } },
     renderUsers: (list) => { 
         document.querySelector('#adm-table-users tbody').innerHTML = list.map(u => `<tr>
@@ -465,7 +529,40 @@ const admin = {
     renderCoupons: (list) => { document.querySelector('#adm-table-coupons tbody').innerHTML = list.map(c => `<tr><td style="color:gold;">${c.code}</td><td>${c.value}</td><td>${c.uses}</td><td style="font-size:10px;">${c.expires || 'NEVER'}</td><td><button onclick="admin.act('delete_coupon',{id:${c.id}})" class="danger" style="font-size:10px;">X</button></td></tr>`).join(''); },
     filterUsers: () => { const term = v('adm-search').toLowerCase(); admin.renderUsers(adminData.users.filter(u => u.username.toLowerCase().includes(term))); },
     createCoupon: () => { const code = v('cp-code') || 'PRO-'+Math.random().toString(36).substr(2,6).toUpperCase(); admin.act('create_coupon', { code: code, value: v('cp-val'), uses: v('cp-uses'), hours: v('cp-hours') }); },
-    act: async (a, p) => { await fetch(`${API}/admin/action`, {method:'POST', headers:getHeader(), body:JSON.stringify({action:a, ...p})}); admin.refresh(); toast("DONE"); }
+    act: async (a, p) => { await fetch(`${API}/admin/action`, {method:'POST', headers:getHeader(), body:JSON.stringify({action:a, ...p})}); admin.refresh(); toast("DONE"); },
+    
+    // NEW: Config Logic
+    renderConfig: () => {
+         document.getElementById('conf-notes').value = document.getElementById('release-notes').innerText;
+         const pDiv = document.getElementById('conf-prices'); pDiv.innerHTML = '';
+         Object.keys(UPGRADES).forEach(k => {
+             const u = UPGRADES[k];
+             pDiv.innerHTML += `
+                 <div style="margin-bottom:5px; border:1px solid #333; padding:5px; display:flex; justify-content:space-between; align-items:center;">
+                    <span style="color:gold; width:120px;">${u.name}</span>
+                    <input type="number" id="base-${k}" value="${u.base}" placeholder="Base" style="width:80px;">
+                    <input type="number" id="step-${k}" value="${u.step}" placeholder="Step" style="width:80px;">
+                 </div>
+             `;
+         });
+    },
+    saveConfig: async () => {
+        const prices = {};
+        Object.keys(UPGRADES).forEach(k => {
+             prices[k] = {
+                 base: parseInt(document.getElementById(`base-${k}`).value),
+                 step: parseInt(document.getElementById(`step-${k}`).value)
+             };
+        });
+        const notes = document.getElementById('conf-notes').value;
+        
+        await fetch(`${API}/admin/save_config`, {
+            method:'POST', headers:getHeader(),
+            body: JSON.stringify({ prices: prices, release_notes: notes })
+        });
+        toast("CONFIG SAVED");
+        setTimeout(() => location.reload(), 1000); // Reload to apply changes
+    }
 };
 
 // --- GAME LOGIC (ENHANCED) ---
@@ -476,6 +573,7 @@ let player = {x:0, y:0, dashing:0, overheat:false};
 let ents = { bullets:[], enemies:[], drones:[], eBullets:[], waves:[] };
 let mouse = {x:0, y:0};
 let drones_active = false;
+let isManualFire = false;
 
 const DIFF_DATA = [
     {}, 
@@ -490,10 +588,11 @@ const game = {
     start: () => {
         canvas.width = innerWidth; canvas.height = innerHeight;
         const diffVal = parseInt(v('diff-select'));
-        // APPLY INCREMENTAL HULL UPGRADE
         const baseHp = 100 + ((USER.inventory.hull||0) * 10);
         g = { run: true, paused: false, score: 0, wave: 1, hp: baseHp, maxHp: baseHp, heat: 0, energy: 100, frames: 0, diff: diffVal };
         document.getElementById('g-diff').innerText = `(${DIFF_DATA[diffVal].name})`;
+        
+        isManualFire = document.querySelector('input[name="firemode"]:checked').value === 'manual';
         
         player = { x: canvas.width/2, y: canvas.height/2, dashing:0, overheat:false };
         mouse = { x: canvas.width/2, y: canvas.height/2 };
@@ -576,12 +675,21 @@ function loop() {
     document.getElementById('bar-hp').style.width = Math.max(0, hpPct)+'%';
     document.getElementById('bar-heat').style.width = g.heat+'%';
 
-    // APPLY INCREMENTAL FIRE RATE
+    // FIRE RATE & SHOOT LOGIC
     let fireRate = 8 - ((USER.inventory['fire_rate']||0) * 0.4); 
-    if(fireRate < 3) fireRate = 3; // Cap speed
+    if(fireRate < 3) fireRate = 3; 
 
-    if(g.frames % Math.floor(fireRate) === 0 && !player.overheat && mouse.y < player.y) { 
-        // APPLY INCREMENTAL DAMAGE
+    // Check Trigger
+    let shouldShoot = false;
+    if (isManualFire) {
+        // Shoot if Space is held AND timer matches
+        if (KEYS['Space'] && g.frames % Math.floor(fireRate) === 0) shouldShoot = true;
+    } else {
+        // Auto: Shoot if mouse is above player
+        if (g.frames % Math.floor(fireRate) === 0 && mouse.y < player.y) shouldShoot = true;
+    }
+
+    if(shouldShoot && !player.overheat) { 
         const dmg = 10 + ((USER.inventory['damage']||0) * 2);
         const double = USER.inventory['double_shot'];
         
