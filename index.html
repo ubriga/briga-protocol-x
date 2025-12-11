@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Brigagame v5.7 ELITE</title>
+    <title>Brigagame v5.7.1 ELITE</title>
     
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
@@ -61,7 +61,7 @@
 
     <div id="toast" style="position:fixed; top:10%; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.9); padding:10px 40px; border:1px solid var(--main); z-index:3000; opacity:0; pointer-events:none; transition:0.3s; color:white; font-weight:bold;">MSG</div>
     
-    <div id="global-footer">DEV: <span>OrelAi</span> | CONTACT: <span style="color:gold">ubriga@gmail.com</span> | v5.7 ELITE</div>
+    <div id="global-footer">DEV: <span>OrelAi</span> | CONTACT: <span style="color:gold">ubriga@gmail.com</span> | v5.7.1 ELITE</div>
 
     <canvas id="gameCanvas"></canvas>
 
@@ -122,7 +122,7 @@
         </div>
         
         <h1 style="font-size:70px; margin:0; text-shadow:0 0 30px var(--main);">BRIGAGAME</h1>
-        <div style="color:#666; letter-spacing:5px; margin-bottom:15px;">v5.7 ELITE</div>
+        <div style="color:#666; letter-spacing:5px; margin-bottom:15px;">v5.7.1 ELITE</div>
 
         <!-- RELEASE NOTES -->
         <div style="width: 850px; margin-bottom: 10px;">
@@ -258,7 +258,7 @@
     </div>
 
 <script>
-/** BRIGAGAME v5.7 ELITE **/
+/** BRIGAGAME v5.7.1 ELITE **/
 const API = "https://ubriga.pythonanywhere.com";
 let USER=null, TOKEN=localStorage.getItem('px_token');
 let KEYS = {}; // Key tracker for manual fire
@@ -431,42 +431,6 @@ const app = {
         if(d.error) return toast(d.error);
         USER.credits += d.added; toast(`+${d.added}`); app.updateUI();
     }
-};
-
-const auth = {
-    login: async () => {
-        const u = v('inp-u'), p = v('inp-p');
-        if(!u || !p) return toast("MISSING INFO"); 
-        try {
-            const res = await fetch(`${API}/login`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({username:u,password:p})});
-            const d = await res.json();
-            if(d.error) return toast(d.error);
-            TOKEN=d.token; USER=d.user; localStorage.setItem('px_token', TOKEN);
-            app.toLobby();
-        } catch(e) { toast("Conn Error"); }
-    },
-    register: async () => {
-        const u = v('inp-u'), p = v('inp-p');
-        if(!u || !p) return toast("MISSING INFO");
-        try {
-            const res = await fetch(`${API}/register`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({username:u,password:p})});
-            const d = await res.json();
-            toast(d.message || d.error);
-        } catch(e) { toast("Error"); }
-    },
-    changePassword: async () => {
-        const oldP = v('cp-old'), newP = v('cp-new');
-        if(!oldP || !newP) return toast("FILL FIELDS");
-        try {
-            const res = await fetch(`${API}/change_password`, {method:'POST', headers:getHeader(), body:JSON.stringify({old_password:oldP, new_password:newP})});
-            const d = await res.json();
-            if(d.error) return toast(d.error);
-            toast("PASSWORD CHANGED");
-            document.getElementById('screen-password').classList.add('hidden');
-        } catch(e) { toast("Error"); }
-    },
-    validate: () => app.show('screen-login'),
-    logout: () => { localStorage.removeItem('px_token'); location.reload(); }
 };
 
 const shop = {
@@ -654,8 +618,10 @@ function loop() {
     if (!(mouse.x === 0 && mouse.y === 0)) {
         player.x += (mouse.x - player.x) * 0.1;
         player.y += (mouse.y - player.y) * 0.1;
+        
+        // FIX 5.7.1: Clamp player to BOTTOM HALF of screen (Prevent Top-Camping)
         player.x = Math.max(20, Math.min(canvas.width - 20, player.x));
-        player.y = Math.max(20, Math.min(canvas.height - 20, player.y));
+        player.y = Math.max(canvas.height * 0.5, Math.min(canvas.height - 20, player.y));
     }
     
     ctx.save(); ctx.translate(player.x, player.y);
