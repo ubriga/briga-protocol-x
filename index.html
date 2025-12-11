@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Brigagame v5.8 NEON</title>
+    <title>Brigagame v5.9 SONIC SWARM</title>
     
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
@@ -65,7 +65,7 @@
 
     <div id="toast" style="position:fixed; top:10%; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.9); padding:10px 40px; border:1px solid var(--main); z-index:3000; opacity:0; pointer-events:none; transition:0.3s; color:white; font-weight:bold;">MSG</div>
     
-    <div id="global-footer">DEV: <span>OrelAi</span> | CONTACT: <span style="color:gold">ubriga@gmail.com</span> | v5.8 NEON</div>
+    <div id="global-footer">DEV: <span>OrelAi</span> | CONTACT: <span style="color:gold">ubriga@gmail.com</span> | v5.9 SONIC SWARM</div>
 
     <canvas id="gameCanvas"></canvas>
 
@@ -126,7 +126,7 @@
         </div>
         
         <h1 style="font-size:70px; margin:0; text-shadow:0 0 30px var(--main);">BRIGAGAME</h1>
-        <div style="color:#666; letter-spacing:5px; margin-bottom:15px;">v5.8 NEON</div>
+        <div style="color:#666; letter-spacing:5px; margin-bottom:15px;">v5.9 SONIC SWARM</div>
 
         <!-- RELEASE NOTES -->
         <div style="width: 850px; margin-bottom: 10px;">
@@ -262,7 +262,7 @@
     </div>
 
 <script>
-/** BRIGAGAME v5.8 NEON JUICE UPDATE **/
+/** BRIGAGAME v5.9 SONIC SWARM **/
 const API = "https://ubriga.pythonanywhere.com";
 var USER=null, TOKEN=localStorage.getItem('px_token');
 var KEYS = {}; 
@@ -284,6 +284,48 @@ function getRankName(xp) {
     return r;
 }
 
+/* SOUND ENGINE (SYNTH) */
+const sfx = {
+    ctx: null,
+    init: () => {
+        if(!sfx.ctx) {
+            sfx.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if(sfx.ctx.state === 'suspended') sfx.ctx.resume();
+    },
+    play: (type) => {
+        if(!sfx.ctx) return;
+        const osc = sfx.ctx.createOscillator();
+        const gain = sfx.ctx.createGain();
+        osc.connect(gain);
+        gain.connect(sfx.ctx.destination);
+
+        const now = sfx.ctx.currentTime;
+        if(type === 'shoot') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(400, now);
+            osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
+            gain.gain.setValueAtTime(0.1, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+            osc.start(now); osc.stop(now + 0.1);
+        } else if(type === 'boom') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(100, now);
+            osc.frequency.exponentialRampToValueAtTime(10, now + 0.3);
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+            osc.start(now); osc.stop(now + 0.3);
+        } else if(type === 'hit') {
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(150, now);
+            osc.frequency.linearRampToValueAtTime(100, now + 0.1);
+            gain.gain.setValueAtTime(0.1, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.1);
+            osc.start(now); osc.stop(now + 0.1);
+        }
+    }
+};
+
 const ART = {
     ship: (ctx, type, c, dash) => {
         ctx.save();
@@ -292,10 +334,7 @@ const ART = {
         else if(type==='crimson') { ctx.moveTo(0,-25); ctx.lineTo(10,5); ctx.lineTo(20,20); ctx.lineTo(0,10); ctx.lineTo(-20,20); ctx.lineTo(-10,5); ctx.closePath(); }
         else { ctx.moveTo(0,-20); ctx.lineTo(10,10); ctx.lineTo(0,5); ctx.lineTo(-10,10); ctx.closePath(); ctx.moveTo(0,0); ctx.lineTo(20,10); ctx.moveTo(0,0); ctx.lineTo(-20,10); }
         ctx.stroke(); ctx.fillStyle='#fff'; ctx.globalAlpha=0.1; ctx.fill(); 
-        // Engine Glow
-        if(dash) {
-            ctx.beginPath(); ctx.moveTo(-5,10); ctx.lineTo(0, 20 + Math.random()*15); ctx.lineTo(5,10); ctx.fillStyle=c; ctx.fill();
-        }
+        if(dash) { ctx.beginPath(); ctx.moveTo(-5,10); ctx.lineTo(0, 20 + Math.random()*15); ctx.lineTo(5,10); ctx.fillStyle=c; ctx.fill(); }
         ctx.restore();
     },
     drone: (ctx) => {
@@ -354,6 +393,8 @@ var app = {
         
         // Init Background
         game.initStars();
+        // Init Sound on Click
+        document.addEventListener('click', sfx.init, {once:true});
     },
     show: (id) => {
         document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
@@ -605,6 +646,7 @@ var game = {
     start: () => {
         canvas.width = innerWidth; canvas.height = innerHeight;
         game.initStars();
+        sfx.init(); // Init Sound
         const diffVal = parseInt(v('diff-select'));
         const baseHp = 100 + ((USER.inventory.hull||0) * 10);
         g = { run: true, paused: false, score: 0, wave: 1, hp: baseHp, maxHp: baseHp, heat: 0, energy: 100, frames: 0, diff: diffVal };
@@ -636,8 +678,13 @@ var game = {
         
         for(let i=0; i<count; i++) {
             ents.enemies.push({
-                x: Math.random()*canvas.width, y: -200 - Math.random()*1000,
-                tx: canvas.width/2, ty: 100 + Math.random()*300,
+                x: Math.random()*canvas.width, 
+                y: -200 - Math.random()*1000,
+                // SWARM LOGIC: Each enemy gets a unique offset
+                offset: (Math.random() - 0.5) * 400,
+                sway: 1 + Math.random() * 2,
+                
+                ty: 100 + Math.random()*300,
                 hp: (10 + g.wave*5) * set.hpMult, 
                 maxHp: (10 + g.wave*5) * set.hpMult,
                 type: Math.random()>0.8 ? 1 : 0, 
@@ -709,8 +756,6 @@ function loop() {
     if (!(mouse.x === 0 && mouse.y === 0)) {
         player.x += (mouse.x - player.x) * 0.1;
         player.y += (mouse.y - player.y) * 0.1;
-        
-        // FIX: Clamp player to BOTTOM HALF of screen
         player.x = Math.max(20, Math.min(canvas.width - 20, player.x));
         player.y = Math.max(canvas.height * 0.5, Math.min(canvas.height - 20, player.y));
     }
@@ -718,7 +763,6 @@ function loop() {
     ctx.save(); ctx.translate(player.x, player.y);
     const skinKey = USER.inventory.active_skin || 'default';
     const skin = SKINS[skinKey] || SKINS['default'];
-    // Thruster visual
     ART.ship(ctx, skin.type, skin.color, true);
     ctx.restore();
 
@@ -746,6 +790,7 @@ function loop() {
     if(shouldShoot && !player.overheat) { 
         const dmg = 10 + ((USER.inventory['damage']||0) * 2);
         const double = USER.inventory['double_shot'];
+        sfx.play('shoot'); // AUDIO JUICE
         
         if(double) {
              ents.bullets.push({x:player.x-10, y:player.y-20, vx:0, vy:-20, c:skin.color, dmg:dmg});
@@ -767,6 +812,7 @@ function loop() {
             if(Math.hypot(e.x-w.x,e.y-w.y)<w.r) {
                  e.hp-=5;
                  spawnExplosion(e.x, e.y, 'white', 2);
+                 sfx.play('hit');
             }
         });
         if(w.r>300) ents.waves.splice(i,1);
@@ -775,13 +821,26 @@ function loop() {
     const diffSet = DIFF_DATA[g.diff];
     ents.enemies.forEach(e => {
         if(e.state==='FLY') {
-            e.tx = player.x; 
+            // SWARM LOGIC: Use Offset + Sine Wave
+            e.tx = player.x + e.offset + Math.sin(g.frames * 0.05 * e.sway) * 50; 
+            
+            // Boundary Check
+            if(e.tx < 20) e.tx = 20;
+            if(e.tx > canvas.width - 20) e.tx = canvas.width - 20;
+
             e.x += (e.tx - e.x) * 0.02; 
             e.y += (e.ty - e.y) * 0.05;
             if(Math.abs(e.y-e.ty)<5) e.state='ATK';
         } else {
-            e.tx = player.x;
-            e.x += (e.tx - e.x) * 0.01 + Math.sin(g.frames*0.05)*2; 
+            // SWARM LOGIC (Attack Phase)
+            e.tx = player.x + e.offset + Math.sin(g.frames * 0.05 * e.sway) * 100;
+            
+            // Boundary Check
+            if(e.tx < 20) e.tx = 20;
+            if(e.tx > canvas.width - 20) e.tx = canvas.width - 20;
+
+            e.x += (e.tx - e.x) * 0.01; 
+            
             if(Math.random() < 0.01 * g.wave * diffSet.spawnRate) {
                 ents.eBullets.push({x:e.x, y:e.y+10, vx:0, vy:7*diffSet.spdMult, c:'#f00'});
             }
@@ -792,6 +851,7 @@ function loop() {
         if(Math.hypot(e.x-player.x, e.y-player.y)<25) { 
             g.hp-=20; e.hp=0; 
             shake = 20; 
+            sfx.play('boom');
             spawnExplosion(player.x, player.y, 'red', 10);
             checkDead(); 
         }
@@ -799,8 +859,9 @@ function loop() {
     
     // Enemy Death
     ents.enemies.forEach(e => {
-        if(e.hp <= 0 && e.maxHp > 0) { // Check maxHp > 0 to avoid multi trigger
+        if(e.hp <= 0 && e.maxHp > 0) { 
             spawnExplosion(e.x, e.y, 'orange', 15);
+            sfx.play('boom');
             shake = 5;
         }
     });
@@ -810,7 +871,6 @@ function loop() {
 
     ents.bullets.forEach((b,i) => {
         b.y+=b.vy; ctx.fillStyle=b.c; ctx.beginPath(); ctx.arc(b.x,b.y,3,0,7); ctx.fill();
-        // Bullet Trail
         ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.lineTo(b.x, b.y-10); ctx.strokeStyle=b.c; ctx.stroke();
         
         if(b.y<0) ents.bullets.splice(i,1);
@@ -818,6 +878,7 @@ function loop() {
             if(Math.hypot(b.x-e.x,b.y-e.y)<25) { 
                 e.hp -= (b.dmg || 10); 
                 spawnExplosion(b.x, b.y, b.c, 3);
+                sfx.play('hit');
                 ents.bullets.splice(i,1); 
                 if(e.hp<=0) { g.score+=10 * g.diff; document.getElementById('g-score').innerText=g.score; } 
             } 
@@ -830,6 +891,7 @@ function loop() {
         else if(Math.hypot(b.x-player.x,b.y-player.y)<15) { 
             g.hp-=5 * diffSet.hpMult; 
             shake = 10;
+            sfx.play('hit');
             spawnExplosion(b.x, b.y, 'red', 5);
             ents.eBullets.splice(i,1); 
             checkDead(); 
@@ -843,10 +905,10 @@ function loop() {
         if(g.frames%20===0 && ents.enemies.length) {
              const t=ents.enemies[0]; const a=Math.atan2(t.y-d.y, t.x-d.x);
              ents.bullets.push({x:d.x, y:d.y, vx:Math.cos(a)*10, vy:Math.sin(a)*10, c:'gold', dmg:10});
+             sfx.play('shoot');
         }
     });
 
-    // Update Particles
     particles.forEach((p,i) => {
         p.x += p.vx; p.y += p.vy; p.life -= 0.05;
         ctx.globalAlpha = p.life; ctx.fillStyle = p.color;
@@ -854,8 +916,7 @@ function loop() {
         if(p.life <= 0) particles.splice(i, 1);
     });
     
-    // Restore Context (Stop Shake/Bloom)
-    if(shake > 0) ctx.restore(); // Restore translate
+    if(shake > 0) ctx.restore(); 
     ctx.globalCompositeOperation = 'source-over';
     ctx.globalAlpha = 1.0;
 
