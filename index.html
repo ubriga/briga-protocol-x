@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BRIGAGAME | v6.6</title>
+    <title>BRIGAGAME | v6.7 HOTFIX</title>
     <!-- GOOGLE RECAPTCHA SCRIPT -->
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <style>
@@ -184,7 +184,7 @@
     <div id="toast">MSG</div>
 
     <!-- DEV WATERMARK -->
-    <div style="position: absolute; bottom: 5px; right: 5px; font-size: 10px; color: #333; pointer-events: none;">DEV: OrelAi | v6.6</div>
+    <div style="position: absolute; bottom: 5px; right: 5px; font-size: 10px; color: #333; pointer-events: none;">DEV: OrelAi | v6.7 HOTFIX</div>
     <div id="fps-counter" style="position: absolute; top: 5px; left: 5px; font-size: 10px; color: #555;">FPS: 60</div>
 
     <!-- PAUSE MENU -->
@@ -316,7 +316,7 @@
             <div style="flex: 1; display: flex; flex-direction: column; gap: 20px;">
                 <!-- NEWS TICKER -->
                 <div class="box" style="width:auto; padding: 10px; display: flex; justify-content: space-between; align-items: center;">
-                    <div style="font-weight:bold;">BRIGAGAME <span style="font-size:10px; background:var(--main); color:black; padding:2px;">v6.6</span></div>
+                    <div style="font-weight:bold;">BRIGAGAME <span style="font-size:10px; background:var(--main); color:black; padding:2px;">v6.7</span></div>
                     <div id="news-ticker" style="font-size:12px; color:#aaa;">LATEST INTEL: Loading...</div>
                 </div>
 
@@ -468,7 +468,7 @@
 <canvas id="gameCanvas"></canvas>
 
 <script>
-/** BRIGAGAME v6.6 - METEOR STORM & JAMMING SYSTEM **/
+/** BRIGAGAME v6.7 HOTFIX - CRITICAL FIXES & STABILITY **/
 const API = "https://ubriga.pythonanywhere.com"; // Change to localhost if testing locally
 var USER=null, TOKEN=localStorage.getItem('px_token');
 var KEYS = {}; 
@@ -910,6 +910,7 @@ const app = {
 
     loop: () => {
         requestAnimationFrame(app.loop);
+        if(!USER) return; // FIX: Don't run game logic if user not logged in
         game.update();
         game.draw();
     }
@@ -1168,6 +1169,8 @@ const game = {
     },
 
     draw: () => {
+        if(!USER) return; // FIX: Don't draw if USER is null
+        
         const ctx = app.ctx;
         ctx.clearRect(0, 0, app.canvas.width, app.canvas.height);
         
