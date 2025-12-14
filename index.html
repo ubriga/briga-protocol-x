@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BRIGAGAME | v6.7.2 SECURE</title>
+    <title>BRIGAGAME | v6.8 SECURE</title>
     <!-- GOOGLE RECAPTCHA SCRIPT -->
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <style>
@@ -184,7 +184,7 @@
     <div id="toast">MSG</div>
 
     <!-- DEV WATERMARK -->
-    <div style="position: absolute; bottom: 5px; right: 5px; font-size: 10px; color: #333; pointer-events: none;">DEV: OrelAi | v6.7.2 SECURE</div>
+    <div style="position: absolute; bottom: 5px; right: 5px; font-size: 10px; color: #333; pointer-events: none;">DEV: OrelAi | v6.8 SECURE</div>
     <div id="fps-counter" style="position: absolute; top: 5px; left: 5px; font-size: 10px; color: #555;">FPS: 60</div>
 
     <!-- PAUSE MENU -->
@@ -316,7 +316,7 @@
             <div style="flex: 1; display: flex; flex-direction: column; gap: 20px;">
                 <!-- NEWS TICKER -->
                 <div class="box" style="width:auto; padding: 10px; display: flex; justify-content: space-between; align-items: center;">
-                    <div style="font-weight:bold;">BRIGAGAME <span style="font-size:10px; background:var(--main); color:black; padding:2px;">v6.7.2</span></div>
+                    <div style="font-weight:bold;">BRIGAGAME <span style="font-size:10px; background:var(--main); color:black; padding:2px;">v6.8</span></div>
                     <div id="news-ticker" style="font-size:12px; color:#aaa;">LATEST INTEL: Loading...</div>
                 </div>
 
@@ -420,6 +420,7 @@
                                 <button onclick="ui.subTab('coupons')">COUPONS</button>
                                 <button onclick="ui.subTab('config')">ECONOMY & NEWS</button>
                                 <button onclick="admin.refresh()" class="gold">REFRESH</button>
+                                <button onclick="admin.lock()" class="red">LOCK</button>
                             </div>
 
                             <!-- ADMIN USERS -->
@@ -468,10 +469,11 @@
 <canvas id="gameCanvas"></canvas>
 
 <script>
-/** BRIGAGAME v6.7.2 SECURE **/
+/** BRIGAGAME v6.8 - SECURITY HARDENING **/
 const API = "https://ubriga.pythonanywhere.com"; // Change to localhost if testing locally
 var USER=null, TOKEN=localStorage.getItem('px_token');
 var KEYS = {}; 
+var ADMIN_UNLOCKED = false; // Local security flag
 
 const RANKS = [
     {xp:0, name:"Private"}, {xp:1000, name:"Private 2"}, {xp:2500, name:"Private 1st Class"},
@@ -507,6 +509,8 @@ const auth = {
             if(d.error) return toast(d.error);
             USER = d.user; TOKEN = d.token;
             localStorage.setItem('px_token', TOKEN);
+            // Lock Admin on new login
+            ADMIN_UNLOCKED = false;
             app.toLobby();
         } catch(e) { toast("Conn Error"); }
     },
@@ -560,11 +564,17 @@ const auth = {
     logout: () => {
         USER=null; TOKEN=null; localStorage.removeItem('px_token');
         
-        // SECURITY FIX: CLEAR CREDENTIALS
+        // SECURITY FIX 1: CLEAR CREDENTIALS
         document.getElementById('inp-u').value = "";
         document.getElementById('inp-p').value = "";
-        document.getElementById('admin-pin').value = ""; // Also clear Admin PIN
-        
+        document.getElementById('admin-pin').value = ""; 
+
+        // SECURITY FIX 2: RESET ADMIN STATE
+        ADMIN_UNLOCKED = false;
+        document.getElementById('btn-admin').style.display = 'none';
+        document.getElementById('admin-panel').style.display = 'none';
+        document.getElementById('admin-login-panel').style.display = 'block';
+
         document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
         document.getElementById('screen-login').style.display='flex';
         auth.toggleMode('login'); // Reset to login view
@@ -581,7 +591,18 @@ const ui = {
         if(t==='armory') shop.render();
         if(t==='hangar') shop.renderHangar();
         if(t==='leaderboard') app.loadLeaderboard();
-        if(t==='admin') document.getElementById('admin-login-panel').style.display = 'block';
+        
+        // SECURITY FIX 3: REQUIRE PIN EVERY TIME IF NOT UNLOCKED
+        if(t==='admin') {
+             if(ADMIN_UNLOCKED) {
+                 document.getElementById('admin-login-panel').style.display = 'none';
+                 document.getElementById('admin-panel').style.display = 'block';
+                 admin.refresh();
+             } else {
+                 document.getElementById('admin-login-panel').style.display = 'block';
+                 document.getElementById('admin-panel').style.display = 'none';
+             }
+        }
     },
     subTab: (t) => {
         document.querySelectorAll('.admin-sub').forEach(d=>d.style.display='none');
@@ -745,11 +766,19 @@ const admin = {
                 document.getElementById('admin-pin').value = ""; // Clear PIN on success
                 document.getElementById('admin-login-panel').style.display='none';
                 document.getElementById('admin-panel').style.display='block';
+                ADMIN_UNLOCKED = true; // Unlock for this session
                 admin.refresh();
             } else toast("ACCESS DENIED");
         } catch(e) {}
     },
+    lock: () => {
+        ADMIN_UNLOCKED = false;
+        document.getElementById('admin-panel').style.display='none';
+        document.getElementById('admin-login-panel').style.display='block';
+        toast("ADMIN LOCKED");
+    },
     refresh: async () => {
+        if(!ADMIN_UNLOCKED) return; // Prevent unauthorized refresh
         try {
             const res = await fetch(`${API}/admin/dashboard`, {headers:{'Authorization':`Bearer ${TOKEN}`}});
             const d = await res.json();
@@ -777,9 +806,8 @@ const admin = {
                 <td><button onclick="admin.act('delete_coupon', null, null, ${c.id})" class="red">X</button></td></tr>`;
             });
             
-            // Config (UPDATED: FETCH FROM SERVER)
+            // Config
             if(d.config) {
-                // Parse prices if they exist in config
                 if(d.config.prices) {
                      let prices = JSON.parse(d.config.prices);
                      let html = "";
@@ -788,13 +816,13 @@ const admin = {
                      }
                      document.getElementById('conf-prices').innerHTML = html;
                 }
-                // Set Release Notes
                 document.getElementById('conf-notes').value = d.config.release_notes || "";
             }
 
         } catch(e){}
     },
     act: async (action, uid, banState, cid) => {
+        if(!ADMIN_UNLOCKED) return;
         if(!confirm("CONFIRM ACTION?")) return;
         await fetch(`${API}/admin/action`, {
             method:'POST', headers:{'Authorization':`Bearer ${TOKEN}`, 'Content-Type':'application/json'},
@@ -803,6 +831,7 @@ const admin = {
         admin.refresh();
     },
     createCoupon: async () => {
+        if(!ADMIN_UNLOCKED) return;
         await fetch(`${API}/admin/action`, {
             method:'POST', headers:{'Authorization':`Bearer ${TOKEN}`, 'Content-Type':'application/json'},
             body:JSON.stringify({
@@ -816,8 +845,8 @@ const admin = {
         admin.refresh();
     },
     saveConfig: async () => {
+        if(!ADMIN_UNLOCKED) return;
         let newPrices = {};
-        // Iterate over current shop items to rebuild structure
         shop.items.filter(i=>i.type==='upgrade').forEach(i => {
              let k = i.id;
              let baseEl = document.getElementById(`p-base-${k}`);
@@ -840,7 +869,6 @@ const admin = {
             })
         });
         
-        // Update local ticker immediately
         document.getElementById('news-ticker').innerText = notes;
         toast("CONFIG SAVED");
     }
@@ -911,7 +939,12 @@ const app = {
         document.getElementById('u-rank').innerText = r.name.toUpperCase();
         document.getElementById('u-avatar').innerText = USER.username.charAt(0).toUpperCase();
 
-        if(USER.is_admin) document.getElementById('btn-admin').style.display='block';
+        // SECURITY FIX 4: Only show admin button if admin AND ensure it's hidden otherwise
+        if(USER.is_admin) {
+            document.getElementById('btn-admin').style.display='block';
+        } else {
+            document.getElementById('btn-admin').style.display='none';
+        }
     },
 
     loadLeaderboard: async () => {
