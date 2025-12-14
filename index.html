@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BRIGAGAME | v6.7 HOTFIX</title>
+    <title>BRIGAGAME | v6.7.2 SECURE</title>
     <!-- GOOGLE RECAPTCHA SCRIPT -->
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <style>
@@ -184,7 +184,7 @@
     <div id="toast">MSG</div>
 
     <!-- DEV WATERMARK -->
-    <div style="position: absolute; bottom: 5px; right: 5px; font-size: 10px; color: #333; pointer-events: none;">DEV: OrelAi | v6.7 HOTFIX</div>
+    <div style="position: absolute; bottom: 5px; right: 5px; font-size: 10px; color: #333; pointer-events: none;">DEV: OrelAi | v6.7.2 SECURE</div>
     <div id="fps-counter" style="position: absolute; top: 5px; left: 5px; font-size: 10px; color: #555;">FPS: 60</div>
 
     <!-- PAUSE MENU -->
@@ -316,7 +316,7 @@
             <div style="flex: 1; display: flex; flex-direction: column; gap: 20px;">
                 <!-- NEWS TICKER -->
                 <div class="box" style="width:auto; padding: 10px; display: flex; justify-content: space-between; align-items: center;">
-                    <div style="font-weight:bold;">BRIGAGAME <span style="font-size:10px; background:var(--main); color:black; padding:2px;">v6.7</span></div>
+                    <div style="font-weight:bold;">BRIGAGAME <span style="font-size:10px; background:var(--main); color:black; padding:2px;">v6.7.2</span></div>
                     <div id="news-ticker" style="font-size:12px; color:#aaa;">LATEST INTEL: Loading...</div>
                 </div>
 
@@ -468,7 +468,7 @@
 <canvas id="gameCanvas"></canvas>
 
 <script>
-/** BRIGAGAME v6.7 HOTFIX - CRITICAL FIXES & STABILITY **/
+/** BRIGAGAME v6.7.2 SECURE **/
 const API = "https://ubriga.pythonanywhere.com"; // Change to localhost if testing locally
 var USER=null, TOKEN=localStorage.getItem('px_token');
 var KEYS = {}; 
@@ -559,6 +559,12 @@ const auth = {
     },
     logout: () => {
         USER=null; TOKEN=null; localStorage.removeItem('px_token');
+        
+        // SECURITY FIX: CLEAR CREDENTIALS
+        document.getElementById('inp-u').value = "";
+        document.getElementById('inp-p').value = "";
+        document.getElementById('admin-pin').value = ""; // Also clear Admin PIN
+        
         document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
         document.getElementById('screen-login').style.display='flex';
         auth.toggleMode('login'); // Reset to login view
@@ -736,6 +742,7 @@ const admin = {
                 body:JSON.stringify({pin:pin})
             });
             if((await res.json()).status === 'success') {
+                document.getElementById('admin-pin').value = ""; // Clear PIN on success
                 document.getElementById('admin-login-panel').style.display='none';
                 document.getElementById('admin-panel').style.display='block';
                 admin.refresh();
@@ -770,14 +777,19 @@ const admin = {
                 <td><button onclick="admin.act('delete_coupon', null, null, ${c.id})" class="red">X</button></td></tr>`;
             });
             
-            // Config
-            if(shop.prices) {
-                let html = "";
-                for(let k in shop.prices) {
-                    html += `<div>${k}: <input id="p-base-${k}" value="${shop.prices[k].base}" style="width:60px;"> + <input id="p-step-${k}" value="${shop.prices[k].step}" style="width:60px;"></div>`;
+            // Config (UPDATED: FETCH FROM SERVER)
+            if(d.config) {
+                // Parse prices if they exist in config
+                if(d.config.prices) {
+                     let prices = JSON.parse(d.config.prices);
+                     let html = "";
+                     for(let k in prices) {
+                        html += `<div>${k}: <input id="p-base-${k}" value="${prices[k].base}" style="width:60px;"> + <input id="p-step-${k}" value="${prices[k].step}" style="width:60px;"></div>`;
+                     }
+                     document.getElementById('conf-prices').innerHTML = html;
                 }
-                document.getElementById('conf-prices').innerHTML = html;
-                document.getElementById('conf-notes').value = document.getElementById('news-ticker').innerText;
+                // Set Release Notes
+                document.getElementById('conf-notes').value = d.config.release_notes || "";
             }
 
         } catch(e){}
@@ -805,19 +817,31 @@ const admin = {
     },
     saveConfig: async () => {
         let newPrices = {};
-        for(let k in shop.prices) {
-            newPrices[k] = {
-                base: parseInt(document.getElementById(`p-base-${k}`).value),
-                step: parseInt(document.getElementById(`p-step-${k}`).value)
-            };
-        }
+        // Iterate over current shop items to rebuild structure
+        shop.items.filter(i=>i.type==='upgrade').forEach(i => {
+             let k = i.id;
+             let baseEl = document.getElementById(`p-base-${k}`);
+             let stepEl = document.getElementById(`p-step-${k}`);
+             if(baseEl && stepEl) {
+                 newPrices[k] = {
+                    base: parseInt(baseEl.value),
+                    step: parseInt(stepEl.value)
+                 };
+             }
+        });
+
+        let notes = document.getElementById('conf-notes').value;
+
         await fetch(`${API}/admin/save_config`, {
             method:'POST', headers:{'Authorization':`Bearer ${TOKEN}`, 'Content-Type':'application/json'},
             body:JSON.stringify({
                 prices: newPrices,
-                release_notes: document.getElementById('conf-notes').value
+                release_notes: notes
             })
         });
+        
+        // Update local ticker immediately
+        document.getElementById('news-ticker').innerText = notes;
         toast("CONFIG SAVED");
     }
 };
