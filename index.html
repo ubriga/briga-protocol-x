@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BRIGAGAME | v6.1 TURBO</title>
+    <title>BRIGAGAME | v6.6</title>
     <!-- GOOGLE RECAPTCHA SCRIPT -->
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <style>
@@ -108,7 +108,7 @@
         }
         .bar-fill { height: 100%; width: 100%; transition: width 0.2s; }
         .hp-fill { background: var(--main); box-shadow: 0 0 10px var(--main); }
-        .heat-fill { background: var(--danger); width: 0%; }
+        .heat-fill { background: var(--danger); width: 0%; transition: width 0.1s; }
         
         #msg-area {
             position: absolute;
@@ -134,6 +134,10 @@
             pointer-events: none;
             z-index: 999;
         }
+        
+        /* JAMMED ANIMATION */
+        @keyframes flash { 0% {opacity:1;} 50% {opacity:0;} 100% {opacity:1;} }
+        .jammed-text { color: red; animation: flash 0.5s infinite; font-weight: bold; font-size: 20px; display: none; }
 
         /* TABLE */
         table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
@@ -174,11 +178,13 @@
 
 <div id="ui-layer">
     <!-- MESSAGE CENTER -->
-    <div id="msg-area"></div>
+    <div id="msg-area">
+         <div id="jammed-msg" class="jammed-text">WEAPON JAMMED!<br><span style="font-size:14px; color:white;">COOLING DOWN...</span></div>
+    </div>
     <div id="toast">MSG</div>
 
     <!-- DEV WATERMARK -->
-    <div style="position: absolute; bottom: 5px; right: 5px; font-size: 10px; color: #333; pointer-events: none;">DEV: OrelAi | v6.1 TURBO</div>
+    <div style="position: absolute; bottom: 5px; right: 5px; font-size: 10px; color: #333; pointer-events: none;">DEV: OrelAi | v6.6</div>
     <div id="fps-counter" style="position: absolute; top: 5px; left: 5px; font-size: 10px; color: #555;">FPS: 60</div>
 
     <!-- PAUSE MENU -->
@@ -220,7 +226,7 @@
         <div class="hud-panel" style="top: 50px; left: 10px;">
             <div id="score-disp" style="font-size: 24px;">0</div>
             <div id="wave-disp" style="font-size: 16px; color: #aaa;">WAVE 1</div>
-            <div id="diff-disp" style="font-size: 12px; color: #777;">(NORMAL)</div>
+            <div id="mode-disp" style="font-size: 12px; color: #777;">(CLASSIC)</div>
             <div style="margin-top:10px; font-size:12px; color:#555;">[ESC] TO PAUSE</div>
         </div>
         
@@ -241,7 +247,7 @@
             <h1 style="color:var(--danger); font-size: 60px;">x_x</h1>
             <h2 id="final-score">0</h2>
             <p id="final-wave">WAVE 1</p>
-            <p id="death-reason" style="font-size: 12px; color: #888;">OVERHEAT!</p>
+            <p id="death-reason" style="font-size: 12px; color: #888;">HULL BREACH!</p>
             <button onclick="app.startGame()">RE-ENGAGE</button>
             <button onclick="app.toLobby()">BASE</button>
         </div>
@@ -252,19 +258,36 @@
         <h1 style="color: red; font-size: 50px; text-shadow: 0 0 20px red; animation: pulse 0.5s infinite;">⚠️ WARNING: BOSS DETECTED ⚠️</h1>
     </div>
 
-    <!-- LOGIN -->
+    <!-- LOGIN SCREEN (UPDATED) -->
     <div id="screen-login" class="screen">
         <h1 style="font-size:90px; margin:0; text-shadow:0 0 40px var(--main);">BRIGAGAME</h1>
-        <div class="box">
+        
+        <!-- LOGIN BOX -->
+        <div class="box" id="login-box">
+            <h3 style="color:var(--main);">PILOT IDENTIFICATION</h3>
             <input type="text" id="inp-u" placeholder="PILOT ID"><br>
             <input type="password" id="inp-p" placeholder="ACCESS CODE"><br>
+            <button onclick="auth.login()" style="width:100%; margin-top:10px;">LOGIN</button>
             
-            <!-- RECAPTCHA WIDGET HERE -->
-            <div class="g-recaptcha" data-sitekey="6LfrGyssAAAAALIPZmJmhTJlcTvLzx2VHK6c06ZL" style="margin: 15px auto; display: inline-block;"></div>
-            <br>
-            
-            <button onclick="auth.login()" style="width:100%;">LOGIN</button>
-            <button onclick="auth.register()" class="gold" style="width:100%;">REGISTER</button>
+            <div style="margin-top:15px; font-size:12px; color:#777; cursor:pointer; text-decoration:underline;" onclick="auth.toggleMode('register')">
+                New Pilot? Join Protocol >
+            </div>
+        </div>
+
+        <!-- REGISTER BOX (HIDDEN BY DEFAULT) -->
+        <div class="box" id="register-box" style="display:none;">
+             <h3 style="color:var(--warn);">NEW RECRUITMENT</h3>
+             <input type="text" id="reg-u" placeholder="CHOOSE ID"><br>
+             <input type="password" id="reg-p" placeholder="SET CODE"><br>
+             
+             <!-- RECAPTCHA WIDGET -->
+             <div class="g-recaptcha" data-sitekey="6LfrGyssAAAAALIPZmJmhTJlcTvLzx2VHK6c06ZL" style="margin: 15px auto; display: inline-block;"></div>
+             <br>
+             
+             <button onclick="auth.register()" class="gold" style="width:100%;">REGISTER</button>
+             <div style="margin-top:15px; font-size:12px; color:#777; cursor:pointer; text-decoration:underline;" onclick="auth.toggleMode('login')">
+                < Back to Login
+             </div>
         </div>
     </div>
 
@@ -293,7 +316,7 @@
             <div style="flex: 1; display: flex; flex-direction: column; gap: 20px;">
                 <!-- NEWS TICKER -->
                 <div class="box" style="width:auto; padding: 10px; display: flex; justify-content: space-between; align-items: center;">
-                    <div style="font-weight:bold;">BRIGAGAME <span style="font-size:10px; background:var(--main); color:black; padding:2px;">v6.1 TURBO</span></div>
+                    <div style="font-weight:bold;">BRIGAGAME <span style="font-size:10px; background:var(--main); color:black; padding:2px;">v6.6</span></div>
                     <div id="news-ticker" style="font-size:12px; color:#aaa;">LATEST INTEL: Loading...</div>
                 </div>
 
@@ -313,6 +336,15 @@
                     <div id="tab-ops" style="height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:20px;">
                         <h2>MISSION PROTOCOL</h2>
                         
+                        <!-- GAME MODE SELECT -->
+                        <div style="display:flex; gap:20px; align-items:center;">
+                            <label>MODE:</label>
+                            <select id="mode-select" style="width:200px;">
+                                <option value="Classic" selected>CLASSIC (INVADERS)</option>
+                                <option value="Meteor">METEOR STORM (SURVIVAL)</option>
+                            </select>
+                        </div>
+
                         <div style="display:flex; gap:20px; align-items:center;">
                             <label>THREAT LEVEL:</label>
                             <select id="diff-select" style="width:200px;">
@@ -436,7 +468,7 @@
 <canvas id="gameCanvas"></canvas>
 
 <script>
-/** BRIGAGAME v6.1 TURBO - PERFORMANCE OPTIMIZED **/
+/** BRIGAGAME v6.6 - METEOR STORM & JAMMING SYSTEM **/
 const API = "https://ubriga.pythonanywhere.com"; // Change to localhost if testing locally
 var USER=null, TOKEN=localStorage.getItem('px_token');
 var KEYS = {}; 
@@ -452,7 +484,6 @@ const RANKS = [
     {xp:5000000, name:"General"}, {xp:10000000, name:"General of the Army"}
 ];
 
-// UTILS
 const v = (id) => document.getElementById(id).value;
 const toast = (msg) => {
     let t = document.getElementById('toast');
@@ -462,6 +493,11 @@ const toast = (msg) => {
 
 // AUTH MODULE
 const auth = {
+    toggleMode: (mode) => {
+        document.getElementById('login-box').style.display = mode === 'login' ? 'block' : 'none';
+        document.getElementById('register-box').style.display = mode === 'register' ? 'block' : 'none';
+    },
+
     login: async () => {
         const u = v('inp-u'), p = v('inp-p');
         if(!u || !p) return toast("MISSING INFO");
@@ -475,9 +511,8 @@ const auth = {
         } catch(e) { toast("Conn Error"); }
     },
     
-    // --- UPDATED REGISTER FUNCTION ---
     register: async () => {
-        const u = v('inp-u'), p = v('inp-p');
+        const u = v('reg-u'), p = v('reg-p');
         if(!u || !p) return toast("MISSING INFO");
 
         // CHECK RECAPTCHA
@@ -493,16 +528,15 @@ const auth = {
                 body:JSON.stringify({
                     username:u,
                     password:p,
-                    recaptcha_token: token // Sending token
+                    recaptcha_token: token
                 })
             });
             const d = await res.json();
             
             if(d.status === 'success') {
                 toast(d.message);
-                // Optional: Try to auto-login here or just ask user to click login
-                // For now, reset captcha
                 grecaptcha.reset();
+                auth.toggleMode('login'); // Switch back to login
             } else {
                 toast(d.message || d.error);
                 grecaptcha.reset();
@@ -527,6 +561,7 @@ const auth = {
         USER=null; TOKEN=null; localStorage.removeItem('px_token');
         document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
         document.getElementById('screen-login').style.display='flex';
+        auth.toggleMode('login'); // Reset to login view
     }
 };
 
@@ -793,22 +828,23 @@ const app = {
     ctx: document.getElementById('gameCanvas').getContext('2d'),
     
     init: async () => {
-        // Resize
         window.addEventListener('resize', app.resize);
         app.resize();
         
-        // Input
-        window.addEventListener('keydown', e => { KEYS[e.code] = true; if(e.code==='Escape') game.togglePause(); if(e.code==='Space') game.shoot(); });
+        window.addEventListener('keydown', e => { 
+            KEYS[e.code] = true; 
+            if(e.code==='Escape') game.togglePause(); 
+            if(e.code==='Space') game.shoot();
+            if(e.code==='KeyR' && game.jammed) game.vent(); // Manual vent on R
+        });
         window.addEventListener('keyup', e => KEYS[e.code] = false);
 
-        // Mobile Input
         if('ontouchstart' in window) {
             document.getElementById('mobile-controls').style.display='block';
             const jf = document.getElementById('joy-fire');
             jf.addEventListener('touchstart', (e)=>{e.preventDefault(); KEYS['Space']=true;});
             jf.addEventListener('touchend', (e)=>{e.preventDefault(); KEYS['Space']=false;});
             
-            // Touch movement
             app.canvas.addEventListener('touchmove', (e)=>{
                 e.preventDefault();
                 let t = e.touches[0];
@@ -824,20 +860,8 @@ const app = {
             });
         }
         
-        // Load Conf
         await shop.getConfig();
-
-        // Check Login
-        if(TOKEN) {
-            // Validate token
-            try {
-                // We assume token valid, if not api rejects
-                // For simplicity, just fetch dashboard info using token to check validity
-                // Or just show login
-            } catch(e) {}
-        }
         document.getElementById('screen-login').style.display='flex';
-        
         app.loop();
     },
 
@@ -859,7 +883,6 @@ const app = {
         document.getElementById('u-name').innerText = USER.username;
         document.getElementById('u-credits').innerText = USER.credits.toLocaleString();
         
-        // Rank
         let r = RANKS.slice().reverse().find(x => USER.total_xp >= x.xp) || RANKS[0];
         document.getElementById('u-rank').innerText = r.name.toUpperCase();
         document.getElementById('u-avatar').innerText = USER.username.charAt(0).toUpperCase();
@@ -897,55 +920,52 @@ const game = {
     running: false,
     paused: false,
     over: false,
+    jammed: false, // New State
     lastTime: 0,
     
     player: {x:0, y:0, hp:100, maxHp:100, heat:0, score:0},
     bullets: [],
     enemies: [],
     particles: [],
-    texts: [],
+    bonuses: [], // New: Loot Drops
     drones: [],
     
     wave: 0,
     waveTimer: 0,
     difficulty: 'Soldier',
+    mode: 'Classic', // 'Classic' or 'Meteor'
     
     start: () => {
         game.running = true;
         game.paused = false;
         game.over = false;
+        game.jammed = false;
         game.difficulty = document.getElementById('diff-select').value;
+        game.mode = document.getElementById('mode-select').value;
         
-        // Stats based on inventory
+        document.getElementById('mode-disp').innerText = `(${game.mode.toUpperCase()})`;
+        
         const inv = USER.inventory;
         game.player.maxHp = 100 + ((inv['hull']||0) * 20);
         game.player.hp = game.player.maxHp;
         game.player.heat = 0;
         game.player.score = 0;
         
-        // Weapon stats
-        game.fireRate = Math.max(5, 20 - (inv['fire_rate']||0)); // Lower is faster
+        game.fireRate = Math.max(5, 20 - (inv['fire_rate']||0));
         game.damage = 10 + ((inv['damage']||0) * 5);
         game.doubleShot = (inv['double_shot']||0);
         
         game.bullets = [];
         game.enemies = [];
         game.particles = [];
-        game.texts = [];
-        game.drones = []; // Reset drones
+        game.bonuses = [];
+        game.drones = [];
         game.wave = 0;
         game.nextWave();
 
-        // Spawn consumable drones
+        // Spawn consumable drones if auto-use
         let dCount = (USER.consumables && USER.consumables['drone_support']) || 0;
-        for(let i=0; i<dCount; i++) {
-             // Use consumable (server side handled at purchase/use)
-             // For this version we just spawn them if they exist in inventory logic
-             // Ideally we should call /use_consumable API here.
-             // For simplicity, we assume if they have it, they use it automatically on start or via button.
-             // Let's implement auto-use for now:
-             app.useDrone();
-        }
+        for(let i=0; i<dCount; i++) app.useDrone();
     },
 
     togglePause: () => {
@@ -956,44 +976,43 @@ const game = {
 
     nextWave: () => {
         game.wave++;
-        game.waveTimer = 300; // 5 seconds break
+        game.waveTimer = game.mode === 'Meteor' ? 600 : 300; // Longer waves in Meteor
         
-        // Boss Logic
-        if(game.wave % 5 === 0) {
+        if(game.mode === 'Classic' && game.wave % 5 === 0) {
             document.getElementById('boss-warning').style.display='flex';
             setTimeout(()=>document.getElementById('boss-warning').style.display='none', 3000);
         }
 
-        // Spawn enemies based on difficulty
         let count = 5 + (game.wave * 2);
         let speedMult = 1;
         if(game.difficulty === 'Veteran') { count *= 1.5; speedMult=1.2; }
         if(game.difficulty === 'Elite') { count *= 2; speedMult=1.5; }
         
+        if(game.mode === 'Meteor') count *= 2; // More meteors
+
         for(let i=0; i<count; i++) {
+            let isBoss = (game.mode === 'Classic' && game.wave % 5 === 0 && i===0);
             game.enemies.push({
                 x: Math.random() * app.canvas.width,
-                y: -Math.random() * 1000,
-                w: 30, h: 30,
-                hp: 10 + (game.wave * 5),
-                maxHp: 10 + (game.wave * 5),
+                y: -Math.random() * (game.mode==='Meteor'?2000:1000),
+                w: isBoss ? 100 : 30, 
+                h: isBoss ? 100 : 30,
+                hp: isBoss ? (1000 + game.wave*100) : (10 + game.wave * 5),
+                maxHp: isBoss ? (1000 + game.wave*100) : (10 + game.wave * 5),
                 speed: (2 + Math.random() * 2) * speedMult,
-                type: (game.wave % 5 === 0 && i===0) ? 'boss' : 'grunt'
+                type: isBoss ? 'boss' : (game.mode==='Meteor'?'meteor':'grunt')
             });
         }
         
-        // Boss Override
-        if(game.wave % 5 === 0) {
-            let boss = game.enemies.find(e=>e.type==='boss');
-            boss.w = 100; boss.h = 100;
-            boss.hp *= 10; boss.maxHp *= 10;
-        }
-
-        toast(`WAVE ${game.wave}`);
+        toast(`${game.mode.toUpperCase()} WAVE ${game.wave}`);
     },
 
     shoot: () => {
-        if(game.player.heat >= 100) return;
+        if(game.jammed) return; // Cannot shoot if jammed
+        if(game.player.heat >= 100) {
+            game.jam();
+            return;
+        }
         
         game.player.heat += 5;
         game.bullets.push({x:game.player.x, y:game.player.y, vx:0, vy:-15, dmg:game.damage});
@@ -1004,25 +1023,41 @@ const game = {
         }
     },
 
+    jam: () => {
+        game.jammed = true;
+        game.player.heat = 100;
+        document.getElementById('jammed-msg').style.display = 'block';
+        let auto = document.getElementById('chk-autofire').checked;
+        if(!auto) document.getElementById('jammed-msg').innerHTML = "WEAPON JAMMED!<br>PRESS [R] TO VENT";
+        else setTimeout(()=>game.vent(), 3000); // Auto clear after 3s
+    },
+
+    vent: () => {
+        game.jammed = false;
+        game.player.heat = 50;
+        document.getElementById('jammed-msg').style.display = 'none';
+        toast("WEAPON VENTED");
+    },
+
     update: () => {
         if(!game.running || game.paused || game.over) return;
         
         const W = app.canvas.width, H = app.canvas.height;
         
         // Player Heat
-        if(game.player.heat > 0) game.player.heat -= 0.5;
-        if(document.getElementById('chk-autofire').checked && game.player.heat < 80) {
+        if(!game.jammed && game.player.heat > 0) game.player.heat -= 0.5;
+        
+        // Auto Fire
+        if(document.getElementById('chk-autofire').checked && !game.jammed && game.player.heat < 80) {
              if(game.lastTime % game.fireRate === 0) game.shoot();
         }
         game.lastTime++;
 
         // Drones
         game.drones.forEach(d => {
-            // Orbit player
             d.angle += 0.05;
             d.x = game.player.x + Math.cos(d.angle)*60;
             d.y = game.player.y + Math.sin(d.angle)*60;
-            // Shoot
             if(game.lastTime % 30 === 0) {
                 game.bullets.push({x:d.x, y:d.y, vx:0, vy:-10, dmg:game.damage/2, color:'#ffcc00'});
             }
@@ -1035,42 +1070,79 @@ const game = {
             if(b.y < -50) game.bullets.splice(i, 1);
         }
 
-        // Enemies
+        // Enemies & Meteors
         let activeEnemies = 0;
         for(let i=game.enemies.length-1; i>=0; i--) {
             let e = game.enemies[i];
             activeEnemies++;
             e.y += e.speed;
             
+            // Boss Bounce
+            if(e.type === 'boss') {
+                if(e.y > H-100) e.speed *= -1; // Bounce up
+                if(e.y < 50 && e.speed < 0) e.speed *= -1; // Bounce down
+            }
+
             // Player Collision
             if(Math.abs(e.x - game.player.x) < 30 && Math.abs(e.y - game.player.y) < 30) {
-                game.player.hp -= 10;
+                game.player.hp -= (e.type==='meteor' ? 30 : 10);
                 game.createParticles(e.x, e.y, 10, 'red');
                 game.enemies.splice(i, 1);
                 continue;
             }
 
-            // Bullet Collision
-            for(let j=game.bullets.length-1; j>=0; j--) {
-                let b = game.bullets[j];
-                if(Math.abs(e.x - b.x) < e.w && Math.abs(e.y - b.y) < e.h) {
-                    e.hp -= b.dmg;
-                    game.bullets.splice(j, 1);
-                    game.createParticles(b.x, b.y, 3, 'cyan');
-                    if(e.hp <= 0) {
-                        game.player.score += (e.type==='boss'?500:50);
-                        game.createParticles(e.x, e.y, 20, 'orange');
-                        game.enemies.splice(i, 1);
-                        activeEnemies--;
-                        break;
+            // Bullet Collision (Immune in Meteor Mode)
+            if(game.mode !== 'Meteor' || e.type === 'boss') { 
+                for(let j=game.bullets.length-1; j>=0; j--) {
+                    let b = game.bullets[j];
+                    if(Math.abs(e.x - b.x) < e.w && Math.abs(e.y - b.y) < e.h) {
+                        e.hp -= b.dmg;
+                        game.bullets.splice(j, 1);
+                        game.createParticles(b.x, b.y, 3, 'cyan');
+                        if(e.hp <= 0) {
+                            game.player.score += (e.type==='boss'?500:50);
+                            game.createParticles(e.x, e.y, 20, 'orange');
+                            
+                            // DROP LOOT
+                            if(Math.random() > 0.9) game.bonuses.push({x:e.x, y:e.y, type: Math.random()>0.5?'shield':'rapid'});
+
+                            game.enemies.splice(i, 1);
+                            activeEnemies--;
+                            break;
+                        }
                     }
                 }
             }
             
-            if(e.y > H + 100) { game.enemies.splice(i, 1); activeEnemies--; }
+            // Enemy Escaped
+            if(e.y > H + 100) { 
+                // Penalty only in Classic Mode
+                if(game.mode === 'Classic' && e.type !== 'boss') {
+                    let pen = game.wave > 5 ? 5 : 10;
+                    game.player.hp -= pen;
+                    toast(`ENEMY BREACH! -${pen} HP`);
+                }
+                game.enemies.splice(i, 1); activeEnemies--; 
+            }
+        }
+
+        // Bonuses Update
+        for(let i=game.bonuses.length-1; i>=0; i--) {
+            let b = game.bonuses[i];
+            b.y += 2;
+            if(Math.abs(b.x - game.player.x) < 30 && Math.abs(b.y - game.player.y) < 30) {
+                toast("BONUS ACQUIRED!");
+                if(b.type==='shield') game.player.hp = Math.min(game.player.maxHp, game.player.hp+20);
+                if(b.type==='rapid') { game.fireRate = 2; setTimeout(()=>game.fireRate=10, 5000); }
+                game.bonuses.splice(i, 1);
+            }
+            if(b.y > H) game.bonuses.splice(i, 1);
         }
 
         if(activeEnemies === 0 && game.waveTimer-- <= 0) game.nextWave();
+
+        // Survival Score in Meteor Mode
+        if(game.mode === 'Meteor' && game.lastTime % 60 === 0) game.player.score += 10;
 
         // Check Death
         if(game.player.hp <= 0) game.endGame();
@@ -1082,11 +1154,15 @@ const game = {
         });
         
         // HUD Updates
-        document.getElementById('bar-hp').style.width = (game.player.hp / game.player.maxHp * 100) + "%";
-        document.getElementById('bar-heat').style.width = game.player.heat + "%";
+        document.getElementById('bar-hp').style.width = Math.max(0, (game.player.hp / game.player.maxHp * 100)) + "%";
+        let hPer = (game.player.heat);
+        document.getElementById('bar-heat').style.width = hPer + "%";
         document.getElementById('score-disp').innerText = game.player.score.toLocaleString();
         document.getElementById('wave-disp').innerText = `WAVE ${game.wave}`;
         
+        if(game.jammed) document.querySelector('.heat-fill').style.background = 'white';
+        else document.querySelector('.heat-fill').style.background = 'var(--danger)';
+
         if(game.player.heat > 90) document.getElementById('overdrive-msg').style.display='block';
         else document.getElementById('overdrive-msg').style.display='none';
     },
@@ -1098,7 +1174,7 @@ const game = {
         // Background Grid
         ctx.strokeStyle = "rgba(0, 255, 204, 0.1)";
         ctx.lineWidth = 1;
-        let off = (game.lastTime * 2) % 50;
+        let off = (game.lastTime * (game.mode==='Meteor'?10:2)) % 50;
         for(let i=0; i<app.canvas.width/50; i++) { ctx.beginPath(); ctx.moveTo(i*50, 0); ctx.lineTo(i*50, app.canvas.height); ctx.stroke(); }
         for(let i=0; i<app.canvas.height/50; i++) { ctx.beginPath(); ctx.moveTo(0, i*50+off); ctx.lineTo(app.canvas.width, i*50+off); ctx.stroke(); }
 
@@ -1106,12 +1182,10 @@ const game = {
         ctx.save();
         ctx.translate(game.player.x, game.player.y);
         
-        // Skin Effect
         let skin = USER.inventory.active_skin;
         if(skin === 'skin_neon') ctx.shadowBlur = 20; ctx.shadowColor = 'cyan';
         if(skin === 'skin_gold') { ctx.fillStyle = 'gold'; } else { ctx.fillStyle = 'black'; }
         
-        // Draw Ship
         ctx.strokeStyle = varColor(skin);
         ctx.lineWidth = 2;
         ctx.beginPath(); ctx.moveTo(0, -20); ctx.lineTo(15, 15); ctx.lineTo(0, 5); ctx.lineTo(-15, 15); ctx.closePath();
@@ -1120,13 +1194,19 @@ const game = {
         // Engine Flame
         ctx.fillStyle = `rgba(0, 255, 204, ${Math.random()})`;
         ctx.beginPath(); ctx.moveTo(-5, 10); ctx.lineTo(5, 10); ctx.lineTo(0, 25 + Math.random()*10); ctx.fill();
-        
         ctx.restore();
 
         // Drones
         game.drones.forEach(d => {
             ctx.fillStyle = "#fff";
             ctx.beginPath(); ctx.arc(d.x, d.y, 5, 0, Math.PI*2); ctx.fill();
+        });
+
+        // Bonuses
+        game.bonuses.forEach(b => {
+            ctx.fillStyle = b.type==='shield'?'blue':'green';
+            ctx.beginPath(); ctx.arc(b.x, b.y, 10, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle='white'; ctx.font='10px Arial'; ctx.fillText(b.type==='shield'?'S':'R', b.x-3, b.y+3);
         });
 
         // Bullets
@@ -1139,14 +1219,20 @@ const game = {
         game.enemies.forEach(e => {
             ctx.save();
             ctx.translate(e.x, e.y);
-            ctx.fillStyle = e.type==='boss' ? 'red' : '#330000';
-            ctx.strokeStyle = e.type==='boss' ? 'orange' : 'red';
-            ctx.lineWidth = 2;
-            ctx.beginPath(); 
-            if(e.type==='boss') ctx.arc(0,0, e.w/2, 0, Math.PI*2);
-            else { ctx.moveTo(0, 15); ctx.lineTo(10, -10); ctx.lineTo(-10, -10); }
-            ctx.closePath();
-            ctx.fill(); ctx.stroke();
+            
+            if(e.type === 'meteor') {
+                ctx.fillStyle = '#555'; ctx.strokeStyle = '#888';
+                ctx.beginPath(); ctx.arc(0,0, 15, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+            } else {
+                ctx.fillStyle = e.type==='boss' ? 'red' : '#330000';
+                ctx.strokeStyle = e.type==='boss' ? 'orange' : 'red';
+                ctx.lineWidth = 2;
+                ctx.beginPath(); 
+                if(e.type==='boss') ctx.arc(0,0, e.w/2, 0, Math.PI*2);
+                else { ctx.moveTo(0, 15); ctx.lineTo(10, -10); ctx.lineTo(-10, -10); }
+                ctx.closePath();
+                ctx.fill(); ctx.stroke();
+            }
             ctx.restore();
         });
         
@@ -1176,14 +1262,10 @@ const game = {
         document.getElementById('final-score').innerText = game.player.score.toLocaleString();
         document.getElementById('final-wave').innerText = `REACHED WAVE ${game.wave} (${game.difficulty})`;
         
-        // Submit Score
         await fetch(`${API}/submit_score`, {
             method:'POST', headers:{'Content-Type':'application/json'},
             body:JSON.stringify({player:USER.username, score:game.player.score, wave:game.wave, difficulty:game.difficulty})
         });
-        
-        // Refresh User Data (Credits earned)
-        // Ideally fetch user again. For now simple.
     }
 };
 
@@ -1207,9 +1289,7 @@ app.useDrone = async () => {
      } catch(e){}
 }
 
-// Start
 window.onload = app.init;
-
 </script>
 </body>
 </html>
