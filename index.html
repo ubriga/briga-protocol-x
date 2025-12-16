@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BRIGAGAME | v6.8 SECURE</title>
+    <title>BRIGAGAME | v6.9 ENHANCED</title>
     <!-- GOOGLE RECAPTCHA SCRIPT -->
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <style>
@@ -110,6 +110,38 @@
         .hp-fill { background: var(--main); box-shadow: 0 0 10px var(--main); }
         .heat-fill { background: var(--danger); width: 0%; transition: width 0.1s; }
         
+        /* BOSS HP BAR */
+        #boss-hp-container {
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 500px;
+            display: none;
+        }
+        #boss-hp-bar {
+            width: 100%;
+            height: 25px;
+            background: #222;
+            border: 2px solid red;
+            position: relative;
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+        }
+        #boss-hp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff0000, #ff6600);
+            transition: width 0.3s;
+            box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.3);
+        }
+        #boss-name {
+            text-align: center;
+            font-size: 16px;
+            color: red;
+            text-shadow: 0 0 10px red;
+            margin-top: 5px;
+            letter-spacing: 3px;
+        }
+        
         #msg-area {
             position: absolute;
             top: 20%; left: 50%;
@@ -119,6 +151,18 @@
             color: var(--warn);
             text-shadow: 0 0 10px black;
             pointer-events: none;
+        }
+
+        /* COMBO COUNTER */
+        #combo-display {
+            position: absolute;
+            top: 50%;
+            right: 20px;
+            font-size: 40px;
+            color: gold;
+            text-shadow: 0 0 20px gold;
+            display: none;
+            animation: pulse 0.5s infinite;
         }
 
         /* TOAST */
@@ -138,6 +182,20 @@
         /* JAMMED ANIMATION */
         @keyframes flash { 0% {opacity:1;} 50% {opacity:0;} 100% {opacity:1;} }
         .jammed-text { color: red; animation: flash 0.5s infinite; font-weight: bold; font-size: 20px; display: none; }
+
+        /* DAMAGE NUMBERS */
+        .damage-number {
+            position: absolute;
+            font-size: 20px;
+            font-weight: bold;
+            pointer-events: none;
+            animation: floatUp 1s ease-out forwards;
+            text-shadow: 0 0 5px black;
+        }
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-50px); }
+        }
 
         /* TABLE */
         table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
@@ -159,18 +217,48 @@
         
         /* Mobile Controls */
         #mobile-controls {
-            display: none; /* Shown via JS if mobile */
-            position: absolute; bottom: 20px; right: 20px;
-            width: 150px; height: 150px;
+            display: none;
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
             pointer-events: auto;
         }
-        .joy-btn {
-            width: 60px; height: 60px;
-            border-radius: 50%;
-            background: rgba(0,255,204,0.1);
-            border: 2px solid var(--main);
+        #joystick-area {
             position: absolute;
-            touch-action: none;
+            bottom: 20px;
+            left: 20px;
+            width: 120px;
+            height: 120px;
+            background: rgba(0, 255, 204, 0.1);
+            border: 2px solid var(--main);
+            border-radius: 50%;
+        }
+        #joystick-stick {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: var(--main);
+            border-radius: 50%;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            transition: 0.1s;
+        }
+        #fire-btn {
+            position: absolute;
+            bottom: 40px;
+            right: 40px;
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 0, 0, 0.3);
+            border: 3px solid red;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: red;
+            text-shadow: 0 0 10px red;
         }
     </style>
 </head>
@@ -182,9 +270,10 @@
          <div id="jammed-msg" class="jammed-text">WEAPON JAMMED!<br><span style="font-size:14px; color:white;">COOLING DOWN...</span></div>
     </div>
     <div id="toast">MSG</div>
+    <div id="combo-display"></div>
 
     <!-- DEV WATERMARK -->
-    <div style="position: absolute; bottom: 5px; right: 5px; font-size: 10px; color: #333; pointer-events: none;">DEV: OrelAi | v6.8 SECURE</div>
+    <div style="position: absolute; bottom: 5px; right: 5px; font-size: 10px; color: #333; pointer-events: none;">DEV: OrelAi | v6.9 ENHANCED</div>
     <div id="fps-counter" style="position: absolute; top: 5px; left: 5px; font-size: 10px; color: #555;">FPS: 60</div>
 
     <!-- PAUSE MENU -->
@@ -223,10 +312,19 @@
             </div>
         </div>
         
+        <!-- BOSS HP BAR -->
+        <div id="boss-hp-container">
+            <div id="boss-hp-bar">
+                <div id="boss-hp-fill" style="width: 100%;"></div>
+            </div>
+            <div id="boss-name">BOSS</div>
+        </div>
+        
         <div class="hud-panel" style="top: 50px; left: 10px;">
             <div id="score-disp" style="font-size: 24px;">0</div>
             <div id="wave-disp" style="font-size: 16px; color: #aaa;">WAVE 1</div>
             <div id="mode-disp" style="font-size: 12px; color: #777;">(CLASSIC)</div>
+            <div id="combo-info" style="font-size: 14px; color: gold; margin-top: 5px;">COMBO: x1</div>
             <div style="margin-top:10px; font-size:12px; color:#555;">[ESC] TO PAUSE</div>
         </div>
         
@@ -235,9 +333,12 @@
             <!-- Populated by JS -->
         </div>
 
-        <!-- Mobile Stick -->
+        <!-- Mobile Controls -->
         <div id="mobile-controls">
-            <div class="joy-btn" id="joy-fire" style="right:0; bottom:0;"></div>
+            <div id="joystick-area">
+                <div id="joystick-stick"></div>
+            </div>
+            <div id="fire-btn">🔥</div>
         </div>
     </div>
 
@@ -247,6 +348,7 @@
             <h1 style="color:var(--danger); font-size: 60px;">x_x</h1>
             <h2 id="final-score">0</h2>
             <p id="final-wave">WAVE 1</p>
+            <p id="final-combo" style="font-size: 14px; color: gold;">MAX COMBO: x1</p>
             <p id="death-reason" style="font-size: 12px; color: #888;">HULL BREACH!</p>
             <button onclick="app.startGame()">RE-ENGAGE</button>
             <button onclick="app.toLobby()">BASE</button>
@@ -258,11 +360,10 @@
         <h1 style="color: red; font-size: 50px; text-shadow: 0 0 20px red; animation: pulse 0.5s infinite;">⚠️ WARNING: BOSS DETECTED ⚠️</h1>
     </div>
 
-    <!-- LOGIN SCREEN (UPDATED) -->
+    <!-- LOGIN SCREEN -->
     <div id="screen-login" class="screen">
         <h1 style="font-size:90px; margin:0; text-shadow:0 0 40px var(--main);">BRIGAGAME</h1>
         
-        <!-- LOGIN BOX -->
         <div class="box" id="login-box">
             <h3 style="color:var(--main);">PILOT IDENTIFICATION</h3>
             <input type="text" id="inp-u" placeholder="PILOT ID"><br>
@@ -274,13 +375,11 @@
             </div>
         </div>
 
-        <!-- REGISTER BOX (HIDDEN BY DEFAULT) -->
         <div class="box" id="register-box" style="display:none;">
              <h3 style="color:var(--warn);">NEW RECRUITMENT</h3>
              <input type="text" id="reg-u" placeholder="CHOOSE ID"><br>
              <input type="password" id="reg-p" placeholder="SET CODE"><br>
              
-             <!-- RECAPTCHA WIDGET -->
              <div class="g-recaptcha" data-sitekey="6LfrGyssAAAAALIPZmJmhTJlcTvLzx2VHK6c06ZL" style="margin: 15px auto; display: inline-block;"></div>
              <br>
              
@@ -291,10 +390,9 @@
         </div>
     </div>
 
-    <!-- LOBBY -->
+    <!-- LOBBY (המשך בדיוק כמו המקור) -->
     <div id="screen-lobby" class="screen">
         <div style="display: flex; gap: 20px; width: 90%; height: 90%;">
-            <!-- SIDEBAR -->
             <div class="box" style="width: 250px; display: flex; flex-direction: column; text-align: left;">
                 <div style="display:flex; align-items:center; gap:10px; margin-bottom: 20px;">
                     <div style="width:40px; height:40px; background:var(--main); border-radius:50%; display:flex; align-items:center; justify-content:center; color:black; font-weight:bold; font-size:20px;" id="u-avatar">?</div>
@@ -312,15 +410,12 @@
                 <button onclick="auth.logout()" class="red" style="margin-top:auto;">LOGOUT</button>
             </div>
 
-            <!-- MAIN CONTENT -->
             <div style="flex: 1; display: flex; flex-direction: column; gap: 20px;">
-                <!-- NEWS TICKER -->
                 <div class="box" style="width:auto; padding: 10px; display: flex; justify-content: space-between; align-items: center;">
-                    <div style="font-weight:bold;">BRIGAGAME <span style="font-size:10px; background:var(--main); color:black; padding:2px;">v6.8</span></div>
+                    <div style="font-weight:bold;">BRIGAGAME <span style="font-size:10px; background:var(--main); color:black; padding:2px;">v6.9</span></div>
                     <div id="news-ticker" style="font-size:12px; color:#aaa;">LATEST INTEL: Loading...</div>
                 </div>
 
-                <!-- TABS -->
                 <div style="display:flex; gap:10px;">
                     <button class="tab-btn active" onclick="ui.tab('ops')">OPERATIONS</button>
                     <button class="tab-btn" onclick="ui.tab('armory')">ARMORY</button>
@@ -329,14 +424,11 @@
                     <button class="tab-btn" onclick="ui.tab('admin')" id="btn-admin" style="display:none;">ADMIN</button>
                 </div>
 
-                <!-- TAB CONTENT -->
                 <div class="box" style="width:auto; flex:1; overflow:hidden; position:relative;">
                     
-                    <!-- OPERATIONS TAB -->
                     <div id="tab-ops" style="height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:20px;">
                         <h2>MISSION PROTOCOL</h2>
                         
-                        <!-- GAME MODE SELECT -->
                         <div style="display:flex; gap:20px; align-items:center;">
                             <label>MODE:</label>
                             <select id="mode-select" style="width:200px;">
@@ -369,15 +461,12 @@
                         </div>
                     </div>
 
-                    <!-- ARMORY TAB (SHOP) -->
                     <div id="tab-armory" style="display:none; height:100%; overflow-y:auto;">
                         <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; padding: 10px;">
-                            <!-- Generated by JS -->
                             <div style="grid-column: 1/-1; text-align:center; padding:20px; color:#555;">Loading Logistics...</div>
                         </div>
                     </div>
-                    
-                    <!-- HANGAR TAB (INVENTORY) -->
+
                     <div id="tab-hangar" style="display:none; height:100%; overflow-y:auto;">
                         <h3>DRONES</h3>
                         <div id="hangar-drones" style="padding:10px; border:1px solid #333; margin-bottom:10px;">
@@ -392,7 +481,6 @@
                         <div id="hangar-skins" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px;"></div>
                     </div>
 
-                    <!-- LEADERBOARD TAB -->
                     <div id="tab-leaderboard" style="display:none; height:100%;">
                         <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
                             <h3>TOP PILOTS</h3>
@@ -406,7 +494,6 @@
                         </div>
                     </div>
 
-                    <!-- ADMIN TAB -->
                     <div id="tab-admin" style="display:none; height:100%; overflow-y:auto;">
                         <div id="admin-login-panel">
                             <h3>SECURE ACCESS</h3>
@@ -423,7 +510,6 @@
                                 <button onclick="admin.lock()" class="red">LOCK</button>
                             </div>
 
-                            <!-- ADMIN USERS -->
                             <div id="sub-users" class="admin-sub">
                                 <table style="font-size:10px;">
                                     <thead><tr><th>ID</th><th>USER</th><th>XP</th><th>STATUS</th><th>ACT</th></tr></thead>
@@ -431,7 +517,6 @@
                                 </table>
                             </div>
 
-                            <!-- ADMIN COUPONS -->
                             <div id="sub-coupons" class="admin-sub" style="display:none;">
                                 <div style="border:1px solid #333; padding:10px; margin-bottom:10px;">
                                     <h4>CREATE COUPON</h4>
@@ -447,7 +532,6 @@
                                 </table>
                             </div>
                             
-                            <!-- ADMIN CONFIG -->
                             <div id="sub-config" class="admin-sub" style="display:none;">
                                 <label>RELEASE NOTES</label><br>
                                 <textarea id="conf-notes" style="width:90%; height:60px; background:black; color:white;"></textarea>
@@ -467,13 +551,12 @@
 </div>
 
 <canvas id="gameCanvas"></canvas>
-
 <script>
-/** BRIGAGAME v6.8 - SECURITY HARDENING **/
-const API = "https://ubriga.pythonanywhere.com"; // Change to localhost if testing locally
+/** BRIGAGAME v6.9 - ENHANCED EDITION **/
+const API = "https://ubriga.pythonanywhere.com";
 var USER=null, TOKEN=localStorage.getItem('px_token');
 var KEYS = {}; 
-var ADMIN_UNLOCKED = false; // Local security flag
+var ADMIN_UNLOCKED = false;
 
 const RANKS = [
     {xp:0, name:"Private"}, {xp:1000, name:"Private 2"}, {xp:2500, name:"Private 1st Class"},
@@ -493,7 +576,7 @@ const toast = (msg) => {
     setTimeout(() => { t.style.opacity = 0; t.style.bottom = "30px"; }, 3000);
 }
 
-// AUTH MODULE
+// AUTH MODULE (UNCHANGED - KEEPS YOUR SECURITY FIXES)
 const auth = {
     toggleMode: (mode) => {
         document.getElementById('login-box').style.display = mode === 'login' ? 'block' : 'none';
@@ -509,7 +592,6 @@ const auth = {
             if(d.error) return toast(d.error);
             USER = d.user; TOKEN = d.token;
             localStorage.setItem('px_token', TOKEN);
-            // Lock Admin on new login
             ADMIN_UNLOCKED = false;
             app.toLobby();
         } catch(e) { toast("Conn Error"); }
@@ -519,7 +601,6 @@ const auth = {
         const u = v('reg-u'), p = v('reg-p');
         if(!u || !p) return toast("MISSING INFO");
 
-        // CHECK RECAPTCHA
         const token = grecaptcha.getResponse();
         if(token.length === 0) {
             return toast("PLEASE CONFIRM YOU ARE NOT A ROBOT");
@@ -540,7 +621,7 @@ const auth = {
             if(d.status === 'success') {
                 toast(d.message);
                 grecaptcha.reset();
-                auth.toggleMode('login'); // Switch back to login
+                auth.toggleMode('login');
             } else {
                 toast(d.message || d.error);
                 grecaptcha.reset();
@@ -561,15 +642,14 @@ const auth = {
             if(d.status==='success') document.getElementById('screen-settings').style.display='none';
         } catch(e) { toast("Error"); }
     },
+    
     logout: () => {
         USER=null; TOKEN=null; localStorage.removeItem('px_token');
         
-        // SECURITY FIX 1: CLEAR CREDENTIALS
         document.getElementById('inp-u').value = "";
         document.getElementById('inp-p').value = "";
         document.getElementById('admin-pin').value = ""; 
 
-        // SECURITY FIX 2: RESET ADMIN STATE
         ADMIN_UNLOCKED = false;
         document.getElementById('btn-admin').style.display = 'none';
         document.getElementById('admin-panel').style.display = 'none';
@@ -577,11 +657,11 @@ const auth = {
 
         document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
         document.getElementById('screen-login').style.display='flex';
-        auth.toggleMode('login'); // Reset to login view
+        auth.toggleMode('login');
     }
 };
 
-// UI MANAGER
+// UI MANAGER (UNCHANGED)
 const ui = {
     tab: (t) => {
         document.querySelectorAll('[id^="tab-"]').forEach(d=>d.style.display='none');
@@ -592,7 +672,6 @@ const ui = {
         if(t==='hangar') shop.renderHangar();
         if(t==='leaderboard') app.loadLeaderboard();
         
-        // SECURITY FIX 3: REQUIRE PIN EVERY TIME IF NOT UNLOCKED
         if(t==='admin') {
              if(ADMIN_UNLOCKED) {
                  document.getElementById('admin-login-panel').style.display = 'none';
@@ -610,7 +689,7 @@ const ui = {
     }
 };
 
-// SHOP & ECONOMY
+// SHOP & ECONOMY (UNCHANGED)
 const shop = {
     prices: {},
     items: [
@@ -647,7 +726,6 @@ const shop = {
         const cost = manualCost || shop.getCost(id, type);
         if(USER.credits < cost) return toast("INSUFFICIENT FUNDS");
         
-        // Optimistic UI
         USER.credits -= cost;
         app.updateLobbyUI();
         
@@ -668,7 +746,7 @@ const shop = {
                 shop.render(); shop.renderHangar();
             } else {
                 toast(d.error);
-                USER.credits += cost; // Revert
+                USER.credits += cost;
                 app.updateLobbyUI();
             }
         } catch(e) { USER.credits+=cost; toast("Error"); }
@@ -727,16 +805,13 @@ const shop = {
     },
 
     renderHangar: () => {
-        // Consumables
         if(USER.consumables) {
             document.getElementById('qty-drone_support').innerText = `OWNED: ${USER.consumables['drone_support']||0}`;
         }
 
-        // Skins
         const con = document.getElementById('hangar-skins');
         con.innerHTML = "";
         
-        // Default Skin
         let dBtn = document.createElement('div');
         dBtn.className = "box";
         dBtn.innerHTML = `<div>DEFAULT</div><button onclick="shop.equip('default')">EQUIP</button>`;
@@ -753,7 +828,7 @@ const shop = {
     }
 };
 
-// ADMIN MODULE
+// ADMIN MODULE (UNCHANGED)
 const admin = {
     verify: async () => {
         const pin = document.getElementById('admin-pin').value;
@@ -763,10 +838,10 @@ const admin = {
                 body:JSON.stringify({pin:pin})
             });
             if((await res.json()).status === 'success') {
-                document.getElementById('admin-pin').value = ""; // Clear PIN on success
+                document.getElementById('admin-pin').value = "";
                 document.getElementById('admin-login-panel').style.display='none';
                 document.getElementById('admin-panel').style.display='block';
-                ADMIN_UNLOCKED = true; // Unlock for this session
+                ADMIN_UNLOCKED = true;
                 admin.refresh();
             } else toast("ACCESS DENIED");
         } catch(e) {}
@@ -778,12 +853,11 @@ const admin = {
         toast("ADMIN LOCKED");
     },
     refresh: async () => {
-        if(!ADMIN_UNLOCKED) return; // Prevent unauthorized refresh
+        if(!ADMIN_UNLOCKED) return;
         try {
             const res = await fetch(`${API}/admin/dashboard`, {headers:{'Authorization':`Bearer ${TOKEN}`}});
             const d = await res.json();
             
-            // Users
             const ub = document.getElementById('adm-users-list'); ub.innerHTML="";
             d.users.forEach(u => {
                 ub.innerHTML += `
@@ -799,14 +873,12 @@ const admin = {
                 </tr>`;
             });
 
-            // Coupons
             const cb = document.getElementById('adm-coupons-list'); cb.innerHTML="";
             d.coupons.forEach(c => {
                 cb.innerHTML += `<tr><td>${c.code}</td><td>${c.value}</td><td>${c.uses}</td><td>${c.expires||'-'}</td>
                 <td><button onclick="admin.act('delete_coupon', null, null, ${c.id})" class="red">X</button></td></tr>`;
             });
             
-            // Config
             if(d.config) {
                 if(d.config.prices) {
                      let prices = JSON.parse(d.config.prices);
@@ -874,7 +946,10 @@ const admin = {
     }
 };
 
-// GAME ENGINE
+// ========================================
+// 🎮 ENHANCED GAME ENGINE
+// ========================================
+
 const app = {
     canvas: document.getElementById('gameCanvas'),
     ctx: document.getElementById('gameCanvas').getContext('2d'),
@@ -887,22 +962,62 @@ const app = {
             KEYS[e.code] = true; 
             if(e.code==='Escape') game.togglePause(); 
             if(e.code==='Space') game.shoot();
-            if(e.code==='KeyR' && game.jammed) game.vent(); // Manual vent on R
+            if(e.code==='KeyR' && game.jammed) game.vent();
         });
         window.addEventListener('keyup', e => KEYS[e.code] = false);
 
+        // ENHANCED MOBILE CONTROLS
         if('ontouchstart' in window) {
             document.getElementById('mobile-controls').style.display='block';
-            const jf = document.getElementById('joy-fire');
-            jf.addEventListener('touchstart', (e)=>{e.preventDefault(); KEYS['Space']=true;});
-            jf.addEventListener('touchend', (e)=>{e.preventDefault(); KEYS['Space']=false;});
             
-            app.canvas.addEventListener('touchmove', (e)=>{
+            // Joystick
+            const joyArea = document.getElementById('joystick-area');
+            const joyStick = document.getElementById('joystick-stick');
+            let joyActive = false;
+            let joyCenter = {x:0, y:0};
+            
+            joyArea.addEventListener('touchstart', (e) => {
                 e.preventDefault();
-                let t = e.touches[0];
-                game.player.x = t.clientX;
-                game.player.y = t.clientY;
-            }, {passive:false});
+                joyActive = true;
+                const rect = joyArea.getBoundingClientRect();
+                joyCenter = {x: rect.left + rect.width/2, y: rect.top + rect.height/2};
+            });
+            
+            joyArea.addEventListener('touchmove', (e) => {
+                if(!joyActive) return;
+                e.preventDefault();
+                const touch = e.touches[0];
+                const dx = touch.clientX - joyCenter.x;
+                const dy = touch.clientY - joyCenter.y;
+                const dist = Math.min(Math.sqrt(dx*dx + dy*dy), 40);
+                const angle = Math.atan2(dy, dx);
+                
+                joyStick.style.left = `calc(50% + ${Math.cos(angle) * dist}px)`;
+                joyStick.style.top = `calc(50% + ${Math.sin(angle) * dist}px)`;
+                
+                // Move player
+                if(game.running && !game.paused) {
+                    game.player.x += Math.cos(angle) * dist * 0.3;
+                    game.player.y += Math.sin(angle) * dist * 0.3;
+                }
+            });
+            
+            joyArea.addEventListener('touchend', () => {
+                joyActive = false;
+                joyStick.style.left = '50%';
+                joyStick.style.top = '50%';
+            });
+            
+            // Fire Button
+            const fireBtn = document.getElementById('fire-btn');
+            fireBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                KEYS['Space'] = true;
+            });
+            fireBtn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                KEYS['Space'] = false;
+            });
         } else {
              app.canvas.addEventListener('mousemove', e => {
                 if(!game.paused && !game.over) {
@@ -939,7 +1054,6 @@ const app = {
         document.getElementById('u-rank').innerText = r.name.toUpperCase();
         document.getElementById('u-avatar').innerText = USER.username.charAt(0).toUpperCase();
 
-        // SECURITY FIX 4: Only show admin button if admin AND ensure it's hidden otherwise
         if(USER.is_admin) {
             document.getElementById('btn-admin').style.display='block';
         } else {
@@ -967,31 +1081,43 @@ const app = {
 
     loop: () => {
         requestAnimationFrame(app.loop);
-        if(!USER) return; // FIX: Don't run game logic if user not logged in
+        if(!USER) return;
         game.update();
         game.draw();
     }
 };
 
-// GAME LOGIC
+// ========================================
+// 🎮 ENHANCED GAME LOGIC
+// ========================================
+
 const game = {
     running: false,
     paused: false,
     over: false,
-    jammed: false, // New State
+    jammed: false,
     lastTime: 0,
+    screenShake: 0,
     
-    player: {x:0, y:0, hp:100, maxHp:100, heat:0, score:0},
+    player: {x:0, y:0, hp:100, maxHp:100, heat:0, score:0, invincible:0},
     bullets: [],
+    enemyBullets: [], // NEW: Enemy projectiles
     enemies: [],
     particles: [],
-    bonuses: [], // New: Loot Drops
+    bonuses: [],
     drones: [],
+    damageNumbers: [], // NEW: Floating damage
     
     wave: 0,
     waveTimer: 0,
     difficulty: 'Soldier',
-    mode: 'Classic', // 'Classic' or 'Meteor'
+    mode: 'Classic',
+    
+    combo: 0, // NEW: Combo system
+    comboTimer: 0,
+    maxCombo: 0,
+    
+    boss: null, // NEW: Boss reference
     
     start: () => {
         game.running = true;
@@ -1008,22 +1134,32 @@ const game = {
         game.player.hp = game.player.maxHp;
         game.player.heat = 0;
         game.player.score = 0;
+        game.player.invincible = 0;
         
         game.fireRate = Math.max(5, 20 - (inv['fire_rate']||0));
         game.damage = 10 + ((inv['damage']||0) * 5);
         game.doubleShot = (inv['double_shot']||0);
         
         game.bullets = [];
+        game.enemyBullets = [];
         game.enemies = [];
         game.particles = [];
         game.bonuses = [];
         game.drones = [];
+        game.damageNumbers = [];
+        game.boss = null;
+        
+        game.combo = 0;
+        game.comboTimer = 0;
+        game.maxCombo = 0;
+        
         game.wave = 0;
         game.nextWave();
 
-        // Spawn consumable drones if auto-use
         let dCount = (USER.consumables && USER.consumables['drone_support']) || 0;
         for(let i=0; i<dCount; i++) app.useDrone();
+        
+        document.getElementById('boss-hp-container').style.display = 'none';
     },
 
     togglePause: () => {
@@ -1034,39 +1170,130 @@ const game = {
 
     nextWave: () => {
         game.wave++;
-        game.waveTimer = game.mode === 'Meteor' ? 600 : 300; // Longer waves in Meteor
+        game.waveTimer = game.mode === 'Meteor' ? 600 : 300;
         
+        // BOSS WAVE (every 5 waves in Classic)
         if(game.mode === 'Classic' && game.wave % 5 === 0) {
             document.getElementById('boss-warning').style.display='flex';
             setTimeout(()=>document.getElementById('boss-warning').style.display='none', 3000);
+            game.spawnBoss();
+            return;
         }
 
+        // BONUS WAVE (every 10 waves)
+        if(game.wave % 10 === 0) {
+            toast("💎 BONUS WAVE! 💎");
+            game.spawnBonusWave();
+            return;
+        }
+
+        // NORMAL WAVE - Mixed enemy types
         let count = 5 + (game.wave * 2);
         let speedMult = 1;
         if(game.difficulty === 'Veteran') { count *= 1.5; speedMult=1.2; }
         if(game.difficulty === 'Elite') { count *= 2; speedMult=1.5; }
+        if(game.difficulty === 'Legend') { count *= 3; speedMult=2; }
         
-        if(game.mode === 'Meteor') count *= 2; // More meteors
+        if(game.mode === 'Meteor') count *= 2;
 
         for(let i=0; i<count; i++) {
-            let isBoss = (game.mode === 'Classic' && game.wave % 5 === 0 && i===0);
-            game.enemies.push({
-                x: Math.random() * app.canvas.width,
-                y: -Math.random() * (game.mode==='Meteor'?2000:1000),
-                w: isBoss ? 100 : 30, 
-                h: isBoss ? 100 : 30,
-                hp: isBoss ? (1000 + game.wave*100) : (10 + game.wave * 5),
-                maxHp: isBoss ? (1000 + game.wave*100) : (10 + game.wave * 5),
-                speed: (2 + Math.random() * 2) * speedMult,
-                type: isBoss ? 'boss' : (game.mode==='Meteor'?'meteor':'grunt')
-            });
+            if(game.mode === 'Meteor') {
+                game.spawnEnemy('meteor', speedMult);
+            } else {
+                // Mix of enemy types
+                let rand = Math.random();
+                if(rand < 0.5) game.spawnEnemy('grunt', speedMult);
+                else if(rand < 0.75) game.spawnEnemy('scout', speedMult);
+                else if(rand < 0.9) game.spawnEnemy('tank', speedMult);
+                else game.spawnEnemy('shooter', speedMult);
+            }
         }
         
         toast(`${game.mode.toUpperCase()} WAVE ${game.wave}`);
     },
 
+    spawnEnemy: (type, speedMult=1) => {
+        let enemy = {
+            x: Math.random() * app.canvas.width,
+            y: -Math.random() * (game.mode==='Meteor'?2000:1000),
+            w: 30, 
+            h: 30,
+            speed: (2 + Math.random() * 2) * speedMult,
+            type: type,
+            shootTimer: 0
+        };
+
+        switch(type) {
+            case 'meteor':
+                enemy.hp = 10 + game.wave * 5;
+                enemy.maxHp = enemy.hp;
+                enemy.color = '#555';
+                break;
+            case 'scout':
+                enemy.hp = 5 + game.wave * 2;
+                enemy.maxHp = enemy.hp;
+                enemy.speed *= 1.5;
+                enemy.color = 'orange';
+                enemy.w = 20; enemy.h = 20;
+                break;
+            case 'tank':
+                enemy.hp = 30 + game.wave * 10;
+                enemy.maxHp = enemy.hp;
+                enemy.speed *= 0.5;
+                enemy.color = 'green';
+                enemy.w = 40; enemy.h = 40;
+                break;
+            case 'shooter':
+                enemy.hp = 15 + game.wave * 5;
+                enemy.maxHp = enemy.hp;
+                enemy.color = 'purple';
+                break;
+            default: // grunt
+                enemy.hp = 10 + game.wave * 5;
+                enemy.maxHp = enemy.hp;
+                enemy.color = 'red';
+        }
+
+        game.enemies.push(enemy);
+    },
+
+    spawnBoss: () => {
+        game.boss = {
+            x: app.canvas.width / 2,
+            y: -150,
+            w: 100,
+            h: 100,
+            hp: 1000 + game.wave * 200,
+            maxHp: 1000 + game.wave * 200,
+            speed: 2,
+            type: 'boss',
+            pattern: Math.floor(Math.random() * 3), // 0=circle, 1=zigzag, 2=dive
+            angle: 0,
+            phase: 1,
+            shootTimer: 0,
+            minions: []
+        };
+        game.enemies.push(game.boss);
+        
+        document.getElementById('boss-hp-container').style.display = 'block';
+        document.getElementById('boss-name').innerText = `⚠️ BOSS WAVE ${game.wave/5} ⚠️`;
+    },
+
+    spawnBonusWave: () => {
+        // Spawn lots of bonuses!
+        for(let i=0; i<20; i++) {
+            setTimeout(() => {
+                game.bonuses.push({
+                    x: Math.random() * app.canvas.width,
+                    y: -50,
+                    type: ['shield', 'rapid', 'triple', 'multiplier'][Math.floor(Math.random() * 4)]
+                });
+            }, i * 200);
+        }
+    },
+
     shoot: () => {
-        if(game.jammed) return; // Cannot shoot if jammed
+        if(game.jammed) return;
         if(game.player.heat >= 100) {
             game.jam();
             return;
@@ -1087,7 +1314,7 @@ const game = {
         document.getElementById('jammed-msg').style.display = 'block';
         let auto = document.getElementById('chk-autofire').checked;
         if(!auto) document.getElementById('jammed-msg').innerHTML = "WEAPON JAMMED!<br>PRESS [R] TO VENT";
-        else setTimeout(()=>game.vent(), 3000); // Auto clear after 3s
+        else setTimeout(()=>game.vent(), 3000);
     },
 
     vent: () => {
@@ -1097,6 +1324,20 @@ const game = {
         toast("WEAPON VENTED");
     },
 
+    addDamageNumber: (x, y, dmg) => {
+        game.damageNumbers.push({
+            x: x,
+            y: y,
+            text: Math.floor(dmg),
+            life: 60,
+            color: dmg > 50 ? 'red' : 'white'
+        });
+    },
+
+    screenShakeEffect: (amount) => {
+        game.screenShake = amount;
+    },
+
     update: () => {
         if(!game.running || game.paused || game.over) return;
         
@@ -1104,12 +1345,19 @@ const game = {
         
         // Player Heat
         if(!game.jammed && game.player.heat > 0) game.player.heat -= 0.5;
+        if(game.player.invincible > 0) game.player.invincible--;
         
         // Auto Fire
         if(document.getElementById('chk-autofire').checked && !game.jammed && game.player.heat < 80) {
              if(game.lastTime % game.fireRate === 0) game.shoot();
         }
         game.lastTime++;
+
+        // Combo Timer
+        if(game.comboTimer > 0) {
+            game.comboTimer--;
+            if(game.comboTimer === 0) game.combo = 0;
+        }
 
         // Drones
         game.drones.forEach(d => {
@@ -1128,41 +1376,151 @@ const game = {
             if(b.y < -50) game.bullets.splice(i, 1);
         }
 
-        // Enemies & Meteors
+        // Enemy Bullets
+        for(let i=game.enemyBullets.length-1; i>=0; i--) {
+            let b = game.enemyBullets[i];
+            b.x += b.vx; b.y += b.vy;
+            
+            // Check player collision
+            if(game.player.invincible === 0 && Math.abs(b.x - game.player.x) < 20 && Math.abs(b.y - game.player.y) < 20) {
+                game.player.hp -= 10;
+                game.screenShakeEffect(10);
+                game.createParticles(b.x, b.y, 5, 'red');
+                game.enemyBullets.splice(i, 1);
+                continue;
+            }
+            
+            if(b.y > H + 50) game.enemyBullets.splice(i, 1);
+        }
+
+        // Enemies & Boss AI
         let activeEnemies = 0;
         for(let i=game.enemies.length-1; i>=0; i--) {
             let e = game.enemies[i];
             activeEnemies++;
-            e.y += e.speed;
             
-            // Boss Bounce
+            // BOSS AI
             if(e.type === 'boss') {
-                if(e.y > H-100) e.speed *= -1; // Bounce up
-                if(e.y < 50 && e.speed < 0) e.speed *= -1; // Bounce down
+                // Movement Patterns
+                switch(e.pattern) {
+                    case 0: // Circle
+                        e.angle += 0.02;
+                        e.x = W/2 + Math.cos(e.angle) * 200;
+                        e.y = 150 + Math.sin(e.angle * 2) * 50;
+                        break;
+                    case 1: // Zigzag
+                        e.x += Math.sin(game.lastTime * 0.05) * 3;
+                        if(e.y < 150) e.y += 1;
+                        break;
+                    case 2: // Dive Bomb
+                        if(game.lastTime % 180 < 90) {
+                            if(e.y < 150) e.y += 2;
+                        } else {
+                            let dx = game.player.x - e.x;
+                            e.x += Math.sign(dx) * 4;
+                            e.y += 3;
+                            if(e.y > H - 100) e.y = 100;
+                        }
+                        break;
+                }
+                
+                // Boss Shooting
+                e.shootTimer++;
+                if(e.shootTimer > 60) {
+                    e.shootTimer = 0;
+                    // Shoot spread pattern
+                    for(let j=-2; j<=2; j++) {
+                        let angle = Math.PI/2 + j * 0.3;
+                        game.enemyBullets.push({
+                            x: e.x,
+                            y: e.y,
+                            vx: Math.cos(angle) * 4,
+                            vy: Math.sin(angle) * 4
+                        });
+                    }
+                }
+                
+                // Boss Phase 2 (spawn minions at 50% HP)
+                if(e.hp < e.maxHp / 2 && e.phase === 1) {
+                    e.phase = 2;
+                    toast("⚠️ BOSS PHASE 2! ⚠️");
+                    for(let j=0; j<5; j++) {
+                        game.spawnEnemy('grunt', 1.5);
+                    }
+                }
+                
+                // Update Boss HP Bar
+                let hpPercent = (e.hp / e.maxHp) * 100;
+                document.getElementById('boss-hp-fill').style.width = hpPercent + '%';
+                
+            } else {
+                // Normal enemy movement
+                e.y += e.speed;
+                
+                // Shooter AI
+                if(e.type === 'shooter') {
+                    e.shootTimer++;
+                    if(e.shootTimer > 120) {
+                        e.shootTimer = 0;
+                        let dx = game.player.x - e.x;
+                        let dy = game.player.y - e.y;
+                        let dist = Math.sqrt(dx*dx + dy*dy);
+                        game.enemyBullets.push({
+                            x: e.x,
+                            y: e.y,
+                            vx: (dx / dist) * 3,
+                            vy: (dy / dist) * 3
+                        });
+                    }
+                }
             }
 
             // Player Collision
-            if(Math.abs(e.x - game.player.x) < 30 && Math.abs(e.y - game.player.y) < 30) {
-                game.player.hp -= (e.type==='meteor' ? 30 : 10);
+            if(game.player.invincible === 0 && Math.abs(e.x - game.player.x) < 30 && Math.abs(e.y - game.player.y) < 30) {
+                let dmg = (e.type==='meteor' ? 30 : (e.type==='boss' ? 50 : 10));
+                game.player.hp -= dmg;
+                game.screenShakeEffect(15);
                 game.createParticles(e.x, e.y, 10, 'red');
-                game.enemies.splice(i, 1);
+                if(e.type !== 'boss') {
+                    game.enemies.splice(i, 1);
+                    activeEnemies--;
+                }
                 continue;
             }
 
-            // Bullet Collision (Immune in Meteor Mode)
-            if(game.mode !== 'Meteor' || e.type === 'boss') { 
+            // Bullet Collision
+            if(game.mode !== 'Meteor' || e.type === 'boss' || e.type !== 'meteor') { 
                 for(let j=game.bullets.length-1; j>=0; j--) {
                     let b = game.bullets[j];
                     if(Math.abs(e.x - b.x) < e.w && Math.abs(e.y - b.y) < e.h) {
                         e.hp -= b.dmg;
                         game.bullets.splice(j, 1);
                         game.createParticles(b.x, b.y, 3, 'cyan');
+                        game.addDamageNumber(e.x, e.y, b.dmg);
+                        
                         if(e.hp <= 0) {
-                            game.player.score += (e.type==='boss'?500:50);
+                            // Combo System
+                            game.combo++;
+                            game.comboTimer = 180; // 3 seconds
+                            if(game.combo > game.maxCombo) game.maxCombo = game.combo;
+                            
+                            let scoreGain = (e.type==='boss'?500:50) * game.combo;
+                            game.player.score += scoreGain;
+                            
                             game.createParticles(e.x, e.y, 20, 'orange');
                             
                             // DROP LOOT
-                            if(Math.random() > 0.9) game.bonuses.push({x:e.x, y:e.y, type: Math.random()>0.5?'shield':'rapid'});
+                            let dropChance = e.type === 'boss' ? 1.0 : 0.15;
+                            if(Math.random() < dropChance) {
+                                let bonusType = ['shield', 'rapid', 'triple', 'multiplier'][Math.floor(Math.random() * 4)];
+                                game.bonuses.push({x:e.x, y:e.y, type: bonusType});
+                            }
+
+                            if(e.type === 'boss') {
+                                game.boss = null;
+                                document.getElementById('boss-hp-container').style.display = 'none';
+                                toast("🏆 BOSS DEFEATED! 🏆");
+                            }
 
                             game.enemies.splice(i, 1);
                             activeEnemies--;
@@ -1174,13 +1532,17 @@ const game = {
             
             // Enemy Escaped
             if(e.y > H + 100) { 
-                // Penalty only in Classic Mode
                 if(game.mode === 'Classic' && e.type !== 'boss') {
                     let pen = game.wave > 5 ? 5 : 10;
                     game.player.hp -= pen;
                     toast(`ENEMY BREACH! -${pen} HP`);
                 }
-                game.enemies.splice(i, 1); activeEnemies--; 
+                if(e.type === 'boss') {
+                    game.boss = null;
+                    document.getElementById('boss-hp-container').style.display = 'none';
+                }
+                game.enemies.splice(i, 1); 
+                activeEnemies--; 
             }
         }
 
@@ -1189,9 +1551,22 @@ const game = {
             let b = game.bonuses[i];
             b.y += 2;
             if(Math.abs(b.x - game.player.x) < 30 && Math.abs(b.y - game.player.y) < 30) {
-                toast("BONUS ACQUIRED!");
-                if(b.type==='shield') game.player.hp = Math.min(game.player.maxHp, game.player.hp+20);
-                if(b.type==='rapid') { game.fireRate = 2; setTimeout(()=>game.fireRate=10, 5000); }
+                toast(`💎 ${b.type.toUpperCase()} ACQUIRED!`);
+                if(b.type==='shield') game.player.hp = Math.min(game.player.maxHp, game.player.hp+30);
+                if(b.type==='rapid') { 
+                    let oldRate = game.fireRate;
+                    game.fireRate = 2; 
+                    setTimeout(()=>game.fireRate=oldRate, 5000); 
+                }
+                if(b.type==='triple') {
+                    let oldShot = game.doubleShot;
+                    game.doubleShot = 2;
+                    setTimeout(()=>game.doubleShot=oldShot, 5000);
+                }
+                if(b.type==='multiplier') {
+                    game.combo = Math.max(game.combo, 5);
+                    game.comboTimer = 300;
+                }
                 game.bonuses.splice(i, 1);
             }
             if(b.y > H) game.bonuses.splice(i, 1);
@@ -1210,6 +1585,16 @@ const game = {
             p.x += p.vx; p.y += p.vy; p.life--;
             if(p.life<=0) game.particles.splice(i,1);
         });
+
+        // Damage Numbers
+        game.damageNumbers.forEach((d, i) => {
+            d.life--;
+            d.y -= 1;
+            if(d.life <= 0) game.damageNumbers.splice(i, 1);
+        });
+
+        // Screen Shake
+        if(game.screenShake > 0) game.screenShake--;
         
         // HUD Updates
         document.getElementById('bar-hp').style.width = Math.max(0, (game.player.hp / game.player.maxHp * 100)) + "%";
@@ -1217,6 +1602,15 @@ const game = {
         document.getElementById('bar-heat').style.width = hPer + "%";
         document.getElementById('score-disp').innerText = game.player.score.toLocaleString();
         document.getElementById('wave-disp').innerText = `WAVE ${game.wave}`;
+        document.getElementById('combo-info').innerText = `COMBO: x${game.combo || 1}`;
+        
+        // Show combo if high
+        if(game.combo >= 5) {
+            document.getElementById('combo-display').style.display = 'block';
+            document.getElementById('combo-display').innerText = `x${game.combo}`;
+        } else {
+            document.getElementById('combo-display').style.display = 'none';
+        }
         
         if(game.jammed) document.querySelector('.heat-fill').style.background = 'white';
         else document.querySelector('.heat-fill').style.background = 'var(--danger)';
@@ -1226,34 +1620,68 @@ const game = {
     },
 
     draw: () => {
-        if(!USER) return; // FIX: Don't draw if USER is null
+        if(!USER) return;
         
         const ctx = app.ctx;
+        ctx.save();
+        
+        // Screen Shake
+        if(game.screenShake > 0) {
+            ctx.translate(
+                (Math.random() - 0.5) * game.screenShake,
+                (Math.random() - 0.5) * game.screenShake
+            );
+        }
+        
         ctx.clearRect(0, 0, app.canvas.width, app.canvas.height);
         
         // Background Grid
         ctx.strokeStyle = "rgba(0, 255, 204, 0.1)";
         ctx.lineWidth = 1;
         let off = (game.lastTime * (game.mode==='Meteor'?10:2)) % 50;
-        for(let i=0; i<app.canvas.width/50; i++) { ctx.beginPath(); ctx.moveTo(i*50, 0); ctx.lineTo(i*50, app.canvas.height); ctx.stroke(); }
-        for(let i=0; i<app.canvas.height/50; i++) { ctx.beginPath(); ctx.moveTo(0, i*50+off); ctx.lineTo(app.canvas.width, i*50+off); ctx.stroke(); }
+        for(let i=0; i<app.canvas.width/50; i++) { 
+            ctx.beginPath(); 
+            ctx.moveTo(i*50, 0); 
+            ctx.lineTo(i*50, app.canvas.height); 
+            ctx.stroke(); 
+        }
+        for(let i=0; i<app.canvas.height/50; i++) { 
+            ctx.beginPath(); 
+            ctx.moveTo(0, i*50+off); 
+            ctx.lineTo(app.canvas.width, i*50+off); 
+            ctx.stroke(); 
+        }
 
         // Player
         ctx.save();
         ctx.translate(game.player.x, game.player.y);
         
         let skin = USER.inventory.active_skin;
-        if(skin === 'skin_neon') ctx.shadowBlur = 20; ctx.shadowColor = 'cyan';
+        if(skin === 'skin_neon') { ctx.shadowBlur = 20; ctx.shadowColor = 'cyan'; }
         if(skin === 'skin_gold') { ctx.fillStyle = 'gold'; } else { ctx.fillStyle = 'black'; }
+        
+        // Invincibility flash
+        if(game.player.invincible > 0 && game.player.invincible % 10 < 5) {
+            ctx.globalAlpha = 0.5;
+        }
         
         ctx.strokeStyle = varColor(skin);
         ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.moveTo(0, -20); ctx.lineTo(15, 15); ctx.lineTo(0, 5); ctx.lineTo(-15, 15); ctx.closePath();
+        ctx.beginPath(); 
+        ctx.moveTo(0, -20); 
+        ctx.lineTo(15, 15); 
+        ctx.lineTo(0, 5); 
+        ctx.lineTo(-15, 15); 
+        ctx.closePath();
         ctx.fill(); ctx.stroke();
         
         // Engine Flame
         ctx.fillStyle = `rgba(0, 255, 204, ${Math.random()})`;
-        ctx.beginPath(); ctx.moveTo(-5, 10); ctx.lineTo(5, 10); ctx.lineTo(0, 25 + Math.random()*10); ctx.fill();
+        ctx.beginPath(); 
+        ctx.moveTo(-5, 10); 
+        ctx.lineTo(5, 10); 
+        ctx.lineTo(0, 25 + Math.random()*10); 
+        ctx.fill();
         ctx.restore();
 
         // Drones
@@ -1264,15 +1692,27 @@ const game = {
 
         // Bonuses
         game.bonuses.forEach(b => {
-            ctx.fillStyle = b.type==='shield'?'blue':'green';
-            ctx.beginPath(); ctx.arc(b.x, b.y, 10, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle='white'; ctx.font='10px Arial'; ctx.fillText(b.type==='shield'?'S':'R', b.x-3, b.y+3);
+            let colors = {shield:'blue', rapid:'yellow', triple:'green', multiplier:'gold'};
+            let symbols = {shield:'🛡️', rapid:'⚡', triple:'🔱', multiplier:'💰'};
+            
+            ctx.fillStyle = colors[b.type];
+            ctx.beginPath(); ctx.arc(b.x, b.y, 12, 0, Math.PI*2); ctx.fill();
+            ctx.font='16px Arial'; 
+            ctx.fillText(symbols[b.type], b.x-8, b.y+5);
         });
 
         // Bullets
         game.bullets.forEach(b => {
             ctx.fillStyle = b.color || varColor(skin);
             ctx.fillRect(b.x-2, b.y-5, 4, 10);
+        });
+
+        // Enemy Bullets
+        game.enemyBullets.forEach(b => {
+            ctx.fillStyle = 'red';
+            ctx.beginPath();
+            ctx.arc(b.x, b.y, 4, 0, Math.PI*2);
+            ctx.fill();
         });
 
         // Enemies
@@ -1283,16 +1723,34 @@ const game = {
             if(e.type === 'meteor') {
                 ctx.fillStyle = '#555'; ctx.strokeStyle = '#888';
                 ctx.beginPath(); ctx.arc(0,0, 15, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+            } else if(e.type === 'boss') {
+                ctx.fillStyle = 'red'; 
+                ctx.strokeStyle = 'orange';
+                ctx.lineWidth = 3;
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = 'red';
+                ctx.beginPath(); 
+                ctx.arc(0,0, e.w/2, 0, Math.PI*2);
+                ctx.fill(); ctx.stroke();
+                
+                // Boss Eyes
+                ctx.fillStyle = 'yellow';
+                ctx.beginPath();
+                ctx.arc(-15, -10, 8, 0, Math.PI*2);
+                ctx.arc(15, -10, 8, 0, Math.PI*2);
+                ctx.fill();
             } else {
-                ctx.fillStyle = e.type==='boss' ? 'red' : '#330000';
-                ctx.strokeStyle = e.type==='boss' ? 'orange' : 'red';
+                ctx.fillStyle = e.color || '#330000';
+                ctx.strokeStyle = e.type==='shooter' ? 'purple' : 'red';
                 ctx.lineWidth = 2;
                 ctx.beginPath(); 
-                if(e.type==='boss') ctx.arc(0,0, e.w/2, 0, Math.PI*2);
-                else { ctx.moveTo(0, 15); ctx.lineTo(10, -10); ctx.lineTo(-10, -10); }
+                ctx.moveTo(0, 15); 
+                ctx.lineTo(10, -10); 
+                ctx.lineTo(-10, -10); 
                 ctx.closePath();
                 ctx.fill(); ctx.stroke();
             }
+            
             ctx.restore();
         });
         
@@ -1301,6 +1759,17 @@ const game = {
             ctx.fillStyle = p.c;
             ctx.globalAlpha = p.life / 20;
             ctx.fillRect(p.x, p.y, 3, 3);
+            ctx.globalAlpha = 1;
+        });
+        
+        ctx.restore();
+        
+        // Damage Numbers (drawn in UI space, not affected by shake)
+        game.damageNumbers.forEach(d => {
+            ctx.fillStyle = d.color;
+            ctx.font = 'bold 20px monospace';
+            ctx.globalAlpha = d.life / 60;
+            ctx.fillText(d.text, d.x, d.y);
             ctx.globalAlpha = 1;
         });
     },
@@ -1321,6 +1790,7 @@ const game = {
         document.getElementById('screen-over').style.display='flex';
         document.getElementById('final-score').innerText = game.player.score.toLocaleString();
         document.getElementById('final-wave').innerText = `REACHED WAVE ${game.wave} (${game.difficulty})`;
+        document.getElementById('final-combo').innerText = `MAX COMBO: x${game.maxCombo}`;
         
         await fetch(`${API}/submit_score`, {
             method:'POST', headers:{'Content-Type':'application/json'},
