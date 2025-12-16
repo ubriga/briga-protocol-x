@@ -3,344 +3,571 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BRIGAGAME v7.3 | RESCUE</title>
+    <title>BRIGAGAME v8.1 | FINAL</title>
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <style>
-        :root { --main: #00ffcc; --bg: #1a0b2e; --panel: rgba(20, 10, 40, 0.95); --danger: #ff3366; --font: sans-serif; }
-        body { margin:0; overflow:hidden; background:var(--bg); color:var(--main); font-family:var(--font); touch-action:none; width:100vw; height:100dvh; }
+        :root { --main: #00ffcc; --bg: #11081f; --panel: rgba(10, 5, 20, 0.95); --danger: #ff3366; --gold: #ffd700; --font: 'Courier New', sans-serif; }
+        body { margin:0; overflow:hidden; background:var(--bg); color:var(--main); font-family:var(--font); touch-action:none; user-select:none; }
         canvas { display:block; width:100%; height:100%; }
-        #ui-layer { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; }
         
-        /* HUD */
-        #hud { display:none; }
-        .bar-container { width:100px; height:8px; background:#222; border:1px solid #555; margin-top:4px; }
-        .bar-fill { height:100%; width:100%; transition: width 0.2s; }
-        .hp-fill { background: linear-gradient(90deg, #ff3366, #ff0000); }
-        .heat-fill { background: linear-gradient(90deg, #ffcc00, #ffff00); }
+        .screen { position:absolute; inset:0; background:rgba(0,0,0,0.85); display:none; flex-direction:column; align-items:center; justify-content:center; z-index:100; backdrop-filter:blur(5px); }
+        .box { background:var(--panel); border:2px solid var(--main); padding:15px; width:95%; max-width:450px; text-align:center; border-radius:10px; box-shadow:0 0 20px rgba(0,255,204,0.2); max-height:95vh; display:flex; flex-direction:column; }
         
-        /* SCREENS */
-        .screen { pointer-events:auto; position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); display:none; flex-direction:column; align-items:center; justify-content:center; z-index:100; }
-        .box { background:var(--panel); border:1px solid var(--main); padding:20px; width:90%; max-width:400px; text-align:center; border-radius:8px; position:relative; max-height:90vh; overflow-y:auto; }
-        input, button, select { font-size:16px; padding:10px; width:100%; margin:5px 0; box-sizing:border-box; }
-        input { background:#000; border:1px solid #555; color:#fff; text-align:center; }
-        button { background:var(--main); border:none; color:#000; font-weight:bold; cursor:pointer; }
-        .tab-btn { background:transparent; border:1px solid #555; color:#aaa; width:auto; flex:1; }
-        .tab-btn.active { background:var(--main); color:#000; }
+        input, button, select, textarea { font-family:inherit; font-size:14px; padding:10px; margin:5px 0; width:100%; box-sizing:border-box; border-radius:5px; }
+        input, select, textarea { background:#000; border:1px solid #444; color:#fff; text-align:center; }
+        button { background:var(--main); border:none; color:#000; font-weight:bold; cursor:pointer; transition:0.2s; }
+        button:active { transform:scale(0.95); }
+        .btn-red { background:var(--danger); color:#fff; }
+        .btn-gold { background:var(--gold); color:#000; }
         
-        /* ADMIN SPECIFIC */
-        .adm-user-row { display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #333; padding:5px; font-size:11px; text-align:left; }
-        .adm-btn { width:auto; padding:2px 5px; font-size:10px; margin:0 2px; }
-        .banned { color:red; text-decoration:line-through; }
+        .tabs { display:flex; gap:5px; margin-bottom:10px; }
+        .tab { flex:1; background:transparent; border:1px solid #444; color:#888; padding:8px; }
+        .tab.active { background:var(--main); color:#000; border-color:var(--main); }
         
-        /* MOBILE JOYSTICK */
-        #mobile-controls { display:none; position:absolute; inset:0; pointer-events:auto; z-index:50; }
-        #joy-base { position:absolute; width:100px; height:100px; border:2px solid rgba(255,255,255,0.2); border-radius:50%; transform:translate(-50%,-50%); display:none; }
-        #joy-stick { position:absolute; top:50%; left:50%; width:40px; height:40px; background:rgba(0,255,204,0.5); border-radius:50%; transform:translate(-50%,-50%); }
-        #btn-fire { position:absolute; bottom:50px; right:30px; width:80px; height:80px; background:rgba(255,0,0,0.2); border:2px solid var(--danger); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:24px; }
+        .scroll-y { overflow-y:auto; flex:1; border:1px solid #333; padding:5px; background:rgba(0,0,0,0.3); margin-bottom:10px; }
+        table { width:100%; font-size:12px; border-collapse:collapse; }
+        td, th { border-bottom:1px solid #333; padding:4px; text-align:left; }
         
-        #toast { position:fixed; bottom:100px; left:50%; transform:translateX(-50%); background:#000; padding:10px; border:1px solid var(--main); opacity:0; pointer-events:none; transition:0.3s; }
+        #hud { display:none; position:absolute; inset:0; pointer-events:none; }
+        .bar-wrap { width:120px; height:10px; background:#222; border:1px solid #555; margin-top:4px; }
+        .bar-val { height:100%; width:100%; transition:width 0.1s; }
+        .hp { background:linear-gradient(90deg, #f00, #f80); }
+        .heat { background:linear-gradient(90deg, #ff0, #fff); }
+        
+        .shop-grid { display:grid; grid-template-columns: 1fr 1fr; gap:5px; }
+        .shop-item { border:1px solid #444; padding:5px; display:flex; flex-direction:column; align-items:center; font-size:12px; }
+        
+        .float-txt { position:absolute; font-weight:bold; animation:floatUp 1s forwards; pointer-events:none; }
+        @keyframes floatUp { 0%{transform:translateY(0); opacity:1;} 100%{transform:translateY(-50px); opacity:0;} }
     </style>
 </head>
 <body>
 
 <canvas id="gameCanvas"></canvas>
 
-<!-- MOBILE -->
-<div id="mobile-controls">
-    <div id="zone-move" style="position:absolute; width:50%; height:100%;"></div>
-    <div id="joy-base"><div id="joy-stick"></div></div>
-    <div id="btn-fire">🔥</div>
+<!-- MOBILE CONTROLS -->
+<div id="mob-ctrl" style="display:none; position:absolute; inset:0; z-index:50;">
+    <div id="stick-zone" style="position:absolute; left:0; top:0; width:50%; height:100%;"></div>
+    <div id="btn-fire" style="position:absolute; right:30px; bottom:50px; width:80px; height:80px; border:3px solid var(--danger); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:30px; background:rgba(255,0,0,0.2);">🔥</div>
 </div>
 
-<div id="ui-layer">
-    <div id="toast">MSG</div>
-    
-    <!-- HUD (FIXED: Added Heat Bar back) -->
-    <div id="hud">
-        <div style="position:absolute; top:10px; left:10px;">
-            <div style="font-size:10px;">HULL INTEGRITY</div>
-            <div class="bar-container"><div class="bar-fill hp-fill" id="bar-hp"></div></div>
-        </div>
-        <div style="position:absolute; top:10px; right:10px; text-align:right;">
-            <div style="font-size:10px;">WEAPON HEAT</div>
-            <div class="bar-container"><div class="bar-fill heat-fill" id="bar-heat"></div></div>
-            <div id="score-disp" style="font-size:20px; font-weight:bold; margin-top:5px;">0</div>
-        </div>
-        <div style="position:absolute; top:0; left:40%; width:20%; height:50px; pointer-events:auto;" onclick="game.togglePause()"></div>
+<!-- HUD -->
+<div id="hud">
+    <div style="position:absolute; top:10px; left:10px;">
+        <div style="font-size:10px;">HULL INTEGRITY</div>
+        <div class="bar-wrap"><div class="bar-val hp" id="hud-hp"></div></div>
     </div>
-
-    <!-- LOGIN -->
-    <div id="screen-login" class="screen" style="display:flex;">
-        <div class="box">
-            <h1>BRIGA PROTOCOL</h1>
-            <input id="u" placeholder="PILOT NAME">
-            <input id="p" type="password" placeholder="ACCESS CODE">
-            <button onclick="auth.login()">LOGIN</button>
-            <button onclick="auth.reg()" style="background:transparent; color:#fff; border:1px solid #555;">REGISTER</button>
-        </div>
+    <div style="position:absolute; top:10px; right:10px; text-align:right;">
+        <div style="font-size:10px;">WEAPON TEMP</div>
+        <div class="bar-wrap"><div class="bar-val heat" id="hud-heat"></div></div>
+        <div id="hud-score" style="font-size:24px; font-weight:bold; margin-top:5px; text-shadow:0 0 5px var(--main);">0</div>
+        <div id="hud-wave" style="font-size:12px; color:#aaa;">WAVE 1</div>
     </div>
+    <div id="dmg-layer"></div>
+    <div style="position:absolute; top:0; left:40%; width:20%; height:50px; pointer-events:auto; cursor:pointer;" onclick="game.togglePause()"></div>
+</div>
 
-    <!-- LOBBY -->
-    <div id="screen-lobby" class="screen">
-        <div class="box">
-            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                <span id="u-name" style="font-weight:bold;">PILOT</span>
-                <span id="u-creds" style="color:gold;">0</span>
+<!-- LOGIN -->
+<div id="sc-login" class="screen" style="display:flex;">
+    <div class="box">
+        <h1 style="font-size:40px; margin:0;">🚀 BRIGA v8.1</h1>
+        <input id="log-u" placeholder="PILOT NAME">
+        <input id="log-p" type="password" placeholder="ACCESS CODE">
+        <button onclick="auth.login()">ENGAGE ENGINES</button>
+        <button onclick="auth.reg()" style="background:transparent; border:1px solid #555; color:#aaa;">NEW RECRUIT</button>
+    </div>
+</div>
+
+<!-- LOBBY -->
+<div id="sc-lobby" class="screen">
+    <div class="box">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #333; padding-bottom:10px; margin-bottom:10px;">
+            <div style="text-align:left;">
+                <div id="lob-name" style="font-size:18px; font-weight:bold; color:#fff;">PILOT</div>
+                <div style="font-size:10px; color:#aaa;">STATUS: ACTIVE</div>
             </div>
-            <div style="display:flex; gap:5px; margin-bottom:10px;">
-                <button onclick="ui.tab('ops')" class="tab-btn active">PLAY</button>
-                <button onclick="ui.tab('shop')" class="tab-btn">SHOP</button>
-                <button onclick="ui.tab('admin')" id="btn-adm" class="tab-btn" style="display:none;">ADM</button>
-            </div>
-            
-            <!-- OPS -->
-            <div id="tab-ops">
-                <select id="mode-sel">
+            <div id="lob-cred" style="font-size:20px; color:var(--gold);">0 🪙</div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="ui.tab('ops')">OPS</button>
+            <button class="tab" onclick="ui.tab('shop')">SHOP</button>
+            <button class="tab" onclick="ui.tab('leaders')">TOP</button>
+            <button class="tab" id="btn-adm-tab" onclick="ui.tab('admin')" style="display:none; color:var(--danger);">ADM</button>
+        </div>
+
+        <div id="tab-ops" class="scroll-y">
+            <div style="background:rgba(0,0,0,0.3); padding:10px; margin-bottom:10px;">
+                <label style="font-size:10px; color:#aaa;">MISSION</label>
+                <select id="sel-mode">
                     <option value="Classic">🐔 SPACE FARM</option>
                     <option value="Meteor">☄️ METEOR STORM</option>
                 </select>
-                <select id="diff-sel">
+                <select id="sel-diff">
                     <option value="Soldier">EASY</option>
                     <option value="Veteran">HARD</option>
                     <option value="Elite">INSANE</option>
                 </select>
-                <input id="coupon-code" placeholder="ENTER COUPON CODE" style="margin-top:20px;">
-                <button onclick="auth.redeem()" style="background:#555; color:#fff;">REDEEM CODE</button>
-                <button onclick="app.start()" style="margin-top:20px; font-size:20px;">LAUNCH MISSION</button>
             </div>
-            
-            <!-- ADMIN -->
-            <div id="tab-admin" style="display:none;">
-                <div id="adm-lock">
-                    <input type="password" id="adm-pin" placeholder="PIN">
-                    <button onclick="admin.unlock()">UNLOCK</button>
+            <div id="daily-msg" style="color:var(--gold); font-size:12px; margin-bottom:5px;"></div>
+            <button onclick="game.init()" class="btn-gold" style="font-size:20px; padding:15px;">LAUNCH</button>
+            <div id="release-notes" style="font-size:10px; color:#aaa; margin-top:10px; text-align:left; white-space:pre-wrap;"></div>
+        </div>
+
+        <div id="tab-shop" class="scroll-y" style="display:none;">
+            <div class="shop-grid" id="shop-cont">Loading...</div>
+        </div>
+        
+        <div id="tab-leaders" class="scroll-y" style="display:none;">
+            <div style="display:flex; gap:5px; margin-bottom:5px;">
+                 <button onclick="app.loadLb('Classic')" style="padding:5px; font-size:10px;">FARM</button>
+                 <button onclick="app.loadLb('Meteor')" style="padding:5px; font-size:10px;">METEOR</button>
+            </div>
+            <table id="lb-table"></table>
+        </div>
+
+        <div id="tab-admin" class="scroll-y" style="display:none;">
+            <div id="adm-lock">
+                <input type="password" id="adm-pin" placeholder="ENTER PIN">
+                <button onclick="admin.login()">ACCESS CONSOLE</button>
+            </div>
+            <div id="adm-dash" style="display:none;">
+                <div class="tabs">
+                    <button class="tab" onclick="admin.view('users')">USERS</button>
+                    <button class="tab" onclick="admin.view('coupons')">COUPONS</button>
+                    <button class="tab" onclick="admin.view('shop')">SHOP</button>
+                    <button class="tab" onclick="admin.view('notes')">SETTINGS</button>
                 </div>
-                <div id="adm-panel" style="display:none;">
-                    <button onclick="admin.refresh()" style="font-size:12px; margin-bottom:5px;">REFRESH LIST</button>
-                    
+                
+                <div id="adm-v-users" style="display:none;">
+                    <input id="adm-u-search" placeholder="Search..." onkeyup="admin.filterUsers()">
+                    <div id="adm-u-list"></div>
+                </div>
+                
+                <div id="adm-v-coupons" style="display:none;">
                     <div style="border:1px solid #444; padding:5px; margin-bottom:10px;">
-                        <div style="font-size:10px; color:#aaa;">GENERATE COUPON</div>
-                        <input id="new-coup-code" placeholder="Code (e.g. BONUS100)" style="font-size:12px;">
-                        <input id="new-coup-val" placeholder="Value" type="number" style="font-size:12px;">
-                        <button onclick="admin.mkCoupon()" style="font-size:12px;">CREATE</button>
+                        <input id="new-c-code" placeholder="Code (Empty=Random)">
+                        <input id="new-c-val" type="number" placeholder="Value">
+                        <input id="new-c-max" type="number" placeholder="Max Uses" value="1">
+                        <div style="display:flex; gap:5px;">
+                            <input id="new-c-days" type="number" placeholder="Days" value="7">
+                            <input id="new-c-mins" type="number" placeholder="Mins" value="0">
+                        </div>
+                        <button onclick="admin.mkCoupon()">CREATE COUPON</button>
                     </div>
-
-                    <div id="adm-users" style="max-height:150px; overflow-y:auto; background:rgba(0,0,0,0.3);"></div>
+                    <table id="adm-c-table"></table>
+                </div>
+                
+                <div id="adm-v-shop" style="display:none;">
+                    <div id="adm-s-list"></div>
+                    <button onclick="admin.saveShop()" class="btn-gold">SAVE PRICES</button>
+                </div>
+                
+                <div id="adm-v-notes" style="display:none;">
+                    <label>Daily Bonus Amount:</label>
+                    <input id="adm-bonus-amt" type="number">
+                    <button onclick="admin.saveBonus()" style="margin-bottom:10px;">UPDATE BONUS</button>
+                    
+                    <label>Release Notes:</label>
+                    <textarea id="adm-notes-txt" rows="5"></textarea>
+                    <button onclick="admin.saveNotes()">UPDATE NOTES</button>
                 </div>
             </div>
+        </div>
 
-            <button onclick="location.reload()" style="background:#333; color:#fff; margin-top:20px;">LOGOUT</button>
-        </div>
+        <button onclick="location.reload()" class="btn-red" style="margin-top:10px;">LOGOUT</button>
     </div>
-    
-    <!-- OVER -->
-    <div id="screen-over" class="screen">
-        <div class="box">
-            <h1 style="color:red;">GAME OVER</h1>
-            <h2 id="final-score">0</h2>
-            <button onclick="app.start()">RETRY</button>
-            <button onclick="app.lobby()">LOBBY</button>
-        </div>
+</div>
+
+<div id="sc-over" class="screen">
+    <div class="box">
+        <h1 style="color:var(--danger);">MISSION FAILED</h1>
+        <div style="font-size:12px;">SCORE</div>
+        <h2 id="end-score" style="color:#fff; font-size:40px; margin:0;">0</h2>
+        <div style="font-size:12px; margin-bottom:20px;">CREDITS EARNED: <span id="end-earned" style="color:var(--gold);">0</span></div>
+        <button onclick="game.init()" class="btn-gold">RETRY</button>
+        <button onclick="app.lobby()">BASE</button>
     </div>
 </div>
 
 <script>
-/** BRIGA v7.3 RESCUE **/
-const API="https://ubriga.pythonanywhere.com";
-let USER=null, TOKEN=localStorage.getItem('px_t'), KEYS={};
+/** BRIGAGAME v8.1 FINAL **/
+const API = "https://ubriga.pythonanywhere.com";
+let USER=null, TOKEN=localStorage.getItem('px_t8'), KEYS={};
+let SHOP_DATA = {};
 
-// AUTH
 const auth={
     login:async()=>{
-        try{
-            let res=await fetch(API+'/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:v('u'),password:v('p')})});
-            let d=await res.json();
-            if(d.token){ USER=d.user; TOKEN=d.token; localStorage.setItem('px_t',TOKEN); app.lobby(); }
-            else toast(d.error);
-        }catch(e){toast("Err");}
+        try {
+            let res = await fetch(API+'/login', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({username:v('log-u'), password:v('log-p')})});
+            let d = await res.json();
+            if(d.token) {
+                USER=d.user; TOKEN=d.token; localStorage.setItem('px_t8', TOKEN);
+                if(d.message) alert(d.message); 
+                app.lobby();
+            } else alert(d.error);
+        } catch(e) { alert("Connection Error"); }
     },
     reg:async()=>{
-        await fetch(API+'/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:v('u'),password:v('p')})});
-        toast("Registered. Login now.");
-    },
-    redeem:async()=>{
-        let c=v('coupon-code'); if(!c) return;
-        let res=await fetch(API+'/redeem',{method:'POST',headers:{'Authorization':`Bearer ${TOKEN}`,'Content-Type':'application/json'},body:JSON.stringify({code:c})});
-        let d=await res.json();
-        if(d.status==='success'){ toast(`+${d.value} CREDITS`); USER.credits+=d.value; app.ui(); }
-        else toast("Invalid Code");
-    }
-};
-
-// ADMIN
-const admin={
-    unlock:async()=>{
-        let p=v('adm-pin');
-        let res=await fetch(API+'/admin/verify_pin',{method:'POST',headers:{'Authorization':`Bearer ${TOKEN}`,'Content-Type':'application/json'},body:JSON.stringify({pin:p})});
-        if((await res.json()).status==='success'){
-            document.getElementById('adm-lock').style.display='none';
-            document.getElementById('adm-panel').style.display='block';
-            admin.refresh();
-        } else toast("Bad PIN");
-    },
-    refresh:async()=>{
-        let res=await fetch(API+'/admin/dashboard',{headers:{'Authorization':`Bearer ${TOKEN}`}});
-        let d=await res.json();
-        let h="";
-        d.users.forEach(u=>{
-            let cls = u.is_banned ? 'banned' : '';
-            h+=`<div class="adm-user-row">
-                <span class="${cls}">${u.username} (${u.credits})</span>
-                <div>
-                    <button class="adm-btn" onclick="admin.act('ban',${u.id})" style="background:red">BAN</button>
-                    <button class="adm-btn" onclick="admin.act('unban',${u.id})" style="background:lime">UN</button>
-                    <button class="adm-btn" onclick="admin.act('reset_name',${u.id})" style="background:orange">RN</button>
-                    <button class="adm-btn" onclick="admin.act('add_credits',${u.id})" style="background:gold">$$</button>
-                </div>
-            </div>`;
-        });
-        document.getElementById('adm-users').innerHTML=h;
-    },
-    act:async(a,tid)=>{
-        let extra={};
-        if(a==='add_credits') extra.amount = prompt("Amount?");
-        await fetch(API+'/admin/action',{method:'POST',headers:{'Authorization':`Bearer ${TOKEN}`,'Content-Type':'application/json'},body:JSON.stringify({action:a,target_id:tid,...extra})});
-        admin.refresh();
-    },
-    mkCoupon:async()=>{
-        let c=v('new-coup-code'), val=v('new-coup-val');
-        await fetch(API+'/admin/action',{method:'POST',headers:{'Authorization':`Bearer ${TOKEN}`,'Content-Type':'application/json'},body:JSON.stringify({action:'create_coupon',code:c,value:val,max:100})});
-        toast("Coupon Created");
+        let res = await fetch(API+'/register', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({username:v('log-u'), password:v('log-p')})});
+        if((await res.json()).status==='success') alert("Registered! Login now."); else alert("Username taken.");
     }
 };
 
 const app={
-    cvs:document.getElementById('gameCanvas'),
-    ctx:document.getElementById('gameCanvas').getContext('2d'),
-    lobby:()=>{
+    lobby:async()=>{
         document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
-        document.getElementById('screen-lobby').style.display='flex';
-        app.ui();
+        document.getElementById('sc-lobby').style.display='flex';
+        document.getElementById('hud').style.display='none';
+        
+        document.getElementById('lob-name').innerText = USER.display_name || USER.username;
+        document.getElementById('lob-cred').innerText = USER.credits.toLocaleString() + " 🪙";
+        document.getElementById('btn-adm-tab').style.display = USER.is_admin ? 'block':'none';
+        
+        let inv = JSON.parse(USER.inventory||'{}');
+
+        if(USER.is_admin) admin.fetchData();
+        let res = await fetch(API+'/shop/items');
+        SHOP_DATA = await res.json();
+        
+        let shtml = "";
+        for(let k in SHOP_DATA) {
+            let it = SHOP_DATA[k];
+            let lvl = inv[k]||0;
+            let max = it.max || 99;
+            let cost = it.cost;
+            let btn = lvl>=max ? `<div style="color:var(--danger)">MAX</div>` : `<button onclick="shop.buy('${k}')" class="btn-gold" style="padding:2px;">${cost}</button>`;
+            
+            shtml += `<div class="shop-item">
+                <div style="font-size:20px;">${it.icon}</div>
+                <div style="font-weight:bold;">${it.name}</div>
+                <div style="color:#aaa;">Lvl: ${lvl}/${max}</div>
+                <div style="margin-top:5px; width:100%;">${btn}</div>
+            </div>`;
+        }
+        document.getElementById('shop-cont').innerHTML = shtml;
+        
+        let admData = await (await fetch(API+'/admin/data', {headers:{'Authorization':`Bearer ${TOKEN}`}})).json(); 
+        if(admData.notes) document.getElementById('release-notes').innerText = admData.notes;
     },
-    start:()=>{
+    loadLb:async(m)=>{
+        let d = await (await fetch(`${API}/leaderboard?mode=${m}`)).json();
+        let h = `<tr><th>PILOT</th><th>SCR</th><th>WV</th></tr>`;
+        d.forEach(r=> h+=`<tr><td>${r.player}</td><td>${r.score}</td><td>${r.wave}</td></tr>`);
+        document.getElementById('lb-table').innerHTML = h;
+    }
+};
+
+const shop={
+    buy:async(id)=>{
+        if(id==='name_change') {
+            let n = prompt("Enter new Display Name:");
+            if(!n) return;
+            let r = await fetch(API+'/update_name', {method:'POST', headers:{'Authorization':`Bearer ${TOKEN}`,'Content-Type':'application/json'}, body:JSON.stringify({name:n})});
+            let d = await r.json();
+            if(d.status==='success') { USER.display_name=d.new_name; USER.name_changes_left--; app.lobby(); return; }
+        }
+        
+        let res = await fetch(API+'/shop/buy', {method:'POST', headers:{'Authorization':`Bearer ${TOKEN}`,'Content-Type':'application/json'}, body:JSON.stringify({item_id:id})});
+        let d = await res.json();
+        if(d.status==='success') {
+            alert("Purchased!");
+            location.reload(); 
+        } else alert(d.error);
+    }
+};
+
+const admin={
+    data: null,
+    login:async()=>{
+        let r = await fetch(API+'/admin/verify', {method:'POST', headers:{'Authorization':`Bearer ${TOKEN}`,'Content-Type':'application/json'}, body:JSON.stringify({pin:v('adm-pin')})});
+        if((await r.json()).status==='success') {
+            document.getElementById('adm-lock').style.display='none';
+            document.getElementById('adm-dash').style.display='block';
+            admin.fetchData();
+        } else alert("Bad PIN");
+    },
+    fetchData:async()=>{
+        let r = await fetch(API+'/admin/data', {headers:{'Authorization':`Bearer ${TOKEN}`}});
+        admin.data = await r.json();
+        admin.renderUsers();
+        admin.renderCoupons();
+        admin.renderShopEdit();
+        document.getElementById('adm-notes-txt').value = admin.data.notes;
+        document.getElementById('adm-bonus-amt').value = admin.data.daily_bonus;
+    },
+    view:(v)=>{
+        ['users','coupons','shop','notes'].forEach(k=>document.getElementById('adm-v-'+k).style.display='none');
+        document.getElementById('adm-v-'+v).style.display='block';
+    },
+    renderUsers:()=>{
+        let h="";
+        admin.data.users.forEach(u=>{
+            let style = u.is_banned ? "text-decoration:line-through; color:red;" : "";
+            h+=`<div style="border-bottom:1px solid #333; padding:5px; text-align:left; ${style}">
+                <b>${u.username}</b> (${u.display_name}) | ${u.credits}cr
+                <br>
+                <button style="width:auto; font-size:10px; padding:2px;" onclick="admin.act('user_mod', ${u.id}, 'ban')">BAN</button>
+                <button style="width:auto; font-size:10px; padding:2px;" onclick="admin.act('user_mod', ${u.id}, 'unban')">UNBAN</button>
+                <button style="width:auto; font-size:10px; padding:2px;" onclick="admin.act('user_mod', ${u.id}, 'reset_name')">RESET NAME</button>
+                <button style="width:auto; font-size:10px; padding:2px;" onclick="admin.act('user_mod', ${u.id}, 'give_credits')">GIVE $$</button>
+            </div>`;
+        });
+        document.getElementById('adm-u-list').innerHTML=h;
+    },
+    renderCoupons:()=>{
+        let h=`<tr><th>CODE</th><th>VAL</th><th>REM</th><th>EXP</th><th>ACT</th></tr>`;
+        admin.data.coupons.forEach(c=>{
+            h+=`<tr><td>${c.code}</td><td>${c.value}</td><td>${c.max_uses-c.used_count}</td><td>${c.expires_at.split('T')[0]}</td>
+            <td><button style="width:auto; padding:0 5px; background:red;" onclick="admin.act('coupon_delete', ${c.id})">X</button></td></tr>`;
+        });
+        document.getElementById('adm-c-table').innerHTML=h;
+    },
+    renderShopEdit:()=>{
+        let h="";
+        for(let k in admin.data.shop) {
+            let it = admin.data.shop[k];
+            h+=`<div style="display:flex; gap:5px; margin-bottom:5px;">
+                <div style="width:100px;">${it.name}</div>
+                <input id="ed-cost-${k}" type="number" value="${it.cost}">
+            </div>`;
+        }
+        document.getElementById('adm-s-list').innerHTML=h;
+    },
+    act:async(act, id, sub)=>{
+        let extra={};
+        if(sub==='give_credits') extra.amount = prompt("Amount?");
+        await fetch(API+'/admin/action', {method:'POST', headers:{'Authorization':`Bearer ${TOKEN}`,'Content-Type':'application/json'}, body:JSON.stringify({action:act, target_id:id, sub_action:sub, ...extra})});
+        admin.fetchData();
+    },
+    mkCoupon:async()=>{
+        let d = {
+            action:'coupon_create',
+            code: v('new-c-code'), value: v('new-c-val'), max: v('new-c-max'),
+            days: v('new-c-days'), mins: v('new-c-mins')
+        };
+        await fetch(API+'/admin/action', {method:'POST', headers:{'Authorization':`Bearer ${TOKEN}`,'Content-Type':'application/json'}, body:JSON.stringify(d)});
+        admin.fetchData();
+    },
+    saveShop:async()=>{
+        let newShop = JSON.parse(JSON.stringify(admin.data.shop));
+        for(let k in newShop) {
+            newShop[k].cost = parseInt(document.getElementById(`ed-cost-${k}`).value);
+        }
+        await fetch(API+'/admin/action', {method:'POST', headers:{'Authorization':`Bearer ${TOKEN}`,'Content-Type':'application/json'}, body:JSON.stringify({action:'shop_update', shop_data:newShop})});
+        alert("Prices Updated");
+    },
+    saveNotes:async()=>{
+        await fetch(API+'/admin/action', {method:'POST', headers:{'Authorization':`Bearer ${TOKEN}`,'Content-Type':'application/json'}, body:JSON.stringify({action:'notes_update', text:document.getElementById('adm-notes-txt').value})});
+        alert("Notes Updated");
+    },
+    saveBonus:async()=>{
+        await fetch(API+'/admin/action', {method:'POST', headers:{'Authorization':`Bearer ${TOKEN}`,'Content-Type':'application/json'}, body:JSON.stringify({action:'bonus_update', amount:document.getElementById('adm-bonus-amt').value})});
+        alert("Bonus Updated");
+    }
+};
+
+const game = {
+    run: false, paused: false,
+    cvs: document.getElementById('gameCanvas'),
+    ctx: document.getElementById('gameCanvas').getContext('2d'),
+    p: {x:0, y:0, hp:100, max:100, heat:0},
+    objs: [], wave:0, mode:'Classic', score:0,
+    
+    init:()=>{
         document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
         document.getElementById('hud').style.display='block';
-        game.start();
+        game.run=true; game.paused=false; game.score=0; game.wave=0;
+        
+        let inv = JSON.parse(USER.inventory||'{}');
+        game.p.max = 100 + ((inv.hull||0)*20);
+        game.p.hp = game.p.max;
+        game.p.heat = 0;
+        game.p.x = game.cvs.width/2; game.p.y = game.cvs.height-100;
+        game.objs=[]; 
+        game.mode = document.getElementById('sel-mode').value;
+        game.nextWave();
+        loop();
     },
-    ui:()=>{
-        document.getElementById('u-name').innerText=USER.display_name||USER.username;
-        document.getElementById('u-creds').innerText=USER.credits;
-        document.getElementById('btn-adm').style.display=USER.is_admin?'block':'none';
-    }
-};
-
-const ui={
-    tab:(t)=>{
-        document.querySelectorAll('[id^="tab-"]').forEach(e=>e.style.display='none');
-        document.getElementById('tab-'+t).style.display='block';
-    }
-};
-
-const game={
-    run:false, paused:false,
-    p:{x:0,y:0,hp:100,max:100,heat:0},
-    objs:[], wave:0, mode:'Classic',
     
-    start:()=>{
-        game.run=true; game.wave=0; game.p.hp=100; game.p.heat=0; game.objs=[];
-        game.p.x=app.cvs.width/2; game.p.y=app.cvs.height-100;
-        game.mode=v('mode-sel');
-        game.nextWave(); animate();
-    },
     nextWave:()=>{
         game.wave++;
-        let cnt=5+game.wave;
-        for(let i=0;i<cnt;i++) game.objs.push({type:'en', x:Math.random()*app.cvs.width, y:-Math.random()*500, hp:10+game.wave, w:30});
-        toast("WAVE "+game.wave);
+        document.getElementById('hud-wave').innerText="WAVE "+game.wave;
+        
+        let isBoss = (game.mode==='Classic' && game.wave%5===0);
+        let count = 5 + game.wave;
+        
+        if(isBoss) {
+            game.objs.push({type:'boss', x:game.cvs.width/2, y:-100, hp:500+(game.wave*50), max:500, w:60, h:60, vy:1});
+            textFloat("⚠️ BOSS INCOMING ⚠️", game.cvs.width/2, game.cvs.height/2, 'red');
+        } else {
+            for(let i=0;i<count;i++){
+                let sprites = game.mode==='Classic' ? ['🍔','🍕','🍩','🍟'] : ['☄️','🌑'];
+                let spr = sprites[Math.floor(Math.random()*sprites.length)];
+                game.objs.push({
+                    type:'en', sprite:spr,
+                    x: Math.random()*(game.cvs.width-50)+25,
+                    y: -Math.random()*800,
+                    hp: 10+(game.wave*2), w:30, h:30,
+                    vy: (Math.random()*2)+1
+                });
+            }
+        }
     },
-    togglePause:()=>{ game.paused=!game.paused; },
+    
     end:()=>{
-        game.run=false; 
-        document.getElementById('screen-over').style.display='flex';
-        fetch(API+'/submit_score',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({player:USER.username,score:USER.credits,wave:game.wave,mode:game.mode})});
+        game.run=false;
+        document.getElementById('sc-over').style.display='flex';
+        document.getElementById('hud').style.display='none';
+        document.getElementById('end-score').innerText = game.score;
+        document.getElementById('end-earned').innerText = Math.floor(game.score*0.1);
+        
+        fetch(API+'/submit_score', {method:'POST', headers:{'Content-Type':'application/json'}, 
+            body:JSON.stringify({player:USER.username, score:game.score, wave:game.wave, mode:game.mode, difficulty:document.getElementById('sel-diff').value})});
+    },
+    
+    togglePause:()=>{
+        if(!game.run) return;
+        game.paused = !game.paused;
+        if(game.paused) textFloat("PAUSED", game.p.x, game.p.y, 'white');
     }
 };
 
-// INPUT & LOOP
-function animate(){
+let tx=0, ty=0;
+
+function loop() {
     if(!game.run) return;
-    requestAnimationFrame(animate);
+    requestAnimationFrame(loop);
     if(game.paused) return;
-
-    let ctx=app.ctx, cvs=app.cvs;
-    cvs.width=window.innerWidth; cvs.height=window.innerHeight;
     
-    // Logic
-    if(KEYS['Space'] && game.p.heat<100) {
-        if(frameCount%10==0) {
-            game.objs.push({type:'bull',x:game.p.x,y:game.p.y,vy:-15});
-            game.p.heat+=5;
-        }
-    }
-    if(game.p.heat>0) game.p.heat-=0.5;
+    let ctx = game.ctx;
+    game.cvs.width = window.innerWidth; 
+    game.cvs.height = window.innerHeight;
     
-    // Mouse/Touch Move
-    if(targetX) {
-        game.p.x += (targetX - game.p.x)*0.2;
-        game.p.y += (targetY - game.p.y)*0.2;
+    if(tx) {
+        game.p.x += (tx - game.p.x) * 0.15;
+        game.p.y += (ty - game.p.y) * 0.15;
     }
+    game.p.x = Math.max(20, Math.min(game.cvs.width-20, game.p.x));
+    game.p.y = Math.max(20, Math.min(game.cvs.height-20, game.p.y));
+    
+    if(game.p.heat>0) game.p.heat -= 0.5;
 
-    // Objs
-    game.objs.forEach((o,i)=>{
-        if(o.type=='bull') o.y+=o.vy;
-        if(o.type=='en') o.y+=2;
+    let inv = JSON.parse(USER.inventory||'{}');
+    
+    game.objs.forEach(o => {
+        o.y += o.vy;
         
-        // Hit Logic
-        if(o.type=='en' && Math.abs(o.x-game.p.x)<30 && Math.abs(o.y-game.p.y)<30) {
-            game.p.hp-=10; o.dead=true;
+        if(o.type === 'bull') {
+            game.objs.forEach(t => {
+                if((t.type==='en' || t.type==='boss') && !t.dead && !o.dead) {
+                    if(Math.abs(o.x - t.x) < t.w && Math.abs(o.y - t.y) < t.h) {
+                        o.dead = true;
+                        let dmg = 10 + ((inv.damage||0)*5);
+                        
+                        let critChance = (inv.crit_chance||0) * 0.05; 
+                        if(Math.random() < critChance) {
+                            dmg *= 2;
+                            textFloat("CRIT! "+dmg, t.x, t.y, 'yellow');
+                        }
+                        
+                        t.hp -= dmg;
+                        if(t.hp <= 0) {
+                            t.dead = true;
+                            game.score += (t.type==='boss'?1000:100);
+                            textFloat("+"+(t.type==='boss'?1000:100), t.x, t.y, 'gold');
+                        }
+                    }
+                }
+            });
+        }
+        
+        if((o.type==='en' || o.type==='boss') && !o.dead) {
+             if(Math.abs(o.x - game.p.x) < 30 && Math.abs(o.y - game.p.y) < 30) {
+                 o.dead = (o.type!=='boss'); 
+                 game.p.hp -= 20;
+                 textFloat("-20 HP", game.p.x, game.p.y, 'red');
+             }
         }
     });
     
-    game.objs = game.objs.filter(o=>!o.dead && o.y<cvs.height && o.y>-100);
-    if(game.objs.filter(o=>o.type=='en').length==0) game.nextWave();
-    if(game.p.hp<=0) game.end();
-
-    // Draw
-    ctx.clearRect(0,0,cvs.width,cvs.height);
-    ctx.font="40px Arial"; ctx.textAlign="center"; 
-    ctx.fillText("🚀", game.p.x, game.p.y);
+    game.objs = game.objs.filter(o => !o.dead && o.y < game.cvs.height+50 && o.y > -200);
     
-    game.objs.forEach(o=>{
-        if(o.type=='bull') { ctx.fillStyle="#0f0"; ctx.fillRect(o.x-2,o.y,4,10); }
-        if(o.type=='en') ctx.fillText(game.mode=='Classic'?"🐔":"☄️", o.x, o.y);
+    if(game.objs.filter(o=>o.type==='en' || o.type==='boss').length === 0) game.nextWave();
+    if(game.p.hp <= 0) game.end();
+
+    ctx.clearRect(0,0,game.cvs.width, game.cvs.height);
+    
+    ctx.save();
+    ctx.translate(game.p.x, game.p.y);
+    ctx.rotate(Math.PI / 4);
+    ctx.font = "40px Arial"; ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.fillText("🚀", 0, 0);
+    ctx.restore();
+    
+    game.objs.forEach(o => {
+        if(o.type==='bull') {
+            ctx.fillStyle = '#0f0';
+            ctx.fillRect(o.x-2, o.y, 4, 15);
+        } else {
+            ctx.font = (o.w)+"px Arial";
+            ctx.fillText(o.sprite || (o.type==='boss'?'🥦':'❓'), o.x, o.y);
+            
+            if(o.type==='boss') {
+                ctx.fillStyle='red'; ctx.fillRect(o.x-30, o.y-50, 60, 5);
+                ctx.fillStyle='lime'; ctx.fillRect(o.x-30, o.y-50, 60*(o.hp/o.max), 5);
+            }
+        }
     });
 
-    // HUD Update
-    document.getElementById('bar-hp').style.width=game.p.hp+'%';
-    document.getElementById('bar-heat').style.width=game.p.heat+'%';
-    
-    frameCount++;
+    document.getElementById('hud-hp').style.width = Math.max(0, (game.p.hp/game.p.max)*100) + "%";
+    document.getElementById('hud-heat').style.width = game.p.heat + "%";
+    document.getElementById('hud-score').innerText = game.score;
 }
 
-let targetX=0, targetY=0, frameCount=0;
-window.onpointermove = e => { targetX=e.clientX; targetY=e.clientY; };
-window.onkeydown = e => KEYS[e.code]=true;
-window.onkeyup = e => KEYS[e.code]=false;
-window.onload = ()=> { 
-    if(localStorage.getItem('px_t')) toast("Welcome Back");
-    app.cvs.width=window.innerWidth; app.cvs.height=window.innerHeight;
-    // Mobile Init
-    if('ontouchstart' in window) {
-        document.getElementById('mobile-controls').style.display='block';
-        let z=document.getElementById('zone-move');
-        z.ontouchmove=e=>{e.preventDefault(); targetX=e.touches[0].clientX; targetY=e.touches[0].clientY;}
-        document.getElementById('btn-fire').ontouchstart=e=>{KEYS['Space']=true;}
-        document.getElementById('btn-fire').ontouchend=e=>{KEYS['Space']=false;}
-    }
+window.onpointermove = e => { tx=e.clientX; ty=e.clientY; };
+window.onkeydown = e => { 
+    if(e.code==='Space') fire();
+    if(e.code==='Escape') game.togglePause();
 };
-function v(id){ return document.getElementById(id).value; }
-function toast(m){ let t=document.getElementById('toast'); t.innerText=m; t.style.opacity=1; setTimeout(()=>t.style.opacity=0,2000); }
 
+function fire() {
+    if(game.paused || !game.run) return;
+    if(game.p.heat >= 100) return;
+    
+    game.p.heat += 5;
+    game.objs.push({type:'bull', x:game.p.x, y:game.p.y-20, vy:-15, w:10, h:10});
+    
+    let inv = JSON.parse(USER.inventory||'{}');
+    if(inv.double_shot) {
+        game.objs.push({type:'bull', x:game.p.x-10, y:game.p.y, vy:-15, w:10, h:10});
+        game.objs.push({type:'bull', x:game.p.x+10, y:game.p.y, vy:-15, w:10, h:10});
+    }
+}
+
+function textFloat(txt, x, y, col) {
+    let el = document.createElement('div');
+    el.className = 'float-txt';
+    el.style.left = x+'px'; el.style.top = y+'px'; el.style.color = col;
+    el.innerText = txt;
+    document.getElementById('dmg-layer').appendChild(el);
+    setTimeout(()=>el.remove(), 1000);
+}
+
+function v(id){ return document.getElementById(id).value; }
+const ui={ tab:(t)=>{ document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active')); event.target.classList.add('active'); document.querySelectorAll('[id^="tab-"]').forEach(e=>e.style.display='none'); document.getElementById('tab-'+t).style.display='block'; }};
+
+if('ontouchstart' in window) {
+    document.getElementById('mob-ctrl').style.display='block';
+    let z = document.getElementById('stick-zone');
+    z.ontouchmove = e => { e.preventDefault(); tx=e.touches[0].clientX; ty=e.touches[0].clientY; };
+    document.getElementById('btn-fire').ontouchstart = (e) => { e.preventDefault(); fire(); };
+}
+
+window.onload = ()=> { 
+    if(TOKEN) auth.login(); 
+    app.cvs.width=window.innerWidth; app.cvs.height=window.innerHeight;
+};
 </script>
 </body>
 </html>
