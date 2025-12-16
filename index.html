@@ -151,10 +151,10 @@ input { background:rgba(0,0,0,0.5); border:1px solid var(--main); color:white; p
 
 <script>
 /** BRIGAGAME v8.1 REFORGED **/
-const API = "https://ubriga.pythonanywhere.com"; // שנה לכתובת השרת שלך אם שונה
+const API = "https://ubriga.pythonanywhere.com";
 let USER=null, TOKEN=localStorage.getItem('px_t8');
 let SHOP_DATA = {};
-let ACTIVE_SKIN = localStorage.getItem('px_skin') || 'plane'; // Default skin
+let ACTIVE_SKIN = localStorage.getItem('px_skin') || 'plane';
 
 const auth={
     login:async()=>{
@@ -183,7 +183,7 @@ const app={
         
         let res = await fetch(API+'/shop/items');
         SHOP_DATA = await res.json();
-        shop.filter('upg'); // Default view
+        shop.filter('upg');
     }
 };
 
@@ -219,7 +219,6 @@ const shop={
             </div>`;
         }
         
-        // Add default plane to skins
         if(type==='skin') {
             let defBtn = (ACTIVE_SKIN === 'plane') ? `<button class="btn-gold">EQUIPPED</button>` : `<button onclick="shop.equip('plane')">EQUIP</button>`;
             html = `<div class="shop-item"><div style="font-size:30px;">✈️</div><div>Fighter Jet</div><div>${defBtn}</div></div>` + html;
@@ -276,7 +275,6 @@ const game={
         let isBoss = (game.wave % 5 === 0);
         
         if(isBoss) {
-            // BOSS SPAWN
             game.objs.push({
                 type:'boss', x:game.cvs.width/2, y:-100, 
                 hp:1000 * game.wave, max:1000 * game.wave, 
@@ -290,7 +288,7 @@ const game={
                 game.objs.push({
                     type:'en', 
                     x:Math.random()*(game.cvs.width-50)+25, 
-                    y:-Math.random()*200 - 50, // Start above screen
+                    y:-Math.random()*200 - 50,
                     w:40, h:40, 
                     vy: Math.random()*2+1, vx: Math.random() > 0.5 ? 2 : -2,
                     state: 'enter',
@@ -312,27 +310,23 @@ const game={
     }
 };
 
-// INPUT HANDLING
 let tx=0, ty=0;
 window.onkeydown = e => game.keys[e.key] = true;
 window.onkeyup = e => game.keys[e.key] = false;
 
-// SMOOTH TOUCH MOVE (No Teleport)
 document.addEventListener('touchmove', (e)=>{
     e.preventDefault();
     tx = e.touches[0].clientX;
-    // ty = e.touches[0].clientY; // Optional Y movement
 }, {passive: false});
 
 document.addEventListener('touchstart', (e)=>{
-    tx = e.touches[0].clientX; // Set initial target on touch
+    tx = e.touches[0].clientX;
 });
 
 function fire() {
     if(game.p.heat > 80) return;
     let inv = JSON.parse(USER.inventory||'{}');
     
-    // Double Shot
     if(inv.double_shot) {
         game.objs.push({type:'bull', x:game.p.x-10, y:game.p.y-20, w:4, h:10, vy:-10});
         game.objs.push({type:'bull', x:game.p.x+10, y:game.p.y-20, w:4, h:10, vy:-10});
@@ -347,20 +341,17 @@ function drawPlayer(ctx, x, y) {
     ctx.translate(x, y);
     
     if(ACTIVE_SKIN === 'skin_ufo') {
-        // UFO DRAWING
         ctx.fillStyle = "#0f0";
         ctx.beginPath(); ctx.ellipse(0, 5, 25, 10, 0, 0, Math.PI*2); ctx.fill();
         ctx.fillStyle = "rgba(100,255,100,0.5)";
         ctx.beginPath(); ctx.arc(0, 0, 15, Math.PI, 0); ctx.fill();
     } 
     else if(ACTIVE_SKIN === 'skin_dragon') {
-        // DRAGON DRAWING
         ctx.fillStyle = "red";
         ctx.font = "40px Arial"; ctx.textAlign="center"; ctx.textBaseline="middle";
         ctx.fillText("🐉", 0, 0);
     }
     else {
-        // DEFAULT PLANE
         ctx.fillStyle = "#00d2ff";
         ctx.beginPath();
         ctx.moveTo(0, -25); ctx.lineTo(-10, 20); ctx.lineTo(0, 15); ctx.lineTo(10, 20);
@@ -381,76 +372,60 @@ function loop() {
     let ctx = game.ctx;
     ctx.clearRect(0,0,game.cvs.width,game.cvs.height);
     
-    // MOVEMENT SMOOTHING
     if(tx) {
         let dx = tx - game.p.x;
-        // Limit speed to prevent teleporting
         let maxSpeed = 15;
         if(Math.abs(dx) > maxSpeed) dx = Math.sign(dx) * maxSpeed;
         game.p.x += dx;
         
-        // Reset tx slightly if close to avoid micro-jitters
         if(Math.abs(tx - game.p.x) < 1) tx = 0;
     }
     
-    // KEYBOARD MOVE
     if(game.keys['ArrowLeft']) game.p.x -= 5;
     if(game.keys['ArrowRight']) game.p.x += 5;
     
-    // AUTO FIRE
     if(game.autoFire && game.frame % 10 === 0) fire();
     
     game.frame = (game.frame||0) + 1;
     if(game.p.heat > 0) game.p.heat -= 0.5;
     document.getElementById('hud-temp').style.width = game.p.heat + "%";
 
-    // DRAW PLAYER
     drawPlayer(ctx, game.p.x, game.p.y);
     
-    // GAME LOGIC
     let activeEnemies = 0;
     
     game.objs.forEach((o, i) => {
         if(o.dead) return;
         
-        // --- AI LOGIC START ---
         if(o.type === 'boss') {
             activeEnemies++;
-            // State Machine for Boss
             if(o.state === 'enter') {
                 o.y += o.vy;
                 if(o.y > 100) o.state = 'fight';
             } else {
-                // Fight Mode: ZigZag
                 o.x += o.vx;
                 if(o.x > game.cvs.width - o.w/2 || o.x < o.w/2) o.vx *= -1;
                 
-                // Boss Shoot
                 if(Math.random() < 0.05) game.objs.push({type:'ebull', x:o.x, y:o.y+30, w:6, h:15, vy:5});
             }
             
-            // Boss HP Bar Update
             let pct = Math.max(0, o.hp/o.max)*100;
             document.getElementById('boss-hp').style.width = pct + "%";
             
-            // Draw Boss
             ctx.fillStyle = 'red';
             ctx.fillRect(o.x-o.w/2, o.y-o.h/2, o.w, o.h);
-            ctx.fillStyle = 'white'; ctx.fillText("BOSS", o.x-15, o.y);
+            ctx.fillStyle = 'white'; ctx.font = "14px Arial"; ctx.textAlign="center"; ctx.fillText("BOSS", o.x, o.y);
         
         } else if (o.type === 'en') {
             activeEnemies++;
-            // Enemy Mechanics: Stay on screen
             if(o.state === 'enter') {
                 o.y += o.vy;
                 if(o.y > Math.random()*200 + 50) o.state = 'hover';
             } else {
-                // Hover/Bounce Logic
                 o.x += o.vx;
-                o.y += Math.sin(game.frame/20) * 2; // Bobbing
+                o.y += Math.sin(game.frame/20) * 2;
                 if(o.x > game.cvs.width - 20 || o.x < 20) o.vx *= -1;
                 
-                // Random Shoot
                 if(Math.random() < 0.005) game.objs.push({type:'ebull', x:o.x, y:o.y, w:5, h:10, vy:4});
             }
             
@@ -462,7 +437,6 @@ function loop() {
             ctx.fillStyle = '#0f0'; ctx.fillRect(o.x-2, o.y, 4, 15);
             if(o.y < 0) o.dead = true;
             
-            // Collision Player Bullet vs Enemy
             game.objs.forEach(t => {
                 if((t.type==='en' || t.type==='boss') && !t.dead && !o.dead) {
                     if(Math.abs(o.x - t.x) < t.w/2 + 10 && Math.abs(o.y - t.y) < t.h/2 + 10) {
@@ -482,7 +456,6 @@ function loop() {
             ctx.fillStyle = 'red'; ctx.fillRect(o.x-2, o.y, 4, 15);
             if(o.y > game.cvs.height) o.dead = true;
             
-            // Hit Player
             if(Math.abs(o.x - game.p.x) < 20 && Math.abs(o.y - game.p.y) < 20) {
                 o.dead = true;
                 game.p.hp -= 10;
@@ -492,11 +465,9 @@ function loop() {
         }
     });
     
-    // Wave Clear Check
     if(activeEnemies === 0 && game.objs.length > 0) {
-        // Wait a bit then next wave
         setTimeout(game.nextWave, 1000);
-        game.objs = []; // Clear bullets
+        game.objs = [];
     }
 }
 
@@ -507,23 +478,18 @@ function gameOver() {
     let earn = Math.floor(game.score / 10);
     document.getElementById('go-cred').innerText = "CREDITS EARNED: " + earn;
     
-    // Update server
     USER.credits += earn;
     fetch(API+'/score/submit', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({
         player: USER.username, score: game.score, wave: game.wave, diff: 'Normal', mode: game.mode
     })});
-    
-    // Need to sync credits to DB actually (simplified here, ideally server validates score)
 }
 
 function v(id){ return document.getElementById(id).value; }
 const ui={ tab:(t)=>{ document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active')); event.target.classList.add('active'); document.querySelectorAll('[id^="tab-"]').forEach(e=>e.style.display='none'); document.getElementById('tab-'+t).style.display='block'; }};
 
 window.onload = ()=> { 
-    if(TOKEN) auth.login(); 
-    app.cvs.width=window.innerWidth; app.cvs.height=window.innerHeight;
+    if(TOKEN) auth.login();
 };
 </script>
 </body>
 </html>
-
