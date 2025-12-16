@@ -115,7 +115,7 @@
         </div>
         <!-- Invisible Pause Button Top Center -->
         <div style="position:absolute; top:0; left:35%; width:30%; height:50px; pointer-events:auto;" onclick="game.togglePause()"></div>
-        <div style="position:absolute; bottom:5px; right:5px; font-size:10px; color:#555;">v7.2 STABLE</div>
+        <div style="position:absolute; bottom:5px; right:5px; font-size:10px; color:#555;">v7.2.1 STABLE</div>
     </div>
 
     <!-- LOGIN -->
@@ -172,7 +172,8 @@
                  <div style="background:rgba(0,0,0,0.3); padding:10px; border-radius:5px; margin-bottom:10px;">
                      <label style="font-size:12px; color:#aaa;">MISSION TYPE</label>
                      <select id="mode-select">
-                         <option value="Classic">🐔 CLASSIC MODE</option>
+                         <!-- FIXED: Renamed to avoid copyright -->
+                         <option value="Classic">🐔 SPACE FARM</option>
                          <option value="Meteor">☄️ METEOR STORM</option>
                      </select>
                      <select id="diff-select" style="margin-top:5px;">
@@ -233,7 +234,7 @@
 </div>
 
 <script>
-/** BRIGAGAME v7.2 - STABLE & SMOOTH **/
+/** BRIGAGAME v7.2.1 - STABLE & PATCHED **/
 const API = "https://ubriga.pythonanywhere.com";
 var USER=null, TOKEN=localStorage.getItem('px_token');
 var KEYS = {}; var ADMIN_UNLOCKED = false;
@@ -361,22 +362,43 @@ const shop = {
     }
 };
 
+// --- UPDATED ADMIN MODULE ---
 const admin = {
     verify: async () => {
+        console.log("Admin: Attempting...");
         const p = document.getElementById('admin-pin').value;
-        const res = await fetch(`${API}/admin/verify_pin`, {method:'POST', headers:{'Authorization':`Bearer ${TOKEN}`,'Content-Type':'application/json'}, body:JSON.stringify({pin:p})});
-        if((await res.json()).status==='success') {
-            document.getElementById('admin-pin').value="";
-            document.getElementById('admin-panel').style.display='block';
-            ADMIN_UNLOCKED=true; admin.refresh();
-        } else toast("DENIED");
+        try {
+            const res = await fetch(`${API}/admin/verify_pin`, {
+                method:'POST', 
+                headers:{'Authorization':`Bearer ${TOKEN}`,'Content-Type':'application/json'}, 
+                body:JSON.stringify({pin:p})
+            });
+            const d = await res.json();
+            console.log("Admin Response:", d);
+
+            if(d.status==='success') {
+                document.getElementById('admin-pin').value="";
+                document.getElementById('admin-panel').style.display='block';
+                ADMIN_UNLOCKED=true; admin.refresh();
+                toast("ACCESS GRANTED");
+            } else {
+                toast("DENIED: " + (d.error || "Unknown"));
+            }
+        } catch(e) {
+            console.error("Admin Error:", e);
+            toast("CONNECTION ERROR");
+        }
     },
     refresh: async () => {
         if(!ADMIN_UNLOCKED) return;
-        const res = await fetch(`${API}/admin/dashboard`, {headers:{'Authorization':`Bearer ${TOKEN}`}});
-        const d = await res.json();
-        const t = document.getElementById('adm-list'); t.innerHTML="";
-        d.users.forEach(u=> t.innerHTML+=`<div>${u.username} | ${u.credits} | ${u.banned?'BAN':'OK'}</div>`);
+        try {
+            const res = await fetch(`${API}/admin/dashboard`, {headers:{'Authorization':`Bearer ${TOKEN}`}});
+            const d = await res.json();
+            const t = document.getElementById('adm-list'); t.innerHTML="";
+            if(d.users) {
+                d.users.forEach(u=> t.innerHTML+=`<div>${u.username} | ${u.credits} | ${u.banned?'BAN':'OK'}</div>`);
+            } else { console.log("No data", d); }
+        } catch(e) { console.error(e); }
     }
 };
 
@@ -392,7 +414,6 @@ const app = {
         if(!('ontouchstart' in window)) {
             app.canvas.addEventListener('mousemove', e => {
                 if(!game.paused && !game.over && !game.inCutscene) { 
-                    // We only update the target, not the player position directly!
                     game.targetX = e.clientX; 
                     game.targetY = e.clientY; 
                 }
@@ -650,4 +671,3 @@ window.onload = app.init;
 </script>
 </body>
 </html>
-
