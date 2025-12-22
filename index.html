@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BRIGAGAME | v6.9 ENHANCED</title>
-    <!-- GOOGLE RECAPTCHA SCRIPT -->
+    <title>BRIGAGAME | v7.0 MEGA UPDATE</title>
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <style>
         :root {
@@ -26,7 +25,6 @@
         }
         canvas { display: block; }
         
-        /* UI LAYOUT */
         #ui-layer {
             position: absolute;
             top: 0; left: 0;
@@ -69,10 +67,12 @@
         }
         button:hover { background: var(--main); color: #000; box-shadow: 0 0 15px var(--main); }
         button:active { transform: scale(0.95); }
+        button:disabled { opacity: 0.3; cursor: not-allowed; }
         button.red { border-color: var(--danger); color: var(--danger); }
         button.red:hover { background: var(--danger); color: #000; }
         button.gold { border-color: var(--warn); color: var(--warn); }
         button.gold:hover { background: var(--warn); color: #000; }
+        button.grayed { border-color: #444; color: #444; background: #111; }
         
         input, select {
             background: #000;
@@ -86,7 +86,6 @@
             outline: none;
         }
         
-        /* HUD */
         #hud {
             display: none;
             width: 100%; height: 100%;
@@ -110,7 +109,6 @@
         .hp-fill { background: var(--main); box-shadow: 0 0 10px var(--main); }
         .heat-fill { background: var(--danger); width: 0%; transition: width 0.1s; }
         
-        /* BOSS HP BAR */
         #boss-hp-container {
             position: absolute;
             top: 80px;
@@ -153,7 +151,6 @@
             pointer-events: none;
         }
 
-        /* COMBO COUNTER */
         #combo-display {
             position: absolute;
             top: 50%;
@@ -165,7 +162,6 @@
             animation: pulse 0.5s infinite;
         }
 
-        /* TOAST */
         #toast {
             position: fixed;
             bottom: 30px; left: 50%;
@@ -179,11 +175,9 @@
             z-index: 999;
         }
         
-        /* JAMMED ANIMATION */
         @keyframes flash { 0% {opacity:1;} 50% {opacity:0;} 100% {opacity:1;} }
         .jammed-text { color: red; animation: flash 0.5s infinite; font-weight: bold; font-size: 20px; display: none; }
 
-        /* DAMAGE NUMBERS */
         .damage-number {
             position: absolute;
             font-size: 20px;
@@ -197,25 +191,20 @@
             100% { opacity: 0; transform: translateY(-50px); }
         }
 
-        /* TABLE */
         table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
         th, td { border: 1px solid #333; padding: 5px; text-align: left; }
         th { color: var(--warn); }
         
-        /* SCROLL */
         .scroll-box { max-height: 300px; overflow-y: auto; text-align: left; }
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-thumb { background: var(--main); }
         
-        /* OVERDRIVE FX */
         @keyframes pulse { 0% {box-shadow: 0 0 10px var(--danger);} 50% {box-shadow: 0 0 30px var(--danger);} 100% {box-shadow: 0 0 10px var(--danger);} }
         .overdrive { animation: pulse 0.5s infinite; border-color: var(--danger); color: var(--danger); }
         
-        /* ADMIN TABS */
         .tab-btn { flex: 1; border-bottom: none; }
         .tab-btn.active { background: var(--main); color: black; }
         
-        /* Mobile Controls */
         #mobile-controls {
             display: none;
             position: absolute;
@@ -260,21 +249,73 @@
             color: red;
             text-shadow: 0 0 10px red;
         }
+        
+        .upgrade-card {
+            background: #111;
+            border: 1px solid #333;
+            padding: 10px;
+            margin: 5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: 0.2s;
+        }
+        .upgrade-card:hover {
+            border-color: var(--main);
+            transform: scale(1.05);
+        }
+        .upgrade-icon {
+            font-size: 40px;
+            margin: 10px 0;
+        }
+        
+        /* RELEASE NOTES MODAL */
+        #release-notes-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--panel);
+            border: 2px solid var(--main);
+            padding: 30px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 0 50px rgba(0, 255, 204, 0.5);
+        }
+        #release-notes-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 999;
+        }
     </style>
 </head>
 <body>
 
 <div id="ui-layer">
-    <!-- MESSAGE CENTER -->
     <div id="msg-area">
          <div id="jammed-msg" class="jammed-text">WEAPON JAMMED!<br><span style="font-size:14px; color:white;">COOLING DOWN...</span></div>
     </div>
     <div id="toast">MSG</div>
     <div id="combo-display"></div>
 
-    <!-- DEV WATERMARK -->
-    <div style="position: absolute; bottom: 5px; right: 5px; font-size: 10px; color: #333; pointer-events: none;">DEV: OrelAi | v6.9 ENHANCED</div>
+    <div style="position: absolute; bottom: 5px; right: 5px; font-size: 10px; color: #333; pointer-events: none;">DEV: OrelAi | v7.0 MEGA</div>
     <div id="fps-counter" style="position: absolute; top: 5px; left: 5px; font-size: 10px; color: #555;">FPS: 60</div>
+
+    <!-- RELEASE NOTES OVERLAY -->
+    <div id="release-notes-overlay" onclick="ui.closeReleaseNotes()"></div>
+    <div id="release-notes-modal">
+        <h2 style="color: var(--main);">📋 RELEASE NOTES</h2>
+        <div id="release-notes-content" style="white-space: pre-wrap; text-align: left; line-height: 1.8;"></div>
+        <button onclick="ui.closeReleaseNotes()" class="gold" style="margin-top: 20px;">CLOSE</button>
+    </div>
 
     <!-- PAUSE MENU -->
     <div id="screen-pause" class="screen">
@@ -298,6 +339,17 @@
         </div>
     </div>
 
+    <!-- DISPLAY NAME CHANGE -->
+    <div id="screen-display-name" class="screen" style="z-index: 110;">
+        <div class="box">
+            <h2>CHANGE DISPLAY NAME</h2>
+            <p style="font-size: 12px; color: #aaa;" id="name-change-info">First change is FREE!</p>
+            <input type="text" id="new-display-name" placeholder="NEW DISPLAY NAME" maxlength="20">
+            <button onclick="auth.changeDisplayName()">CONFIRM</button>
+            <button onclick="this.parentElement.parentElement.style.display='none'" class="red">CANCEL</button>
+        </div>
+    </div>
+
     <!-- HUD -->
     <div id="hud">
         <div class="hud-panel" id="top-bar">
@@ -312,7 +364,6 @@
             </div>
         </div>
         
-        <!-- BOSS HP BAR -->
         <div id="boss-hp-container">
             <div id="boss-hp-bar">
                 <div id="boss-hp-fill" style="width: 100%;"></div>
@@ -328,12 +379,8 @@
             <div style="margin-top:10px; font-size:12px; color:#555;">[ESC] TO PAUSE</div>
         </div>
         
-        <!-- CONSUMABLES -->
-        <div class="hud-panel" id="bottom-bar">
-            <!-- Populated by JS -->
-        </div>
+        <div class="hud-panel" id="bottom-bar"></div>
 
-        <!-- Mobile Controls -->
         <div id="mobile-controls">
             <div id="joystick-area">
                 <div id="joystick-stick"></div>
@@ -366,8 +413,8 @@
         
         <div class="box" id="login-box">
             <h3 style="color:var(--main);">PILOT IDENTIFICATION</h3>
-            <input type="text" id="inp-u" placeholder="PILOT ID"><br>
-            <input type="password" id="inp-p" placeholder="ACCESS CODE"><br>
+            <input type="text" id="inp-u" placeholder="PILOT ID" onkeypress="if(event.key==='Enter') auth.login()"><br>
+            <input type="password" id="inp-p" placeholder="ACCESS CODE" onkeypress="if(event.key==='Enter') auth.login()"><br>
             <button onclick="auth.login()" style="width:100%; margin-top:10px;">LOGIN</button>
             
             <div style="margin-top:15px; font-size:12px; color:#777; cursor:pointer; text-decoration:underline;" onclick="auth.toggleMode('register')">
@@ -377,8 +424,8 @@
 
         <div class="box" id="register-box" style="display:none;">
              <h3 style="color:var(--warn);">NEW RECRUITMENT</h3>
-             <input type="text" id="reg-u" placeholder="CHOOSE ID"><br>
-             <input type="password" id="reg-p" placeholder="SET CODE"><br>
+             <input type="text" id="reg-u" placeholder="CHOOSE ID" onkeypress="if(event.key==='Enter') document.getElementById('reg-p').focus()"><br>
+             <input type="password" id="reg-p" placeholder="SET CODE" onkeypress="if(event.key==='Enter') auth.register()"><br>
              
              <div class="g-recaptcha" data-sitekey="6LfrGyssAAAAALIPZmJmhTJlcTvLzx2VHK6c06ZL" style="margin: 15px auto; display: inline-block;"></div>
              <br>
@@ -390,1436 +437,4 @@
         </div>
     </div>
 
-    <!-- LOBBY (המשך בדיוק כמו המקור) -->
-    <div id="screen-lobby" class="screen">
-        <div style="display: flex; gap: 20px; width: 90%; height: 90%;">
-            <div class="box" style="width: 250px; display: flex; flex-direction: column; text-align: left;">
-                <div style="display:flex; align-items:center; gap:10px; margin-bottom: 20px;">
-                    <div style="width:40px; height:40px; background:var(--main); border-radius:50%; display:flex; align-items:center; justify-content:center; color:black; font-weight:bold; font-size:20px;" id="u-avatar">?</div>
-                    <div>
-                        <div id="u-name" style="font-weight:bold;">User</div>
-                        <div id="u-rank" style="font-size:12px; color:#aaa;">PRIVATE</div>
-                    </div>
-                </div>
-                
-                <div style="background:#111; padding:10px; margin-bottom:10px; border:1px solid #333;">
-                    <div style="font-size:12px; color:#777;">CREDITS</div>
-                    <div id="u-credits" style="font-size:20px; color:var(--warn);">0</div>
-                </div>
-
-                <button onclick="auth.logout()" class="red" style="margin-top:auto;">LOGOUT</button>
-            </div>
-
-            <div style="flex: 1; display: flex; flex-direction: column; gap: 20px;">
-                <div class="box" style="width:auto; padding: 10px; display: flex; justify-content: space-between; align-items: center;">
-                    <div style="font-weight:bold;">BRIGAGAME <span style="font-size:10px; background:var(--main); color:black; padding:2px;">v6.9</span></div>
-                    <div id="news-ticker" style="font-size:12px; color:#aaa;">LATEST INTEL: Loading...</div>
-                </div>
-
-                <div style="display:flex; gap:10px;">
-                    <button class="tab-btn active" onclick="ui.tab('ops')">OPERATIONS</button>
-                    <button class="tab-btn" onclick="ui.tab('armory')">ARMORY</button>
-                    <button class="tab-btn" onclick="ui.tab('hangar')">HANGAR</button>
-                    <button class="tab-btn" onclick="ui.tab('leaderboard')">LEADERS</button>
-                    <button class="tab-btn" onclick="ui.tab('admin')" id="btn-admin" style="display:none;">ADMIN</button>
-                </div>
-
-                <div class="box" style="width:auto; flex:1; overflow:hidden; position:relative;">
-                    
-                    <div id="tab-ops" style="height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:20px;">
-                        <h2>MISSION PROTOCOL</h2>
-                        
-                        <div style="display:flex; gap:20px; align-items:center;">
-                            <label>MODE:</label>
-                            <select id="mode-select" style="width:200px;">
-                                <option value="Classic" selected>CLASSIC (INVADERS)</option>
-                                <option value="Meteor">METEOR STORM (SURVIVAL)</option>
-                            </select>
-                        </div>
-
-                        <div style="display:flex; gap:20px; align-items:center;">
-                            <label>THREAT LEVEL:</label>
-                            <select id="diff-select" style="width:200px;">
-                                <option value="Recruit">RECRUIT (EASY)</option>
-                                <option value="Soldier" selected>SOLDIER (NORMAL)</option>
-                                <option value="Veteran">VETERAN (HARD)</option>
-                                <option value="Elite">ELITE (INSANE)</option>
-                                <option value="Legend">LEGEND (IMPOSSIBLE)</option>
-                            </select>
-                        </div>
-
-                        <div style="display:flex; gap:20px;">
-                            <label><input type="checkbox" id="chk-autofire" style="width:auto;"> AUTO FIRE</label>
-                            <div style="font-size:12px; color:#777;">MANUAL (SPACE)</div>
-                        </div>
-
-                        <button onclick="app.startGame()" style="font-size:24px; padding: 20px 60px;" class="gold">LAUNCH</button>
-
-                        <div style="margin-top: 30px; border-top: 1px solid #333; padding-top: 20px; width: 80%;">
-                            <input type="text" id="coupon-code" placeholder="REDEEM CODE" style="width: 200px;">
-                            <button onclick="shop.redeem()">SUPPLY</button>
-                        </div>
-                    </div>
-
-                    <div id="tab-armory" style="display:none; height:100%; overflow-y:auto;">
-                        <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; padding: 10px;">
-                            <div style="grid-column: 1/-1; text-align:center; padding:20px; color:#555;">Loading Logistics...</div>
-                        </div>
-                    </div>
-
-                    <div id="tab-hangar" style="display:none; height:100%; overflow-y:auto;">
-                        <h3>DRONES</h3>
-                        <div id="hangar-drones" style="padding:10px; border:1px solid #333; margin-bottom:10px;">
-                            <div style="display:flex; justify-content:space-between; align-items:center; background:#111; padding:10px;">
-                                <div>🛸 DRONE</div>
-                                <button onclick="shop.buy('drone_support', 'consumable', 500)">BUY (500)</button>
-                                <div id="qty-drone_support">OWNED: 0</div>
-                            </div>
-                        </div>
-
-                        <h3>SKINS</h3>
-                        <div id="hangar-skins" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px;"></div>
-                    </div>
-
-                    <div id="tab-leaderboard" style="display:none; height:100%;">
-                        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                            <h3>TOP PILOTS</h3>
-                            <button onclick="app.loadLeaderboard()">REFRESH</button>
-                        </div>
-                        <div class="scroll-box">
-                            <table id="lb-table">
-                                <thead><tr><th>RANK</th><th>PILOT</th><th>SCORE</th><th>WAVE</th><th>DIFF</th></tr></thead>
-                                <tbody></tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <div id="tab-admin" style="display:none; height:100%; overflow-y:auto;">
-                        <div id="admin-login-panel">
-                            <h3>SECURE ACCESS</h3>
-                            <input type="password" id="admin-pin" placeholder="PIN CODE">
-                            <button onclick="admin.verify()">ACCESS</button>
-                        </div>
-                        
-                        <div id="admin-panel" style="display:none;">
-                            <div style="display:flex; gap:10px; margin-bottom:10px;">
-                                <button onclick="ui.subTab('users')">USERS</button>
-                                <button onclick="ui.subTab('coupons')">COUPONS</button>
-                                <button onclick="ui.subTab('config')">ECONOMY & NEWS</button>
-                                <button onclick="admin.refresh()" class="gold">REFRESH</button>
-                                <button onclick="admin.lock()" class="red">LOCK</button>
-                            </div>
-
-                            <div id="sub-users" class="admin-sub">
-                                <table style="font-size:10px;">
-                                    <thead><tr><th>ID</th><th>USER</th><th>XP</th><th>STATUS</th><th>ACT</th></tr></thead>
-                                    <tbody id="adm-users-list"></tbody>
-                                </table>
-                            </div>
-
-                            <div id="sub-coupons" class="admin-sub" style="display:none;">
-                                <div style="border:1px solid #333; padding:10px; margin-bottom:10px;">
-                                    <h4>CREATE COUPON</h4>
-                                    <input id="new-c-code" placeholder="CODE"> <button onclick="document.getElementById('new-c-code').value='CP'+Math.floor(Math.random()*10000)">RND</button><br>
-                                    <input id="new-c-val" type="number" placeholder="VALUE"><br>
-                                    <input id="new-c-uses" type="number" placeholder="MAX USES (-1 infinite)"><br>
-                                    <input id="new-c-hours" type="number" placeholder="HOURS VALID"><br>
-                                    <button onclick="admin.createCoupon()">CREATE</button>
-                                </div>
-                                <table>
-                                    <thead><tr><th>CODE</th><th>VAL</th><th>USES</th><th>EXP</th><th>ACT</th></tr></thead>
-                                    <tbody id="adm-coupons-list"></tbody>
-                                </table>
-                            </div>
-                            
-                            <div id="sub-config" class="admin-sub" style="display:none;">
-                                <label>RELEASE NOTES</label><br>
-                                <textarea id="conf-notes" style="width:90%; height:60px; background:black; color:white;"></textarea>
-                                
-                                <h4>ECONOMY (BASE PRICE / STEP PRICE)</h4>
-                                <div id="conf-prices"></div>
-                                
-                                <button onclick="admin.saveConfig()" class="gold" style="margin-top:10px;">SAVE CHANGES</button>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<canvas id="gameCanvas"></canvas>
-<script>
-/** BRIGAGAME v6.9 - ENHANCED EDITION **/
-const API = "https://ubriga.pythonanywhere.com";
-var USER=null, TOKEN=localStorage.getItem('px_token');
-var KEYS = {}; 
-var ADMIN_UNLOCKED = false;
-
-const RANKS = [
-    {xp:0, name:"Private"}, {xp:1000, name:"Private 2"}, {xp:2500, name:"Private 1st Class"},
-    {xp:5000, name:"Specialist"}, {xp:10000, name:"Corporal"}, {xp:20000, name:"Sergeant"},
-    {xp:35000, name:"Staff Sergeant"}, {xp:50000, name:"Sergeant 1st Class"}, {xp:75000, name:"Master Sergeant"},
-    {xp:100000, name:"First Sergeant"}, {xp:150000, name:"Sergeant Major"}, {xp:200000, name:"Command Sgt Major"},
-    {xp:300000, name:"2nd Lieutenant"}, {xp:400000, name:"1st Lieutenant"}, {xp:500000, name:"Captain"},
-    {xp:650000, name:"Major"}, {xp:800000, name:"Lt Colonel"}, {xp:1000000, name:"Colonel"},
-    {xp:1500000, name:"Brigadier General"}, {xp:2000000, name:"Major General"}, {xp:3000000, name:"Lt General"},
-    {xp:5000000, name:"General"}, {xp:10000000, name:"General of the Army"}
-];
-
-const v = (id) => document.getElementById(id).value;
-const toast = (msg) => {
-    let t = document.getElementById('toast');
-    t.innerText = msg; t.style.opacity = 1; t.style.bottom = "50px";
-    setTimeout(() => { t.style.opacity = 0; t.style.bottom = "30px"; }, 3000);
-}
-
-// AUTH MODULE (UNCHANGED - KEEPS YOUR SECURITY FIXES)
-const auth = {
-    toggleMode: (mode) => {
-        document.getElementById('login-box').style.display = mode === 'login' ? 'block' : 'none';
-        document.getElementById('register-box').style.display = mode === 'register' ? 'block' : 'none';
-    },
-
-    login: async () => {
-        const u = v('inp-u'), p = v('inp-p');
-        if(!u || !p) return toast("MISSING INFO");
-        try {
-            const res = await fetch(`${API}/login`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({username:u,password:p})});
-            const d = await res.json();
-            if(d.error) return toast(d.error);
-            USER = d.user; TOKEN = d.token;
-            localStorage.setItem('px_token', TOKEN);
-            ADMIN_UNLOCKED = false;
-            app.toLobby();
-        } catch(e) { toast("Conn Error"); }
-    },
-    
-    register: async () => {
-        const u = v('reg-u'), p = v('reg-p');
-        if(!u || !p) return toast("MISSING INFO");
-
-        const token = grecaptcha.getResponse();
-        if(token.length === 0) {
-            return toast("PLEASE CONFIRM YOU ARE NOT A ROBOT");
-        }
-
-        try {
-            const res = await fetch(`${API}/register`, {
-                method:'POST', 
-                headers:{'Content-Type':'application/json'}, 
-                body:JSON.stringify({
-                    username:u,
-                    password:p,
-                    recaptcha_token: token
-                })
-            });
-            const d = await res.json();
-            
-            if(d.status === 'success') {
-                toast(d.message);
-                grecaptcha.reset();
-                auth.toggleMode('login');
-            } else {
-                toast(d.message || d.error);
-                grecaptcha.reset();
-            }
-        } catch(e) { toast("Error"); }
-    },
-
-    changePassword: async () => {
-        const oldP = v('cp-old'), newP = v('cp-new');
-        if(!oldP || !newP) return toast("FILL FIELDS");
-        try {
-            const res = await fetch(`${API}/change_password`, {
-                method:'POST', headers:{'Authorization':`Bearer ${TOKEN}`, 'Content-Type':'application/json'},
-                body:JSON.stringify({old_password:oldP, new_password:newP})
-            });
-            const d = await res.json();
-            toast(d.message || d.error);
-            if(d.status==='success') document.getElementById('screen-settings').style.display='none';
-        } catch(e) { toast("Error"); }
-    },
-    
-    logout: () => {
-        USER=null; TOKEN=null; localStorage.removeItem('px_token');
-        
-        document.getElementById('inp-u').value = "";
-        document.getElementById('inp-p').value = "";
-        document.getElementById('admin-pin').value = ""; 
-
-        ADMIN_UNLOCKED = false;
-        document.getElementById('btn-admin').style.display = 'none';
-        document.getElementById('admin-panel').style.display = 'none';
-        document.getElementById('admin-login-panel').style.display = 'block';
-
-        document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
-        document.getElementById('screen-login').style.display='flex';
-        auth.toggleMode('login');
-    }
-};
-
-// UI MANAGER (UNCHANGED)
-const ui = {
-    tab: (t) => {
-        document.querySelectorAll('[id^="tab-"]').forEach(d=>d.style.display='none');
-        document.getElementById(`tab-${t}`).style.display = t==='ops'?'flex':'block';
-        document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-        event.target.classList.add('active');
-        if(t==='armory') shop.render();
-        if(t==='hangar') shop.renderHangar();
-        if(t==='leaderboard') app.loadLeaderboard();
-        
-        if(t==='admin') {
-             if(ADMIN_UNLOCKED) {
-                 document.getElementById('admin-login-panel').style.display = 'none';
-                 document.getElementById('admin-panel').style.display = 'block';
-                 admin.refresh();
-             } else {
-                 document.getElementById('admin-login-panel').style.display = 'block';
-                 document.getElementById('admin-panel').style.display = 'none';
-             }
-        }
-    },
-    subTab: (t) => {
-        document.querySelectorAll('.admin-sub').forEach(d=>d.style.display='none');
-        document.getElementById(`sub-${t}`).style.display='block';
-    }
-};
-
-// SHOP & ECONOMY (UNCHANGED)
-const shop = {
-    prices: {},
-    items: [
-        {id:'double_shot', name:'DOUBLE BLASTER', type:'upgrade', desc:'Fires 2 bullets'},
-        {id:'fire_rate', name:'RAPID FIRE MOD', type:'upgrade', desc:'Increases shooting speed'},
-        {id:'damage', name:'PLASMA CHARGE', type:'upgrade', desc:'Increases damage per hit'},
-        {id:'hull', name:'NANOBOT HULL', type:'upgrade', desc:'Increases Max HP'},
-        
-        {id:'skin_neon', name:'NEON SKIN', type:'skin', cost:50000, desc:'Cyberpunk glow'},
-        {id:'skin_gold', name:'GOLD SKIN', type:'skin', cost:100000, desc:'Pure luxury'},
-        {id:'skin_stealth', name:'STEALTH SKIN', type:'skin', cost:75000, desc:'Tactical black'}
-    ],
-    
-    getConfig: async () => {
-        try {
-            const res = await fetch(`${API}/get_config`);
-            const d = await res.json();
-            if(d.prices) shop.prices = JSON.parse(d.prices);
-            if(d.release_notes) document.getElementById('news-ticker').innerText = d.release_notes;
-        } catch(e) {}
-    },
-
-    getCost: (id, type) => {
-        if(type === 'skin') return shop.items.find(x=>x.id===id).cost;
-        if(type === 'upgrade') {
-            const lvl = (USER.inventory[id] || 0);
-            const p = shop.prices[id] || {base:1000, step:1000};
-            return p.base + (lvl * p.step);
-        }
-        return 0;
-    },
-
-    buy: async (id, type, manualCost) => {
-        const cost = manualCost || shop.getCost(id, type);
-        if(USER.credits < cost) return toast("INSUFFICIENT FUNDS");
-        
-        USER.credits -= cost;
-        app.updateLobbyUI();
-        
-        try {
-            const res = await fetch(`${API}/shop/buy`, {
-                method:'POST', headers:{'Authorization':`Bearer ${TOKEN}`, 'Content-Type':'application/json'},
-                body:JSON.stringify({item_id:id, item_type:type, cost:cost})
-            });
-            const d = await res.json();
-            if(d.status === 'ok') {
-                if(type === 'upgrade') USER.inventory[id] = (USER.inventory[id]||0)+1;
-                else if(type === 'skin') USER.inventory[id] = true;
-                else if(type === 'consumable') {
-                     if(!USER.consumables) USER.consumables = {};
-                     USER.consumables[id] = (USER.consumables[id]||0)+1;
-                }
-                toast("ACQUIRED!");
-                shop.render(); shop.renderHangar();
-            } else {
-                toast(d.error);
-                USER.credits += cost;
-                app.updateLobbyUI();
-            }
-        } catch(e) { USER.credits+=cost; toast("Error"); }
-    },
-
-    equip: async (id) => {
-        try {
-            const res = await fetch(`${API}/shop/equip`, {
-                method:'POST', headers:{'Authorization':`Bearer ${TOKEN}`, 'Content-Type':'application/json'},
-                body:JSON.stringify({skin_id:id})
-            });
-            if((await res.json()).status === 'ok') {
-                USER.inventory.active_skin = id;
-                toast("EQUIPPED");
-                shop.renderHangar();
-            }
-        } catch(e){}
-    },
-
-    redeem: async () => {
-        const c = document.getElementById('coupon-code').value;
-        if(!c) return;
-        try {
-            const res = await fetch(`${API}/redeem_coupon`, {
-                method:'POST', headers:{'Authorization':`Bearer ${TOKEN}`, 'Content-Type':'application/json'},
-                body:JSON.stringify({code:c})
-            });
-            const d = await res.json();
-            if(d.status === 'ok') {
-                toast(`ADDED ${d.added} CR!`);
-                USER.credits += d.added;
-                app.updateLobbyUI();
-            } else toast(d.error);
-        } catch(e){}
-    },
-
-    render: () => {
-        const con = document.getElementById('tab-armory');
-        con.innerHTML = "";
-        shop.items.forEach(i => {
-            const owned = i.type==='skin' && USER.inventory[i.id];
-            const lvl = USER.inventory[i.id] || 0;
-            const cost = shop.getCost(i.id, i.type);
-            
-            const div = document.createElement('div');
-            div.className = "box";
-            div.innerHTML = `
-                <h4 style="color:var(--main); margin:0;">${i.name}</h4>
-                <div style="font-size:10px; color:#aaa; margin-bottom:5px;">${i.desc}</div>
-                ${i.type==='upgrade' ? `<div style="color:white;">LVL: ${lvl}</div>` : ''}
-                ${owned ? `<button disabled style="border-color:#555; color:#555;">OWNED</button>` : 
-                `<button onclick="shop.buy('${i.id}', '${i.type}')">${cost.toLocaleString()} CR</button>`}
-            `;
-            con.appendChild(div);
-        });
-    },
-
-    renderHangar: () => {
-        if(USER.consumables) {
-            document.getElementById('qty-drone_support').innerText = `OWNED: ${USER.consumables['drone_support']||0}`;
-        }
-
-        const con = document.getElementById('hangar-skins');
-        con.innerHTML = "";
-        
-        let dBtn = document.createElement('div');
-        dBtn.className = "box";
-        dBtn.innerHTML = `<div>DEFAULT</div><button onclick="shop.equip('default')">EQUIP</button>`;
-        if(USER.inventory.active_skin === 'default') dBtn.style.borderColor = "var(--warn)";
-        con.appendChild(dBtn);
-
-        shop.items.filter(i=>i.type==='skin' && USER.inventory[i.id]).forEach(i => {
-            let div = document.createElement('div');
-            div.className = "box";
-            div.innerHTML = `<div>${i.name}</div><button onclick="shop.equip('${i.id}')">EQUIP</button>`;
-            if(USER.inventory.active_skin === i.id) div.style.borderColor = "var(--warn)";
-            con.appendChild(div);
-        });
-    }
-};
-
-// ADMIN MODULE (UNCHANGED)
-const admin = {
-    verify: async () => {
-        const pin = document.getElementById('admin-pin').value;
-        try {
-            const res = await fetch(`${API}/admin/verify_pin`, {
-                method:'POST', headers:{'Authorization':`Bearer ${TOKEN}`, 'Content-Type':'application/json'},
-                body:JSON.stringify({pin:pin})
-            });
-            if((await res.json()).status === 'success') {
-                document.getElementById('admin-pin').value = "";
-                document.getElementById('admin-login-panel').style.display='none';
-                document.getElementById('admin-panel').style.display='block';
-                ADMIN_UNLOCKED = true;
-                admin.refresh();
-            } else toast("ACCESS DENIED");
-        } catch(e) {}
-    },
-    lock: () => {
-        ADMIN_UNLOCKED = false;
-        document.getElementById('admin-panel').style.display='none';
-        document.getElementById('admin-login-panel').style.display='block';
-        toast("ADMIN LOCKED");
-    },
-    refresh: async () => {
-        if(!ADMIN_UNLOCKED) return;
-        try {
-            const res = await fetch(`${API}/admin/dashboard`, {headers:{'Authorization':`Bearer ${TOKEN}`}});
-            const d = await res.json();
-            
-            const ub = document.getElementById('adm-users-list'); ub.innerHTML="";
-            d.users.forEach(u => {
-                ub.innerHTML += `
-                <tr>
-                    <td>${u.id}</td><td>${u.username}</td><td>${u.xp}</td>
-                    <td>${u.banned?'BAN':(u.approved?'OK':'WAIT')}</td>
-                    <td>
-                        ${!u.approved ? `<button onclick="admin.act('approve_user', ${u.id})" style="padding:2px; font-size:10px;">OK</button>` : ''}
-                        <button onclick="admin.act('ban_user', ${u.id}, ${!u.banned})" style="padding:2px; font-size:10px;">${u.banned?'UNBAN':'BAN'}</button>
-                        <button onclick="admin.act('reset_pass', ${u.id})" style="padding:2px; font-size:10px;">RST</button>
-                        <button onclick="admin.act('delete_user', ${u.id})" class="red" style="padding:2px; font-size:10px;">X</button>
-                    </td>
-                </tr>`;
-            });
-
-            const cb = document.getElementById('adm-coupons-list'); cb.innerHTML="";
-            d.coupons.forEach(c => {
-                cb.innerHTML += `<tr><td>${c.code}</td><td>${c.value}</td><td>${c.uses}</td><td>${c.expires||'-'}</td>
-                <td><button onclick="admin.act('delete_coupon', null, null, ${c.id})" class="red">X</button></td></tr>`;
-            });
-            
-            if(d.config) {
-                if(d.config.prices) {
-                     let prices = JSON.parse(d.config.prices);
-                     let html = "";
-                     for(let k in prices) {
-                        html += `<div>${k}: <input id="p-base-${k}" value="${prices[k].base}" style="width:60px;"> + <input id="p-step-${k}" value="${prices[k].step}" style="width:60px;"></div>`;
-                     }
-                     document.getElementById('conf-prices').innerHTML = html;
-                }
-                document.getElementById('conf-notes').value = d.config.release_notes || "";
-            }
-
-        } catch(e){}
-    },
-    act: async (action, uid, banState, cid) => {
-        if(!ADMIN_UNLOCKED) return;
-        if(!confirm("CONFIRM ACTION?")) return;
-        await fetch(`${API}/admin/action`, {
-            method:'POST', headers:{'Authorization':`Bearer ${TOKEN}`, 'Content-Type':'application/json'},
-            body:JSON.stringify({action:action, user_id:uid, ban:banState, id:cid})
-        });
-        admin.refresh();
-    },
-    createCoupon: async () => {
-        if(!ADMIN_UNLOCKED) return;
-        await fetch(`${API}/admin/action`, {
-            method:'POST', headers:{'Authorization':`Bearer ${TOKEN}`, 'Content-Type':'application/json'},
-            body:JSON.stringify({
-                action:'create_coupon',
-                code: v('new-c-code'),
-                value: v('new-c-val'),
-                uses: v('new-c-uses'),
-                hours: v('new-c-hours')
-            })
-        });
-        admin.refresh();
-    },
-    saveConfig: async () => {
-        if(!ADMIN_UNLOCKED) return;
-        let newPrices = {};
-        shop.items.filter(i=>i.type==='upgrade').forEach(i => {
-             let k = i.id;
-             let baseEl = document.getElementById(`p-base-${k}`);
-             let stepEl = document.getElementById(`p-step-${k}`);
-             if(baseEl && stepEl) {
-                 newPrices[k] = {
-                    base: parseInt(baseEl.value),
-                    step: parseInt(stepEl.value)
-                 };
-             }
-        });
-
-        let notes = document.getElementById('conf-notes').value;
-
-        await fetch(`${API}/admin/save_config`, {
-            method:'POST', headers:{'Authorization':`Bearer ${TOKEN}`, 'Content-Type':'application/json'},
-            body:JSON.stringify({
-                prices: newPrices,
-                release_notes: notes
-            })
-        });
-        
-        document.getElementById('news-ticker').innerText = notes;
-        toast("CONFIG SAVED");
-    }
-};
-
-// ========================================
-// 🎮 ENHANCED GAME ENGINE
-// ========================================
-
-const app = {
-    canvas: document.getElementById('gameCanvas'),
-    ctx: document.getElementById('gameCanvas').getContext('2d'),
-    
-    init: async () => {
-        window.addEventListener('resize', app.resize);
-        app.resize();
-        
-        window.addEventListener('keydown', e => { 
-            KEYS[e.code] = true; 
-            if(e.code==='Escape') game.togglePause(); 
-            if(e.code==='Space') game.shoot();
-            if(e.code==='KeyR' && game.jammed) game.vent();
-        });
-        window.addEventListener('keyup', e => KEYS[e.code] = false);
-
-        // ENHANCED MOBILE CONTROLS
-        if('ontouchstart' in window) {
-            document.getElementById('mobile-controls').style.display='block';
-            
-            // Joystick
-            const joyArea = document.getElementById('joystick-area');
-            const joyStick = document.getElementById('joystick-stick');
-            let joyActive = false;
-            let joyCenter = {x:0, y:0};
-            
-            joyArea.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                joyActive = true;
-                const rect = joyArea.getBoundingClientRect();
-                joyCenter = {x: rect.left + rect.width/2, y: rect.top + rect.height/2};
-            });
-            
-            joyArea.addEventListener('touchmove', (e) => {
-                if(!joyActive) return;
-                e.preventDefault();
-                const touch = e.touches[0];
-                const dx = touch.clientX - joyCenter.x;
-                const dy = touch.clientY - joyCenter.y;
-                const dist = Math.min(Math.sqrt(dx*dx + dy*dy), 40);
-                const angle = Math.atan2(dy, dx);
-                
-                joyStick.style.left = `calc(50% + ${Math.cos(angle) * dist}px)`;
-                joyStick.style.top = `calc(50% + ${Math.sin(angle) * dist}px)`;
-                
-                // Move player
-                if(game.running && !game.paused) {
-                    game.player.x += Math.cos(angle) * dist * 0.3;
-                    game.player.y += Math.sin(angle) * dist * 0.3;
-                }
-            });
-            
-            joyArea.addEventListener('touchend', () => {
-                joyActive = false;
-                joyStick.style.left = '50%';
-                joyStick.style.top = '50%';
-            });
-            
-            // Fire Button
-            const fireBtn = document.getElementById('fire-btn');
-            fireBtn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                KEYS['Space'] = true;
-            });
-            fireBtn.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                KEYS['Space'] = false;
-            });
-        } else {
-             app.canvas.addEventListener('mousemove', e => {
-                if(!game.paused && !game.over) {
-                    game.player.x = e.clientX;
-                    game.player.y = e.clientY;
-                }
-            });
-        }
-        
-        await shop.getConfig();
-        document.getElementById('screen-login').style.display='flex';
-        app.loop();
-    },
-
-    resize: () => {
-        app.canvas.width = window.innerWidth;
-        app.canvas.height = window.innerHeight;
-    },
-
-    toLobby: () => {
-        game.running = false;
-        document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
-        document.getElementById('hud').style.display='none';
-        document.getElementById('screen-lobby').style.display='flex';
-        app.updateLobbyUI();
-    },
-    
-    updateLobbyUI: () => {
-        if(!USER) return;
-        document.getElementById('u-name').innerText = USER.username;
-        document.getElementById('u-credits').innerText = USER.credits.toLocaleString();
-        
-        let r = RANKS.slice().reverse().find(x => USER.total_xp >= x.xp) || RANKS[0];
-        document.getElementById('u-rank').innerText = r.name.toUpperCase();
-        document.getElementById('u-avatar').innerText = USER.username.charAt(0).toUpperCase();
-
-        if(USER.is_admin) {
-            document.getElementById('btn-admin').style.display='block';
-        } else {
-            document.getElementById('btn-admin').style.display='none';
-        }
-    },
-
-    loadLeaderboard: async () => {
-        const res = await fetch(`${API}/leaderboard`);
-        const data = await res.json();
-        const tb = document.querySelector('#lb-table tbody');
-        tb.innerHTML = "";
-        data.forEach((r, i) => {
-            tb.innerHTML += `<tr style="${r.player===USER.username?'color:var(--main)':''}">
-                <td>#${i+1}</td><td>${r.player}</td><td>${r.score.toLocaleString()}</td><td>${r.wave}</td><td>${r.diff}</td>
-            </tr>`;
-        });
-    },
-
-    startGame: () => {
-        document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
-        document.getElementById('hud').style.display='block';
-        game.start();
-    },
-
-    loop: () => {
-        requestAnimationFrame(app.loop);
-        if(!USER) return;
-        game.update();
-        game.draw();
-    }
-};
-
-// ========================================
-// 🎮 ENHANCED GAME LOGIC
-// ========================================
-
-const game = {
-    running: false,
-    paused: false,
-    over: false,
-    jammed: false,
-    lastTime: 0,
-    screenShake: 0,
-    
-    player: {x:0, y:0, hp:100, maxHp:100, heat:0, score:0, invincible:0},
-    bullets: [],
-    enemyBullets: [], // NEW: Enemy projectiles
-    enemies: [],
-    particles: [],
-    bonuses: [],
-    drones: [],
-    damageNumbers: [], // NEW: Floating damage
-    
-    wave: 0,
-    waveTimer: 0,
-    difficulty: 'Soldier',
-    mode: 'Classic',
-    
-    combo: 0, // NEW: Combo system
-    comboTimer: 0,
-    maxCombo: 0,
-    
-    boss: null, // NEW: Boss reference
-    
-    start: () => {
-        game.running = true;
-        game.paused = false;
-        game.over = false;
-        game.jammed = false;
-        game.difficulty = document.getElementById('diff-select').value;
-        game.mode = document.getElementById('mode-select').value;
-        
-        document.getElementById('mode-disp').innerText = `(${game.mode.toUpperCase()})`;
-        
-        const inv = USER.inventory;
-        game.player.maxHp = 100 + ((inv['hull']||0) * 20);
-        game.player.hp = game.player.maxHp;
-        game.player.heat = 0;
-        game.player.score = 0;
-        game.player.invincible = 0;
-        
-        game.fireRate = Math.max(5, 20 - (inv['fire_rate']||0));
-        game.damage = 10 + ((inv['damage']||0) * 5);
-        game.doubleShot = (inv['double_shot']||0);
-        
-        game.bullets = [];
-        game.enemyBullets = [];
-        game.enemies = [];
-        game.particles = [];
-        game.bonuses = [];
-        game.drones = [];
-        game.damageNumbers = [];
-        game.boss = null;
-        
-        game.combo = 0;
-        game.comboTimer = 0;
-        game.maxCombo = 0;
-        
-        game.wave = 0;
-        game.nextWave();
-
-        let dCount = (USER.consumables && USER.consumables['drone_support']) || 0;
-        for(let i=0; i<dCount; i++) app.useDrone();
-        
-        document.getElementById('boss-hp-container').style.display = 'none';
-    },
-
-    togglePause: () => {
-        if(!game.running || game.over) return;
-        game.paused = !game.paused;
-        document.getElementById('screen-pause').style.display = game.paused ? 'flex' : 'none';
-    },
-
-    nextWave: () => {
-        game.wave++;
-        game.waveTimer = game.mode === 'Meteor' ? 600 : 300;
-        
-        // BOSS WAVE (every 5 waves in Classic)
-        if(game.mode === 'Classic' && game.wave % 5 === 0) {
-            document.getElementById('boss-warning').style.display='flex';
-            setTimeout(()=>document.getElementById('boss-warning').style.display='none', 3000);
-            game.spawnBoss();
-            return;
-        }
-
-        // BONUS WAVE (every 10 waves)
-        if(game.wave % 10 === 0) {
-            toast("💎 BONUS WAVE! 💎");
-            game.spawnBonusWave();
-            return;
-        }
-
-        // NORMAL WAVE - Mixed enemy types
-        let count = 5 + (game.wave * 2);
-        let speedMult = 1;
-        if(game.difficulty === 'Veteran') { count *= 1.5; speedMult=1.2; }
-        if(game.difficulty === 'Elite') { count *= 2; speedMult=1.5; }
-        if(game.difficulty === 'Legend') { count *= 3; speedMult=2; }
-        
-        if(game.mode === 'Meteor') count *= 2;
-
-        for(let i=0; i<count; i++) {
-            if(game.mode === 'Meteor') {
-                game.spawnEnemy('meteor', speedMult);
-            } else {
-                // Mix of enemy types
-                let rand = Math.random();
-                if(rand < 0.5) game.spawnEnemy('grunt', speedMult);
-                else if(rand < 0.75) game.spawnEnemy('scout', speedMult);
-                else if(rand < 0.9) game.spawnEnemy('tank', speedMult);
-                else game.spawnEnemy('shooter', speedMult);
-            }
-        }
-        
-        toast(`${game.mode.toUpperCase()} WAVE ${game.wave}`);
-    },
-
-    spawnEnemy: (type, speedMult=1) => {
-        let enemy = {
-            x: Math.random() * app.canvas.width,
-            y: -Math.random() * (game.mode==='Meteor'?2000:1000),
-            w: 30, 
-            h: 30,
-            speed: (2 + Math.random() * 2) * speedMult,
-            type: type,
-            shootTimer: 0
-        };
-
-        switch(type) {
-            case 'meteor':
-                enemy.hp = 10 + game.wave * 5;
-                enemy.maxHp = enemy.hp;
-                enemy.color = '#555';
-                break;
-            case 'scout':
-                enemy.hp = 5 + game.wave * 2;
-                enemy.maxHp = enemy.hp;
-                enemy.speed *= 1.5;
-                enemy.color = 'orange';
-                enemy.w = 20; enemy.h = 20;
-                break;
-            case 'tank':
-                enemy.hp = 30 + game.wave * 10;
-                enemy.maxHp = enemy.hp;
-                enemy.speed *= 0.5;
-                enemy.color = 'green';
-                enemy.w = 40; enemy.h = 40;
-                break;
-            case 'shooter':
-                enemy.hp = 15 + game.wave * 5;
-                enemy.maxHp = enemy.hp;
-                enemy.color = 'purple';
-                break;
-            default: // grunt
-                enemy.hp = 10 + game.wave * 5;
-                enemy.maxHp = enemy.hp;
-                enemy.color = 'red';
-        }
-
-        game.enemies.push(enemy);
-    },
-
-    spawnBoss: () => {
-        game.boss = {
-            x: app.canvas.width / 2,
-            y: -150,
-            w: 100,
-            h: 100,
-            hp: 1000 + game.wave * 200,
-            maxHp: 1000 + game.wave * 200,
-            speed: 2,
-            type: 'boss',
-            pattern: Math.floor(Math.random() * 3), // 0=circle, 1=zigzag, 2=dive
-            angle: 0,
-            phase: 1,
-            shootTimer: 0,
-            minions: []
-        };
-        game.enemies.push(game.boss);
-        
-        document.getElementById('boss-hp-container').style.display = 'block';
-        document.getElementById('boss-name').innerText = `⚠️ BOSS WAVE ${game.wave/5} ⚠️`;
-    },
-
-    spawnBonusWave: () => {
-        // Spawn lots of bonuses!
-        for(let i=0; i<20; i++) {
-            setTimeout(() => {
-                game.bonuses.push({
-                    x: Math.random() * app.canvas.width,
-                    y: -50,
-                    type: ['shield', 'rapid', 'triple', 'multiplier'][Math.floor(Math.random() * 4)]
-                });
-            }, i * 200);
-        }
-    },
-
-    shoot: () => {
-        if(game.jammed) return;
-        if(game.player.heat >= 100) {
-            game.jam();
-            return;
-        }
-        
-        game.player.heat += 5;
-        game.bullets.push({x:game.player.x, y:game.player.y, vx:0, vy:-15, dmg:game.damage});
-        
-        if(game.doubleShot > 0) {
-             game.bullets.push({x:game.player.x-10, y:game.player.y+5, vx:-2, vy:-14, dmg:game.damage});
-             game.bullets.push({x:game.player.x+10, y:game.player.y+5, vx:2, vy:-14, dmg:game.damage});
-        }
-    },
-
-    jam: () => {
-        game.jammed = true;
-        game.player.heat = 100;
-        document.getElementById('jammed-msg').style.display = 'block';
-        let auto = document.getElementById('chk-autofire').checked;
-        if(!auto) document.getElementById('jammed-msg').innerHTML = "WEAPON JAMMED!<br>PRESS [R] TO VENT";
-        else setTimeout(()=>game.vent(), 3000);
-    },
-
-    vent: () => {
-        game.jammed = false;
-        game.player.heat = 50;
-        document.getElementById('jammed-msg').style.display = 'none';
-        toast("WEAPON VENTED");
-    },
-
-    addDamageNumber: (x, y, dmg) => {
-        game.damageNumbers.push({
-            x: x,
-            y: y,
-            text: Math.floor(dmg),
-            life: 60,
-            color: dmg > 50 ? 'red' : 'white'
-        });
-    },
-
-    screenShakeEffect: (amount) => {
-        game.screenShake = amount;
-    },
-
-    update: () => {
-        if(!game.running || game.paused || game.over) return;
-        
-        const W = app.canvas.width, H = app.canvas.height;
-        
-        // Player Heat
-        if(!game.jammed && game.player.heat > 0) game.player.heat -= 0.5;
-        if(game.player.invincible > 0) game.player.invincible--;
-        
-        // Auto Fire
-        if(document.getElementById('chk-autofire').checked && !game.jammed && game.player.heat < 80) {
-             if(game.lastTime % game.fireRate === 0) game.shoot();
-        }
-        game.lastTime++;
-
-        // Combo Timer
-        if(game.comboTimer > 0) {
-            game.comboTimer--;
-            if(game.comboTimer === 0) game.combo = 0;
-        }
-
-        // Drones
-        game.drones.forEach(d => {
-            d.angle += 0.05;
-            d.x = game.player.x + Math.cos(d.angle)*60;
-            d.y = game.player.y + Math.sin(d.angle)*60;
-            if(game.lastTime % 30 === 0) {
-                game.bullets.push({x:d.x, y:d.y, vx:0, vy:-10, dmg:game.damage/2, color:'#ffcc00'});
-            }
-        });
-
-        // Bullets
-        for(let i=game.bullets.length-1; i>=0; i--) {
-            let b = game.bullets[i];
-            b.x += b.vx; b.y += b.vy;
-            if(b.y < -50) game.bullets.splice(i, 1);
-        }
-
-        // Enemy Bullets
-        for(let i=game.enemyBullets.length-1; i>=0; i--) {
-            let b = game.enemyBullets[i];
-            b.x += b.vx; b.y += b.vy;
-            
-            // Check player collision
-            if(game.player.invincible === 0 && Math.abs(b.x - game.player.x) < 20 && Math.abs(b.y - game.player.y) < 20) {
-                game.player.hp -= 10;
-                game.screenShakeEffect(10);
-                game.createParticles(b.x, b.y, 5, 'red');
-                game.enemyBullets.splice(i, 1);
-                continue;
-            }
-            
-            if(b.y > H + 50) game.enemyBullets.splice(i, 1);
-        }
-
-        // Enemies & Boss AI
-        let activeEnemies = 0;
-        for(let i=game.enemies.length-1; i>=0; i--) {
-            let e = game.enemies[i];
-            activeEnemies++;
-            
-            // BOSS AI
-            if(e.type === 'boss') {
-                // Movement Patterns
-                switch(e.pattern) {
-                    case 0: // Circle
-                        e.angle += 0.02;
-                        e.x = W/2 + Math.cos(e.angle) * 200;
-                        e.y = 150 + Math.sin(e.angle * 2) * 50;
-                        break;
-                    case 1: // Zigzag
-                        e.x += Math.sin(game.lastTime * 0.05) * 3;
-                        if(e.y < 150) e.y += 1;
-                        break;
-                    case 2: // Dive Bomb
-                        if(game.lastTime % 180 < 90) {
-                            if(e.y < 150) e.y += 2;
-                        } else {
-                            let dx = game.player.x - e.x;
-                            e.x += Math.sign(dx) * 4;
-                            e.y += 3;
-                            if(e.y > H - 100) e.y = 100;
-                        }
-                        break;
-                }
-                
-                // Boss Shooting
-                e.shootTimer++;
-                if(e.shootTimer > 60) {
-                    e.shootTimer = 0;
-                    // Shoot spread pattern
-                    for(let j=-2; j<=2; j++) {
-                        let angle = Math.PI/2 + j * 0.3;
-                        game.enemyBullets.push({
-                            x: e.x,
-                            y: e.y,
-                            vx: Math.cos(angle) * 4,
-                            vy: Math.sin(angle) * 4
-                        });
-                    }
-                }
-                
-                // Boss Phase 2 (spawn minions at 50% HP)
-                if(e.hp < e.maxHp / 2 && e.phase === 1) {
-                    e.phase = 2;
-                    toast("⚠️ BOSS PHASE 2! ⚠️");
-                    for(let j=0; j<5; j++) {
-                        game.spawnEnemy('grunt', 1.5);
-                    }
-                }
-                
-                // Update Boss HP Bar
-                let hpPercent = (e.hp / e.maxHp) * 100;
-                document.getElementById('boss-hp-fill').style.width = hpPercent + '%';
-                
-            } else {
-                // Normal enemy movement
-                e.y += e.speed;
-                
-                // Shooter AI
-                if(e.type === 'shooter') {
-                    e.shootTimer++;
-                    if(e.shootTimer > 120) {
-                        e.shootTimer = 0;
-                        let dx = game.player.x - e.x;
-                        let dy = game.player.y - e.y;
-                        let dist = Math.sqrt(dx*dx + dy*dy);
-                        game.enemyBullets.push({
-                            x: e.x,
-                            y: e.y,
-                            vx: (dx / dist) * 3,
-                            vy: (dy / dist) * 3
-                        });
-                    }
-                }
-            }
-
-            // Player Collision
-            if(game.player.invincible === 0 && Math.abs(e.x - game.player.x) < 30 && Math.abs(e.y - game.player.y) < 30) {
-                let dmg = (e.type==='meteor' ? 30 : (e.type==='boss' ? 50 : 10));
-                game.player.hp -= dmg;
-                game.screenShakeEffect(15);
-                game.createParticles(e.x, e.y, 10, 'red');
-                if(e.type !== 'boss') {
-                    game.enemies.splice(i, 1);
-                    activeEnemies--;
-                }
-                continue;
-            }
-
-            // Bullet Collision
-            if(game.mode !== 'Meteor' || e.type === 'boss' || e.type !== 'meteor') { 
-                for(let j=game.bullets.length-1; j>=0; j--) {
-                    let b = game.bullets[j];
-                    if(Math.abs(e.x - b.x) < e.w && Math.abs(e.y - b.y) < e.h) {
-                        e.hp -= b.dmg;
-                        game.bullets.splice(j, 1);
-                        game.createParticles(b.x, b.y, 3, 'cyan');
-                        game.addDamageNumber(e.x, e.y, b.dmg);
-                        
-                        if(e.hp <= 0) {
-                            // Combo System
-                            game.combo++;
-                            game.comboTimer = 180; // 3 seconds
-                            if(game.combo > game.maxCombo) game.maxCombo = game.combo;
-                            
-                            let scoreGain = (e.type==='boss'?500:50) * game.combo;
-                            game.player.score += scoreGain;
-                            
-                            game.createParticles(e.x, e.y, 20, 'orange');
-                            
-                            // DROP LOOT
-                            let dropChance = e.type === 'boss' ? 1.0 : 0.15;
-                            if(Math.random() < dropChance) {
-                                let bonusType = ['shield', 'rapid', 'triple', 'multiplier'][Math.floor(Math.random() * 4)];
-                                game.bonuses.push({x:e.x, y:e.y, type: bonusType});
-                            }
-
-                            if(e.type === 'boss') {
-                                game.boss = null;
-                                document.getElementById('boss-hp-container').style.display = 'none';
-                                toast("🏆 BOSS DEFEATED! 🏆");
-                            }
-
-                            game.enemies.splice(i, 1);
-                            activeEnemies--;
-                            break;
-                        }
-                    }
-                }
-            }
-            
-            // Enemy Escaped
-            if(e.y > H + 100) { 
-                if(game.mode === 'Classic' && e.type !== 'boss') {
-                    let pen = game.wave > 5 ? 5 : 10;
-                    game.player.hp -= pen;
-                    toast(`ENEMY BREACH! -${pen} HP`);
-                }
-                if(e.type === 'boss') {
-                    game.boss = null;
-                    document.getElementById('boss-hp-container').style.display = 'none';
-                }
-                game.enemies.splice(i, 1); 
-                activeEnemies--; 
-            }
-        }
-
-        // Bonuses Update
-        for(let i=game.bonuses.length-1; i>=0; i--) {
-            let b = game.bonuses[i];
-            b.y += 2;
-            if(Math.abs(b.x - game.player.x) < 30 && Math.abs(b.y - game.player.y) < 30) {
-                toast(`💎 ${b.type.toUpperCase()} ACQUIRED!`);
-                if(b.type==='shield') game.player.hp = Math.min(game.player.maxHp, game.player.hp+30);
-                if(b.type==='rapid') { 
-                    let oldRate = game.fireRate;
-                    game.fireRate = 2; 
-                    setTimeout(()=>game.fireRate=oldRate, 5000); 
-                }
-                if(b.type==='triple') {
-                    let oldShot = game.doubleShot;
-                    game.doubleShot = 2;
-                    setTimeout(()=>game.doubleShot=oldShot, 5000);
-                }
-                if(b.type==='multiplier') {
-                    game.combo = Math.max(game.combo, 5);
-                    game.comboTimer = 300;
-                }
-                game.bonuses.splice(i, 1);
-            }
-            if(b.y > H) game.bonuses.splice(i, 1);
-        }
-
-        if(activeEnemies === 0 && game.waveTimer-- <= 0) game.nextWave();
-
-        // Survival Score in Meteor Mode
-        if(game.mode === 'Meteor' && game.lastTime % 60 === 0) game.player.score += 10;
-
-        // Check Death
-        if(game.player.hp <= 0) game.endGame();
-
-        // Particles
-        game.particles.forEach((p,i) => {
-            p.x += p.vx; p.y += p.vy; p.life--;
-            if(p.life<=0) game.particles.splice(i,1);
-        });
-
-        // Damage Numbers
-        game.damageNumbers.forEach((d, i) => {
-            d.life--;
-            d.y -= 1;
-            if(d.life <= 0) game.damageNumbers.splice(i, 1);
-        });
-
-        // Screen Shake
-        if(game.screenShake > 0) game.screenShake--;
-        
-        // HUD Updates
-        document.getElementById('bar-hp').style.width = Math.max(0, (game.player.hp / game.player.maxHp * 100)) + "%";
-        let hPer = (game.player.heat);
-        document.getElementById('bar-heat').style.width = hPer + "%";
-        document.getElementById('score-disp').innerText = game.player.score.toLocaleString();
-        document.getElementById('wave-disp').innerText = `WAVE ${game.wave}`;
-        document.getElementById('combo-info').innerText = `COMBO: x${game.combo || 1}`;
-        
-        // Show combo if high
-        if(game.combo >= 5) {
-            document.getElementById('combo-display').style.display = 'block';
-            document.getElementById('combo-display').innerText = `x${game.combo}`;
-        } else {
-            document.getElementById('combo-display').style.display = 'none';
-        }
-        
-        if(game.jammed) document.querySelector('.heat-fill').style.background = 'white';
-        else document.querySelector('.heat-fill').style.background = 'var(--danger)';
-
-        if(game.player.heat > 90) document.getElementById('overdrive-msg').style.display='block';
-        else document.getElementById('overdrive-msg').style.display='none';
-    },
-
-    draw: () => {
-        if(!USER) return;
-        
-        const ctx = app.ctx;
-        ctx.save();
-        
-        // Screen Shake
-        if(game.screenShake > 0) {
-            ctx.translate(
-                (Math.random() - 0.5) * game.screenShake,
-                (Math.random() - 0.5) * game.screenShake
-            );
-        }
-        
-        ctx.clearRect(0, 0, app.canvas.width, app.canvas.height);
-        
-        // Background Grid
-        ctx.strokeStyle = "rgba(0, 255, 204, 0.1)";
-        ctx.lineWidth = 1;
-        let off = (game.lastTime * (game.mode==='Meteor'?10:2)) % 50;
-        for(let i=0; i<app.canvas.width/50; i++) { 
-            ctx.beginPath(); 
-            ctx.moveTo(i*50, 0); 
-            ctx.lineTo(i*50, app.canvas.height); 
-            ctx.stroke(); 
-        }
-        for(let i=0; i<app.canvas.height/50; i++) { 
-            ctx.beginPath(); 
-            ctx.moveTo(0, i*50+off); 
-            ctx.lineTo(app.canvas.width, i*50+off); 
-            ctx.stroke(); 
-        }
-
-        // Player
-        ctx.save();
-        ctx.translate(game.player.x, game.player.y);
-        
-        let skin = USER.inventory.active_skin;
-        if(skin === 'skin_neon') { ctx.shadowBlur = 20; ctx.shadowColor = 'cyan'; }
-        if(skin === 'skin_gold') { ctx.fillStyle = 'gold'; } else { ctx.fillStyle = 'black'; }
-        
-        // Invincibility flash
-        if(game.player.invincible > 0 && game.player.invincible % 10 < 5) {
-            ctx.globalAlpha = 0.5;
-        }
-        
-        ctx.strokeStyle = varColor(skin);
-        ctx.lineWidth = 2;
-        ctx.beginPath(); 
-        ctx.moveTo(0, -20); 
-        ctx.lineTo(15, 15); 
-        ctx.lineTo(0, 5); 
-        ctx.lineTo(-15, 15); 
-        ctx.closePath();
-        ctx.fill(); ctx.stroke();
-        
-        // Engine Flame
-        ctx.fillStyle = `rgba(0, 255, 204, ${Math.random()})`;
-        ctx.beginPath(); 
-        ctx.moveTo(-5, 10); 
-        ctx.lineTo(5, 10); 
-        ctx.lineTo(0, 25 + Math.random()*10); 
-        ctx.fill();
-        ctx.restore();
-
-        // Drones
-        game.drones.forEach(d => {
-            ctx.fillStyle = "#fff";
-            ctx.beginPath(); ctx.arc(d.x, d.y, 5, 0, Math.PI*2); ctx.fill();
-        });
-
-        // Bonuses
-        game.bonuses.forEach(b => {
-            let colors = {shield:'blue', rapid:'yellow', triple:'green', multiplier:'gold'};
-            let symbols = {shield:'🛡️', rapid:'⚡', triple:'🔱', multiplier:'💰'};
-            
-            ctx.fillStyle = colors[b.type];
-            ctx.beginPath(); ctx.arc(b.x, b.y, 12, 0, Math.PI*2); ctx.fill();
-            ctx.font='16px Arial'; 
-            ctx.fillText(symbols[b.type], b.x-8, b.y+5);
-        });
-
-        // Bullets
-        game.bullets.forEach(b => {
-            ctx.fillStyle = b.color || varColor(skin);
-            ctx.fillRect(b.x-2, b.y-5, 4, 10);
-        });
-
-        // Enemy Bullets
-        game.enemyBullets.forEach(b => {
-            ctx.fillStyle = 'red';
-            ctx.beginPath();
-            ctx.arc(b.x, b.y, 4, 0, Math.PI*2);
-            ctx.fill();
-        });
-
-        // Enemies
-        game.enemies.forEach(e => {
-            ctx.save();
-            ctx.translate(e.x, e.y);
-            
-            if(e.type === 'meteor') {
-                ctx.fillStyle = '#555'; ctx.strokeStyle = '#888';
-                ctx.beginPath(); ctx.arc(0,0, 15, 0, Math.PI*2); ctx.fill(); ctx.stroke();
-            } else if(e.type === 'boss') {
-                ctx.fillStyle = 'red'; 
-                ctx.strokeStyle = 'orange';
-                ctx.lineWidth = 3;
-                ctx.shadowBlur = 20;
-                ctx.shadowColor = 'red';
-                ctx.beginPath(); 
-                ctx.arc(0,0, e.w/2, 0, Math.PI*2);
-                ctx.fill(); ctx.stroke();
-                
-                // Boss Eyes
-                ctx.fillStyle = 'yellow';
-                ctx.beginPath();
-                ctx.arc(-15, -10, 8, 0, Math.PI*2);
-                ctx.arc(15, -10, 8, 0, Math.PI*2);
-                ctx.fill();
-            } else {
-                ctx.fillStyle = e.color || '#330000';
-                ctx.strokeStyle = e.type==='shooter' ? 'purple' : 'red';
-                ctx.lineWidth = 2;
-                ctx.beginPath(); 
-                ctx.moveTo(0, 15); 
-                ctx.lineTo(10, -10); 
-                ctx.lineTo(-10, -10); 
-                ctx.closePath();
-                ctx.fill(); ctx.stroke();
-            }
-            
-            ctx.restore();
-        });
-        
-        // Particles
-        game.particles.forEach(p => {
-            ctx.fillStyle = p.c;
-            ctx.globalAlpha = p.life / 20;
-            ctx.fillRect(p.x, p.y, 3, 3);
-            ctx.globalAlpha = 1;
-        });
-        
-        ctx.restore();
-        
-        // Damage Numbers (drawn in UI space, not affected by shake)
-        game.damageNumbers.forEach(d => {
-            ctx.fillStyle = d.color;
-            ctx.font = 'bold 20px monospace';
-            ctx.globalAlpha = d.life / 60;
-            ctx.fillText(d.text, d.x, d.y);
-            ctx.globalAlpha = 1;
-        });
-    },
-
-    createParticles: (x, y, count, color) => {
-        for(let i=0; i<count; i++) {
-            game.particles.push({
-                x:x, y:y, 
-                vx:(Math.random()-0.5)*10, vy:(Math.random()-0.5)*10,
-                life: 20 + Math.random()*20,
-                c: color
-            });
-        }
-    },
-
-    endGame: async () => {
-        game.over = true;
-        document.getElementById('screen-over').style.display='flex';
-        document.getElementById('final-score').innerText = game.player.score.toLocaleString();
-        document.getElementById('final-wave').innerText = `REACHED WAVE ${game.wave} (${game.difficulty})`;
-        document.getElementById('final-combo').innerText = `MAX COMBO: x${game.maxCombo}`;
-        
-        await fetch(`${API}/submit_score`, {
-            method:'POST', headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({player:USER.username, score:game.player.score, wave:game.wave, difficulty:game.difficulty})
-        });
-    }
-};
-
-function varColor(s) {
-    if(s==='skin_neon') return '#00ffff';
-    if(s==='skin_gold') return '#ffd700';
-    if(s==='skin_stealth') return '#333';
-    return '#00ffcc';
-}
-
-app.useDrone = async () => {
-     try {
-         const res = await fetch(`${API}/use_consumable`, {
-             method:'POST', headers:{'Authorization':`Bearer ${TOKEN}`, 'Content-Type':'application/json'},
-             body:JSON.stringify({item_id:'drone_support'})
-         });
-         if((await res.json()).status === 'ok') {
-             game.drones.push({angle:Math.random()*Math.PI*2, x:0, y:0});
-             toast("DRONE DEPLOYED");
-         }
-     } catch(e){}
-}
-
-window.onload = app.init;
-</script>
-</body>
-</html>
+    <!-- LOBBY -->
