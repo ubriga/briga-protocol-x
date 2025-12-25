@@ -1535,8 +1535,8 @@ const game = {
             y: -150,
             w: 100,
             h: 100,
-            hp: 1000 + game.wave * 200,
-            maxHp: 1000 + game.wave * 200,
+            hp: 2000 + game.wave * 500,
+            maxHp: 2000 + game.wave * 5000,
             speed: 2,
             type: 'boss',
             pattern: Math.floor(Math.random() * 3),
@@ -1567,7 +1567,7 @@ const game = {
         if(game.isVenting) return;
         
         // Check if heat will overflow
-        const heatGain = document.getElementById('chk-autofire').checked ? 1 : 2;
+        const heatGain = document.getElementById('chk-autofire').checked ? 3 : 5;
         
         if(!game.noHeatActive && game.player.heat + heatGain >= 100) {
             game.startVent();
@@ -1686,7 +1686,7 @@ const game = {
         } else {
             // Normal heat cooling
             if(!game.noHeatActive && game.player.heat > 0) {
-                game.player.heat = Math.max(0, game.player.heat - 0.5);
+                game.player.heat = Math.max(0, game.player.heat - 0.1);
             }
         }
         
