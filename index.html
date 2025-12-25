@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BRIGAGAME | v7.0 MEGA UPDATE</title>
+    <title>BRIGAGAME | v7.1 HEAT UPDATE</title>
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <style>
         :root {
@@ -109,6 +109,28 @@
         .hp-fill { background: var(--main); box-shadow: 0 0 10px var(--main); }
         .heat-fill { background: var(--danger); width: 0%; transition: width 0.1s; }
         
+        /* HEAT BAR R-MARKER */
+        .heat-marker {
+            position: absolute;
+            left: 50%;
+            top: -2px;
+            bottom: -2px;
+            width: 3px;
+            background: yellow;
+            box-shadow: 0 0 10px yellow;
+            display: none;
+        }
+        .heat-marker-text {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: -25px;
+            font-size: 10px;
+            color: yellow;
+            white-space: nowrap;
+            display: none;
+        }
+        
         #boss-hp-container {
             position: absolute;
             top: 80px;
@@ -175,8 +197,24 @@
             z-index: 999;
         }
         
-        @keyframes flash { 0% {opacity:1;} 50% {opacity:0;} 100% {opacity:1;} }
-        .jammed-text { color: red; animation: flash 0.5s infinite; font-weight: bold; font-size: 20px; display: none; }
+        /* HEAT OVERHEAT WARNING */
+        #heat-warning {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 0, 0, 0.9);
+            border: 3px solid yellow;
+            padding: 30px;
+            font-size: 40px;
+            color: white;
+            text-shadow: 0 0 20px red;
+            display: none;
+            z-index: 200;
+            animation: flash 0.3s infinite;
+        }
+        
+        @keyframes flash { 0% {opacity:1;} 50% {opacity:0.5;} 100% {opacity:1;} }
 
         .damage-number {
             position: absolute;
@@ -189,6 +227,27 @@
         @keyframes floatUp {
             0% { opacity: 1; transform: translateY(0); }
             100% { opacity: 0; transform: translateY(-50px); }
+        }
+
+        /* BONUS PICKUP NOTIFICATION */
+        #bonus-notification {
+            position: absolute;
+            top: 30%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            border: 3px solid gold;
+            padding: 20px 40px;
+            font-size: 30px;
+            color: gold;
+            text-shadow: 0 0 20px gold;
+            display: none;
+            z-index: 150;
+            animation: slideDown 0.5s ease-out;
+        }
+        @keyframes slideDown {
+            0% { top: 20%; opacity: 0; }
+            100% { top: 30%; opacity: 1; }
         }
 
         table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
@@ -300,15 +359,16 @@
 <body>
 
 <div id="ui-layer">
-    <div id="msg-area">
-         <div id="jammed-msg" class="jammed-text">WEAPON JAMMED!<br><span style="font-size:14px; color:white;">COOLING DOWN...</span></div>
-    </div>
+    <div id="msg-area"></div>
     <div id="toast">MSG</div>
     <div id="combo-display"></div>
+    <div id="heat-warning">⚠️ OVERHEATING! ⚠️<br><span style="font-size:20px;">VENTING...</span></div>
+    <div id="bonus-notification"></div>
 
-    <div style="position: absolute; bottom: 5px; right: 5px; font-size: 10px; color: #333; pointer-events: none;">DEV: OrelAi | v7.0 MEGA</div>
+    <div style="position: absolute; bottom: 5px; right: 5px; font-size: 10px; color: #333; pointer-events: none;">DEV: OrelAi | v7.1 HEAT</div>
     <div id="fps-counter" style="position: absolute; top: 5px; left: 5px; font-size: 10px; color: #555;">FPS: 60</div>
-        <!-- RELEASE NOTES OVERLAY -->
+    
+    <!-- RELEASE NOTES OVERLAY -->
     <div id="release-notes-overlay" onclick="ui.closeReleaseNotes()"></div>
     <div id="release-notes-modal">
         <h2 style="color: var(--main);">📋 RELEASE NOTES</h2>
@@ -357,9 +417,12 @@
                 <div class="bar-container"><div class="bar-fill hp-fill" id="bar-hp"></div></div>
             </div>
             <div style="text-align: right;">
-                HEAT
-                <div class="bar-container"><div class="bar-fill heat-fill" id="bar-heat"></div></div>
-                <div id="overdrive-msg" style="color:var(--danger); display:none; font-size:12px;">SYSTEM OVERDRIVE ACTIVE!</div>
+                HEAT <span id="heat-timer-display" style="font-size:12px; color:#888;"></span>
+                <div class="bar-container">
+                    <div class="bar-fill heat-fill" id="bar-heat"></div>
+                    <div class="heat-marker" id="heat-marker"></div>
+                    <div class="heat-marker-text" id="heat-marker-text">PRESS 'R'</div>
+                </div>
             </div>
         </div>
         
@@ -461,7 +524,7 @@
 
             <div style="flex: 1; display: flex; flex-direction: column; gap: 20px;">
                 <div class="box" style="width:auto; padding: 10px; display: flex; justify-content: space-between; align-items: center;">
-                    <div style="font-weight:bold;">BRIGAGAME <span style="font-size:10px; background:var(--main); color:black; padding:2px;">v7.0</span></div>
+                    <div style="font-weight:bold;">BRIGAGAME <span style="font-size:10px; background:var(--main); color:black; padding:2px;">v7.1</span></div>
                     <div id="news-ticker" style="font-size:12px; color:#aaa; cursor:pointer;" onclick="ui.showReleaseNotes()">📋 Click for Update Notes</div>
                 </div>
 
@@ -605,8 +668,8 @@
 </div>
 
 <canvas id="gameCanvas"></canvas>
- <script>
-/** BRIGAGAME v7.0 - MEGA UPDATE **/
+<script>
+/** BRIGAGAME v7.1 - HEAT UPDATE **/
 const API = "https://ubriga.pythonanywhere.com";
 var USER=null, TOKEN=localStorage.getItem('px_token');
 var KEYS = {}; 
@@ -719,7 +782,7 @@ const auth = {
             }
         } catch(e) { toast("Error"); }
     },
-    
+
     logout: () => {
         USER=null; TOKEN=null; localStorage.removeItem('px_token');
         
@@ -1118,23 +1181,39 @@ const app = {
         window.addEventListener('resize', app.resize);
         app.resize();
         
-        // ENTER KEY SUPPORT EVERYWHERE
+        // KEY HANDLING
         window.addEventListener('keydown', e => { 
             KEYS[e.code] = true; 
             if(e.code==='Escape') game.togglePause(); 
-            if(e.code==='Space') game.shoot();
-            if(e.code==='KeyR' && game.jammed) game.vent();
             
-            // ENTER in game over screen
+            // Manual fire - single shot or hold
+            if(e.code==='Space' && !document.getElementById('chk-autofire').checked && game.running && !game.paused && !game.over) {
+                if(!game.isVenting && !game.spaceHeld) {
+                    game.spaceHeld = true;
+                    game.shoot();
+                }
+            }
+            
+            // R for perfect vent timing
+            if(e.code==='KeyR' && game.isVenting) {
+                game.tryPerfectVent();
+            }
+            
+            // ENTER shortcuts
             if(e.code === 'Enter' && document.getElementById('screen-over').style.display === 'flex') {
                 app.startGame();
             }
-            // ENTER in pause screen
             if(e.code === 'Enter' && document.getElementById('screen-pause').style.display === 'flex') {
                 game.togglePause();
             }
         });
-        window.addEventListener('keyup', e => KEYS[e.code] = false);
+        
+        window.addEventListener('keyup', e => {
+            KEYS[e.code] = false;
+            if(e.code === 'Space') {
+                game.spaceHeld = false;
+            }
+        });
 
         // Mobile Controls
         if('ontouchstart' in window) {
@@ -1263,17 +1342,22 @@ const app = {
         game.draw();
     }
 };
-
 // ========================================
-// 🎮 GAME ENGINE (ENHANCED with DYNAMIC AI)
+// 🎮 GAME ENGINE (ENHANCED with HEAT SYSTEM)
 // ========================================
 const game = {
     running: false,
     paused: false,
     over: false,
-    jammed: false,
+    isVenting: false,
+    ventTimer: 0,
+    maxVentTime: 5000, // 5 seconds in milliseconds
+    ventStartTime: 0,
+    spaceHeld: false,
     lastTime: 0,
     screenShake: 0,
+    noHeatActive: false,
+    noHeatTimer: 0,
     
     player: {x:0, y:0, hp:100, maxHp:100, heat:0, score:0, invincible:0},
     bullets: [],
@@ -1299,7 +1383,12 @@ const game = {
         game.running = true;
         game.paused = false;
         game.over = false;
-        game.jammed = false;
+        game.isVenting = false;
+        game.ventTimer = 0;
+        game.spaceHeld = false;
+        game.noHeatActive = false;
+        game.noHeatTimer = 0;
+        
         game.difficulty = document.getElementById('diff-select').value;
         game.mode = document.getElementById('mode-select').value;
         
@@ -1313,6 +1402,11 @@ const game = {
         game.player.invincible = 0;
         game.player.x = app.canvas.width / 2;
         game.player.y = app.canvas.height - 100;
+        
+        // Calculate vent time based on cooling upgrade
+        const coolingLevel = inv['heat_cooling'] || 0;
+        const reduction = coolingLevel * 0.005; // 0.5% per level
+        game.maxVentTime = 5000 * (1 - reduction); // Max 35% reduction at level 70
         
         game.fireRate = Math.max(5, 20 - (inv['fire_rate']||0));
         game.damage = 10 + ((inv['damage']||0) * 5);
@@ -1336,6 +1430,7 @@ const game = {
         game.nextWave();
         
         document.getElementById('boss-hp-container').style.display = 'none';
+        document.getElementById('heat-warning').style.display = 'none';
     },
 
     togglePause: () => {
@@ -1462,20 +1557,27 @@ const game = {
                 game.bonuses.push({
                     x: Math.random() * app.canvas.width,
                     y: -50,
-                    type: ['shield', 'rapid', 'triple', 'multiplier'][Math.floor(Math.random() * 4)]
+                    type: ['shield', 'rapid', 'triple', 'multiplier', 'no_heat'][Math.floor(Math.random() * 5)]
                 });
             }, i * 200);
         }
     },
 
     shoot: () => {
-        if(game.jammed) return;
-        if(game.player.heat >= 100) {
-            game.jam();
+        if(game.isVenting) return;
+        
+        // Check if heat will overflow
+        const heatGain = document.getElementById('chk-autofire').checked ? 1 : 2;
+        
+        if(!game.noHeatActive && game.player.heat + heatGain >= 100) {
+            game.startVent();
             return;
         }
         
-        game.player.heat += 5;
+        if(!game.noHeatActive) {
+            game.player.heat += heatGain;
+        }
+        
         game.bullets.push({x:game.player.x, y:game.player.y, vx:0, vy:-15, dmg:game.damage});
         
         if(game.tripleShot > 0) {
@@ -1489,20 +1591,39 @@ const game = {
         }
     },
 
-    jam: () => {
-        game.jammed = true;
+    startVent: () => {
+        game.isVenting = true;
         game.player.heat = 100;
-        document.getElementById('jammed-msg').style.display = 'block';
-        let auto = document.getElementById('chk-autofire').checked;
-        if(!auto) document.getElementById('jammed-msg').innerHTML = "WEAPON JAMMED!<br>PRESS [R] TO VENT";
-        else setTimeout(()=>game.vent(), 3000);
+        game.ventStartTime = Date.now();
+        document.getElementById('heat-warning').style.display = 'block';
+        document.getElementById('heat-marker').style.display = 'block';
+        document.getElementById('heat-marker-text').style.display = 'block';
+        
+        // Play alert sound (you can add actual audio later)
+        console.log("🔥 OVERHEATING!");
+        
+        setTimeout(() => {
+            document.getElementById('heat-warning').style.display = 'none';
+        }, 2000);
     },
 
-    vent: () => {
-        game.jammed = false;
-        game.player.heat = 50;
-        document.getElementById('jammed-msg').style.display = 'none';
-        toast("WEAPON VENTED");
+    tryPerfectVent: () => {
+        if(!game.isVenting) return;
+        
+        const elapsed = Date.now() - game.ventStartTime;
+        const progress = elapsed / game.maxVentTime;
+        const heatPercent = 100 - (progress * 100);
+        
+        // Perfect timing window: 45-55% (10% window around 50%)
+        if(heatPercent >= 45 && heatPercent <= 55) {
+            // PERFECT VENT!
+            game.isVenting = false;
+            game.player.heat = 0;
+            document.getElementById('heat-marker').style.display = 'none';
+            document.getElementById('heat-marker-text').style.display = 'none';
+            game.showBonusNotification("⚡ PERFECT VENT! ⚡", "gold");
+            game.createParticles(game.player.x, game.player.y, 20, 'gold');
+        }
     },
 
     addDamageNumber: (x, y, dmg) => {
@@ -1519,13 +1640,56 @@ const game = {
         game.screenShake = amount;
     },
 
+    showBonusNotification: (text, color) => {
+        const notif = document.getElementById('bonus-notification');
+        notif.innerText = text;
+        notif.style.color = color;
+        notif.style.borderColor = color;
+        notif.style.textShadow = `0 0 20px ${color}`;
+        notif.style.display = 'block';
+        
+        setTimeout(() => {
+            notif.style.display = 'none';
+        }, 2000);
+    },
+
     update: () => {
         if(!game.running || game.paused || game.over) return;
         
         const W = app.canvas.width, H = app.canvas.height;
         
-        // Player Heat
-        if(!game.jammed && game.player.heat > 0) game.player.heat -= 0.5;
+        // NO HEAT BONUS TIMER
+        if(game.noHeatActive) {
+            game.noHeatTimer--;
+            if(game.noHeatTimer <= 0) {
+                game.noHeatActive = false;
+                toast("NO HEAT EXPIRED");
+            }
+        }
+        
+        // VENT PROCESS
+        if(game.isVenting) {
+            const elapsed = Date.now() - game.ventStartTime;
+            
+            if(elapsed >= game.maxVentTime) {
+                // Vent complete
+                game.isVenting = false;
+                game.player.heat = 0;
+                document.getElementById('heat-marker').style.display = 'none';
+                document.getElementById('heat-marker-text').style.display = 'none';
+                toast("VENT COMPLETE");
+            } else {
+                // Update heat bar during vent
+                const progress = elapsed / game.maxVentTime;
+                game.player.heat = 100 - (progress * 100);
+            }
+        } else {
+            // Normal heat cooling
+            if(!game.noHeatActive && game.player.heat > 0) {
+                game.player.heat = Math.max(0, game.player.heat - 0.5);
+            }
+        }
+        
         if(game.player.invincible > 0) game.player.invincible--;
         
         // Keyboard Movement
@@ -1540,9 +1704,17 @@ const game = {
         game.player.y = Math.max(20, Math.min(H-20, game.player.y));
         
         // Auto Fire
-        if(document.getElementById('chk-autofire').checked && !game.jammed && game.player.heat < 80) {
+        if(document.getElementById('chk-autofire').checked && !game.isVenting) {
              if(game.lastTime % game.fireRate === 0) game.shoot();
         }
+        
+        // Manual Fire (hold space)
+        if(game.spaceHeld && !document.getElementById('chk-autofire').checked && !game.isVenting) {
+            if(game.lastTime % Math.max(5, game.fireRate * 0.5) === 0) {
+                game.shoot();
+            }
+        }
+        
         game.lastTime++;
 
         // Combo Timer
@@ -1591,7 +1763,7 @@ const game = {
             activeEnemies++;
             
             if(e.type === 'boss') {
-                // Boss AI (unchanged, working well)
+                // Boss AI
                 switch(e.pattern) {
                     case 0:
                         e.angle += 0.02;
@@ -1713,7 +1885,7 @@ const game = {
                         
                         let dropChance = e.type === 'boss' ? 1.0 : 0.15;
                         if(Math.random() < dropChance) {
-                            let bonusType = ['shield', 'rapid', 'triple', 'multiplier'][Math.floor(Math.random() * 4)];
+                            let bonusType = ['shield', 'rapid', 'triple', 'multiplier', 'no_heat'][Math.floor(Math.random() * 5)];
                             game.bonuses.push({x:e.x, y:e.y, type: bonusType});
                         }
 
@@ -1751,22 +1923,37 @@ const game = {
             let b = game.bonuses[i];
             b.y += 2;
             if(Math.abs(b.x - game.player.x) < 30 && Math.abs(b.y - game.player.y) < 30) {
-                toast(`💎 ${b.type.toUpperCase()} ACQUIRED!`);
-                if(b.type==='shield') game.player.hp = Math.min(game.player.maxHp, game.player.hp+30);
+                let msg = "";
+                
+                if(b.type==='shield') {
+                    game.player.hp = Math.min(game.player.maxHp, game.player.hp+30);
+                    msg = "🛡️ SHIELD +30HP";
+                }
                 if(b.type==='rapid') { 
                     let oldRate = game.fireRate;
                     game.fireRate = 2; 
-                    setTimeout(()=>game.fireRate=oldRate, 5000); 
+                    setTimeout(()=>game.fireRate=oldRate, 5000);
+                    msg = "⚡ RAPID FIRE 5s";
                 }
                 if(b.type==='triple') {
                     let oldShot = game.doubleShot;
                     game.doubleShot = 2;
                     setTimeout(()=>game.doubleShot=oldShot, 5000);
+                    msg = "🔱 TRIPLE SHOT 5s";
                 }
                 if(b.type==='multiplier') {
                     game.combo = Math.max(game.combo, 5);
                     game.comboTimer = 300;
+                    msg = "💰 COMBO x5 BOOST";
                 }
+                if(b.type==='no_heat') {
+                    game.noHeatActive = true;
+                    game.noHeatTimer = 600; // 10 seconds
+                    game.player.heat = 0;
+                    msg = "❄️ NO HEAT 10s";
+                }
+                
+                game.showBonusNotification(msg, 'gold');
                 game.bonuses.splice(i, 1);
             }
             if(b.y > H) game.bonuses.splice(i, 1);
@@ -1793,8 +1980,23 @@ const game = {
         
         // HUD Updates
         document.getElementById('bar-hp').style.width = Math.max(0, (game.player.hp / game.player.maxHp * 100)) + "%";
-        let hPer = (game.player.heat);
+        
+        let hPer = Math.max(0, Math.min(100, game.player.heat));
         document.getElementById('bar-heat').style.width = hPer + "%";
+        
+        // Show vent timer
+        if(game.isVenting) {
+            const elapsed = Date.now() - game.ventStartTime;
+            const remaining = Math.max(0, (game.maxVentTime - elapsed) / 1000);
+            document.getElementById('heat-timer-display').innerText = `(${remaining.toFixed(1)}s)`;
+        } else if(game.noHeatActive) {
+            document.getElementById('heat-timer-display').innerText = `(NO HEAT)`;
+            document.getElementById('bar-heat').style.background = 'cyan';
+        } else {
+            document.getElementById('heat-timer-display').innerText = '';
+            document.getElementById('bar-heat').style.background = 'var(--danger)';
+        }
+        
         document.getElementById('score-disp').innerText = game.player.score.toLocaleString();
         document.getElementById('wave-disp').innerText = `WAVE ${game.wave}`;
         document.getElementById('combo-info').innerText = `COMBO: x${game.combo || 1}`;
@@ -1805,12 +2007,6 @@ const game = {
         } else {
             document.getElementById('combo-display').style.display = 'none';
         }
-        
-        if(game.jammed) document.querySelector('.heat-fill').style.background = 'white';
-        else document.querySelector('.heat-fill').style.background = 'var(--danger)';
-
-        if(game.player.heat > 90) document.getElementById('overdrive-msg').style.display='block';
-        else document.getElementById('overdrive-msg').style.display='none';
     },
 
     draw: () => {
@@ -1857,27 +2053,33 @@ const game = {
             ctx.globalAlpha = 0.5;
         }
         
+        // NO HEAT VISUAL EFFECT
+        if(game.noHeatActive) {
+            ctx.shadowBlur = 30;
+            ctx.shadowColor = 'cyan';
+        }
+        
         ctx.strokeStyle = varColor(skin);
         ctx.lineWidth = 2;
         
         // Fighter jet shape (pointing UP)
         ctx.beginPath(); 
-        ctx.moveTo(0, -20);  // Nose (top)
-        ctx.lineTo(-8, 0);   // Left wing
-        ctx.lineTo(-5, 5);   // Left body
-        ctx.lineTo(-8, 15);  // Left tail
-        ctx.lineTo(-3, 15);  // Left tail inner
-        ctx.lineTo(0, 8);    // Center
-        ctx.lineTo(3, 15);   // Right tail inner
-        ctx.lineTo(8, 15);   // Right tail
-        ctx.lineTo(5, 5);    // Right body
-        ctx.lineTo(8, 0);    // Right wing
+        ctx.moveTo(0, -20);  
+        ctx.lineTo(-8, 0);   
+        ctx.lineTo(-5, 5);   
+        ctx.lineTo(-8, 15);  
+        ctx.lineTo(-3, 15);  
+        ctx.lineTo(0, 8);    
+        ctx.lineTo(3, 15);   
+        ctx.lineTo(8, 15);   
+        ctx.lineTo(5, 5);    
+        ctx.lineTo(8, 0);    
         ctx.closePath();
         ctx.fill(); 
         ctx.stroke();
         
         // Engine Flames
-        if(game.lastTime % 4 < 2) {
+        if(!game.isVenting && game.lastTime % 4 < 2) {
             ctx.fillStyle = `rgba(255, 100, 0, ${0.7 + Math.random()*0.3})`;
             ctx.beginPath();
             ctx.moveTo(-3, 15);
@@ -1900,15 +2102,17 @@ const game = {
             ctx.stroke();
         });
 
-        // Bonuses
+        // Bonuses (LARGER ICONS)
         game.bonuses.forEach(b => {
-            let colors = {shield:'blue', rapid:'yellow', triple:'green', multiplier:'gold'};
-            let symbols = {shield:'🛡️', rapid:'⚡', triple:'🔱', multiplier:'💰'};
+            let colors = {shield:'blue', rapid:'yellow', triple:'green', multiplier:'gold', no_heat:'cyan'};
+            let symbols = {shield:'🛡️', rapid:'⚡', triple:'🔱', multiplier:'💰', no_heat:'❄️'};
             
             ctx.fillStyle = colors[b.type];
-            ctx.beginPath(); ctx.arc(b.x, b.y, 12, 0, Math.PI*2); ctx.fill();
-            ctx.font='16px Arial'; 
-            ctx.fillText(symbols[b.type], b.x-8, b.y+5);
+            ctx.beginPath(); 
+            ctx.arc(b.x, b.y, 18, 0, Math.PI*2); 
+            ctx.fill();
+            ctx.font='28px Arial'; 
+            ctx.fillText(symbols[b.type], b.x-14, b.y+10);
         });
 
         // Bullets
@@ -1959,12 +2163,12 @@ const game = {
                 ctx.strokeStyle = e.type==='shooter' ? 'purple' : e.color;
                 ctx.lineWidth = 2;
                 ctx.beginPath(); 
-                ctx.moveTo(0, 12);    // Bottom nose
-                ctx.lineTo(-10, -8);  // Left wing
-                ctx.lineTo(-3, -8);   // Left inner
-                ctx.lineTo(0, -3);    // Center
-                ctx.lineTo(3, -8);    // Right inner
-                ctx.lineTo(10, -8);   // Right wing
+                ctx.moveTo(0, 12);    
+                ctx.lineTo(-10, -8);  
+                ctx.lineTo(-3, -8);   
+                ctx.lineTo(0, -3);    
+                ctx.lineTo(3, -8);    
+                ctx.lineTo(10, -8);   
                 ctx.closePath();
                 ctx.fill(); 
                 ctx.stroke();
@@ -2037,4 +2241,3 @@ window.onload = app.init;
 </script>
 </body>
 </html>
-   
