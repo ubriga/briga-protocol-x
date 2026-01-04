@@ -928,7 +928,7 @@
             btn.innerHTML = '<span class="loading"></span>';
             
             try {
-                const result = await apiCall('/login', 'POST', { username, password });
+                const result = await apiCall('/api/login', 'POST', { username, password });
                 
                 authToken = result.token;
                 currentUser = {
@@ -954,7 +954,7 @@
         }
         
         function logout() {
-            apiCall('/logout', 'POST').catch(() => {});
+            apiCall('/api/logout', 'POST').catch(() => {});
             authToken = null;
             currentUser = {};
             localStorage.removeItem('authToken');
@@ -967,7 +967,7 @@
         // ============================================================================
         async function loadPlayerState() {
             try {
-                playerState = await apiCall('/player/state');
+                playerState = await apiCall('/api/player/state');
                 
                 // Update UI
                 document.getElementById('creditsDisplay').textContent = playerState.credits.toLocaleString();
@@ -1008,7 +1008,7 @@
             btn.innerHTML = '<span class="loading"></span>';
             
             try {
-                const result = await apiCall('/players/scan');
+                const result = await apiCall('/api/players/scan');
                 
                 const listEl = document.getElementById('targetList');
                 listEl.innerHTML = '';
@@ -1069,7 +1069,7 @@
             btn.innerHTML = '<span class="loading"></span>';
             
             try {
-                const result = await apiCall('/attack', 'POST', {
+                const result = await apiCall('/api/attack', 'POST', {
                     target_id: selectedTargetId,
                     tools: tools
                 });
@@ -1106,7 +1106,7 @@
         // ============================================================================
         async function buyItem(itemType, itemName, price) {
             try {
-                const result = await apiCall('/shop/buy', 'POST', {
+                const result = await apiCall('/api/shop/buy', 'POST', {
                     item_type: itemType,
                     item_name: itemName,
                     price: price
@@ -1134,7 +1134,7 @@
             btn.innerHTML = '<span class="loading"></span>';
             
             try {
-                await apiCall('/admin/verify-pin', 'POST', { pin });
+                await apiCall('/api/admin/verify-pin', 'POST', { pin });
                 showAdminDashboard();
             } catch (error) {
                 showAlert('pinAlert', error.message, 'error');
@@ -1146,7 +1146,7 @@
         
         async function loadAdminStats() {
             try {
-                const stats = await apiCall('/admin/stats');
+                const stats = await apiCall('/api/admin/stats');
                 
                 document.getElementById('adminTotalUsers').textContent = stats.total_users;
                 document.getElementById('adminCurrentSeason').textContent = stats.current_season;
@@ -1161,7 +1161,7 @@
             const query = document.getElementById('adminUserSearch').value;
             
             try {
-                const result = await apiCall(`/admin/users/search?q=${encodeURIComponent(query)}`);
+                const result = await apiCall(`/api/admin/users/search?q=${encodeURIComponent(query)}`);
                 
                 const listEl = document.getElementById('adminUserList');
                 listEl.innerHTML = '';
@@ -1201,7 +1201,7 @@
         
         async function banUser(userId, banStatus) {
             try {
-                await apiCall('/admin/users/ban', 'POST', {
+                await apiCall('/api/admin/users/ban', 'POST', {
                     user_id: userId,
                     ban: banStatus
                 });
@@ -1217,7 +1217,7 @@
             if (!amount || isNaN(amount)) return;
             
             try {
-                await apiCall('/admin/users/compensate', 'POST', {
+                await apiCall('/api/admin/users/compensate', 'POST', {
                     user_id: userId,
                     amount: parseInt(amount)
                 });
@@ -1232,7 +1232,7 @@
             if (!confirm('⚠️ END SEASON? This will reset ALL player progress!')) return;
             
             try {
-                const result = await apiCall('/admin/season/end', 'POST');
+                const result = await apiCall('/api/admin/season/end', 'POST');
                 showAlert('adminAlert', result.message, 'success');
                 loadAdminStats();
             } catch (error) {
@@ -1269,6 +1269,3 @@
     </script>
 </body>
 </html>
-
-
-
