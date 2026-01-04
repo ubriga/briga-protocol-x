@@ -796,7 +796,7 @@
         // ============================================================================
         // Configuration
         // ============================================================================
-        const API_URL = 'https://ubriga.pythonanywhere.com/api';
+        const API_URL = 'https://ubriga.pythonanywhere.com';
         const RECAPTCHA_SITE_KEY = '6LdH7j8sAAAAAFIJlXXMA33Y7flohLumGDQScTAF';
         
         let authToken = localStorage.getItem('authToken') || null;
@@ -905,7 +905,7 @@
             
             try {
                 const recaptchaToken = await getRecaptchaToken();
-                const result = await apiCall('/register', 'POST', {
+                const result = await apiCall('/api/register', 'POST', {
                     username,
                     password,
                     recaptcha_token: recaptchaToken
@@ -1269,5 +1269,6 @@
     </script>
 </body>
 </html>
+
 
 
