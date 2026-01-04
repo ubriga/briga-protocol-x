@@ -1,2040 +1,1271 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BRIGAGAME | v7.0 MEGA UPDATE</title>
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <title>CYBER-NEXUS: Protocol</title>
+    
+    <!-- Google reCAPTCHA v3 -->
+    <script src="https://www.google.com/recaptcha/api.js?render=YOUR_RECAPTCHA_SITE_KEY_HERE"></script>
+    
     <style>
-        :root {
-            --main: #00ffcc;
-            --bg: #050505;
-            --panel: rgba(0, 20, 20, 0.95);
-            --danger: #ff3333;
-            --warn: #ffcc00;
-            --font: 'Courier New', monospace;
-        }
-        body {
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+        
+        * {
             margin: 0;
-            overflow: hidden;
-            background: var(--bg);
-            color: var(--main);
-            font-family: var(--font);
-            user-select: none;
-            touch-action: none;
-        }
-        canvas { display: block; }
-        
-        #ui-layer {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            pointer-events: none;
-        }
-        .screen {
-            pointer-events: auto;
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85);
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 100;
-            backdrop-filter: blur(5px);
-        }
-        .box {
-            background: var(--panel);
-            border: 2px solid var(--main);
-            padding: 20px;
-            width: 320px;
-            text-align: center;
-            box-shadow: 0 0 30px rgba(0, 255, 204, 0.2);
-        }
-        h1, h2, h3 { margin: 10px 0; text-transform: uppercase; letter-spacing: 2px; }
-        button {
-            background: rgba(0, 50, 50, 0.8);
-            border: 1px solid var(--main);
-            color: var(--main);
-            padding: 10px 20px;
-            margin: 5px;
-            cursor: pointer;
-            font-family: var(--font);
-            font-size: 16px;
-            transition: 0.2s;
-            text-transform: uppercase;
-        }
-        button:hover { background: var(--main); color: #000; box-shadow: 0 0 15px var(--main); }
-        button:active { transform: scale(0.95); }
-        button:disabled { opacity: 0.3; cursor: not-allowed; }
-        button.red { border-color: var(--danger); color: var(--danger); }
-        button.red:hover { background: var(--danger); color: #000; }
-        button.gold { border-color: var(--warn); color: var(--warn); }
-        button.gold:hover { background: var(--warn); color: #000; }
-        button.grayed { border-color: #444; color: #444; background: #111; }
-        
-        input, select, textarea {
-            background: #000;
-            border: 1px solid var(--main);
-            color: var(--main);
-            padding: 8px;
-            margin: 5px 0;
-            width: 90%;
-            font-family: var(--font);
-            text-align: center;
-            outline: none;
+            padding: 0;
+            box-sizing: border-box;
         }
         
-        #hud {
-            display: none;
-            width: 100%; height: 100%;
-            pointer-events: none;
+        :root {
+            --neon-cyan: #00ffff;
+            --neon-pink: #ff00ff;
+            --neon-green: #39ff14;
+            --neon-yellow: #ffff00;
+            --dark-bg: #0a0e27;
+            --darker-bg: #050811;
+            --grid-color: rgba(0, 255, 255, 0.1);
         }
-        .hud-panel {
-            position: absolute;
-            pointer-events: auto;
-        }
-        #top-bar { top: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; font-size: 18px; text-shadow: 0 0 5px var(--main); }
-        #bottom-bar { bottom: 10px; left: 10px; display: flex; gap: 10px; }
         
-        .bar-container {
-            width: 200px; height: 15px;
-            background: #222;
-            border: 1px solid #555;
-            margin-top: 5px;
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background: var(--darker-bg);
+            color: var(--neon-cyan);
+            overflow-x: hidden;
             position: relative;
-        }
-        .bar-fill { height: 100%; width: 100%; transition: width 0.2s; }
-        .hp-fill { background: var(--main); box-shadow: 0 0 10px var(--main); }
-        .heat-fill { background: var(--danger); width: 0%; transition: width 0.1s; }
-        
-        #boss-hp-container {
-            position: absolute;
-            top: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 500px;
-            display: none;
-        }
-        #boss-hp-bar {
-            width: 100%;
-            height: 25px;
-            background: #222;
-            border: 2px solid red;
-            position: relative;
-            box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
-        }
-        #boss-hp-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #ff0000, #ff6600);
-            transition: width 0.3s;
-            box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.3);
-        }
-        #boss-name {
-            text-align: center;
-            font-size: 16px;
-            color: red;
-            text-shadow: 0 0 10px red;
-            margin-top: 5px;
-            letter-spacing: 3px;
+            min-height: 100vh;
         }
         
-        #msg-area {
-            position: absolute;
-            top: 20%; left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            font-size: 24px;
-            color: var(--warn);
-            text-shadow: 0 0 10px black;
-            pointer-events: none;
-        }
-
-        #combo-display {
-            position: absolute;
-            top: 50%;
-            right: 20px;
-            font-size: 40px;
-            color: gold;
-            text-shadow: 0 0 20px gold;
-            display: none;
-            animation: pulse 0.5s infinite;
-        }
-
-        #toast {
-            position: fixed;
-            bottom: 30px; left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,0,0,0.9);
-            border: 1px solid var(--main);
-            padding: 10px 30px;
-            opacity: 0;
-            transition: 0.5s;
-            pointer-events: none;
-            z-index: 999;
-        }
-        
-        @keyframes flash { 0% {opacity:1;} 50% {opacity:0;} 100% {opacity:1;} }
-        .jammed-text { color: red; animation: flash 0.5s infinite; font-weight: bold; font-size: 20px; display: none; }
-
-        .damage-number {
-            position: absolute;
-            font-size: 20px;
-            font-weight: bold;
-            pointer-events: none;
-            animation: floatUp 1s ease-out forwards;
-            text-shadow: 0 0 5px black;
-        }
-        @keyframes floatUp {
-            0% { opacity: 1; transform: translateY(0); }
-            100% { opacity: 0; transform: translateY(-50px); }
-        }
-
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
-        th, td { border: 1px solid #333; padding: 5px; text-align: left; }
-        th { color: var(--warn); }
-        
-        .scroll-box { max-height: 300px; overflow-y: auto; text-align: left; }
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-thumb { background: var(--main); }
-        
-        @keyframes pulse { 0% {box-shadow: 0 0 10px var(--danger);} 50% {box-shadow: 0 0 30px var(--danger);} 100% {box-shadow: 0 0 10px var(--danger);} }
-        .overdrive { animation: pulse 0.5s infinite; border-color: var(--danger); color: var(--danger); }
-        
-        .tab-btn { flex: 1; border-bottom: none; }
-        .tab-btn.active { background: var(--main); color: black; }
-        
-        #mobile-controls {
-            display: none;
-            position: absolute;
-            bottom: 20px;
-            width: 100%;
-            pointer-events: auto;
-        }
-        #joystick-area {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            width: 120px;
-            height: 120px;
-            background: rgba(0, 255, 204, 0.1);
-            border: 2px solid var(--main);
-            border-radius: 50%;
-        }
-        #joystick-stick {
-            position: absolute;
-            width: 40px;
-            height: 40px;
-            background: var(--main);
-            border-radius: 50%;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            transition: 0.1s;
-        }
-        #fire-btn {
-            position: absolute;
-            bottom: 40px;
-            right: 40px;
-            width: 80px;
-            height: 80px;
-            background: rgba(255, 0, 0, 0.3);
-            border: 3px solid red;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            color: red;
-            text-shadow: 0 0 10px red;
-        }
-        
-        .upgrade-card {
-            background: #111;
-            border: 1px solid #333;
-            padding: 10px;
-            margin: 5px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            transition: 0.2s;
-        }
-        .upgrade-card:hover {
-            border-color: var(--main);
-            transform: scale(1.05);
-        }
-        .upgrade-icon {
-            font-size: 40px;
-            margin: 10px 0;
-        }
-        
-        /* RELEASE NOTES MODAL */
-        #release-notes-modal {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: var(--panel);
-            border: 2px solid var(--main);
-            padding: 30px;
-            max-width: 600px;
-            max-height: 80vh;
-            overflow-y: auto;
-            z-index: 1000;
-            box-shadow: 0 0 50px rgba(0, 255, 204, 0.5);
-        }
-        #release-notes-overlay {
-            display: none;
+        /* Cyberpunk Grid Background */
+        body::before {
+            content: '';
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            z-index: 999;
+            background: 
+                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px),
+                linear-gradient(var(--grid-color) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: -1;
+            animation: gridScroll 20s linear infinite;
+        }
+        
+        @keyframes gridScroll {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(50px); }
+        }
+        
+        /* Glitch Animation */
+        @keyframes glitch {
+            0%, 100% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+        }
+        
+        .glitch-text {
+            animation: glitch 0.3s infinite;
+        }
+        
+        /* Container */
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* Header */
+        .game-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(0,255,255,0.1), rgba(255,0,255,0.1));
+            border: 2px solid var(--neon-cyan);
+            border-radius: 10px;
+            box-shadow: 0 0 20px var(--neon-cyan);
+        }
+        
+        .game-title {
+            font-size: 2.5rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 0 0 10px var(--neon-cyan), 0 0 20px var(--neon-pink);
+            margin-bottom: 10px;
+        }
+        
+        .game-subtitle {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.9rem;
+            color: var(--neon-green);
+            text-shadow: 0 0 5px var(--neon-green);
+        }
+        
+        /* Screen System */
+        .screen {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .screen.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Cyberpunk Button */
+        .cyber-btn {
+            position: relative;
+            padding: 15px 30px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--neon-cyan);
+            background: transparent;
+            border: 2px solid var(--neon-cyan);
+            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            margin: 10px 0;
+            box-shadow: 0 0 10px var(--neon-cyan);
+        }
+        
+        .cyber-btn:hover {
+            background: var(--neon-cyan);
+            color: var(--dark-bg);
+            box-shadow: 0 0 20px var(--neon-cyan), 0 0 40px var(--neon-cyan);
+            transform: translateY(-2px);
+        }
+        
+        .cyber-btn:active {
+            transform: translateY(0);
+        }
+        
+        .cyber-btn.danger {
+            border-color: var(--neon-pink);
+            color: var(--neon-pink);
+            box-shadow: 0 0 10px var(--neon-pink);
+        }
+        
+        .cyber-btn.danger:hover {
+            background: var(--neon-pink);
+            color: var(--dark-bg);
+            box-shadow: 0 0 20px var(--neon-pink);
+        }
+        
+        .cyber-btn.success {
+            border-color: var(--neon-green);
+            color: var(--neon-green);
+            box-shadow: 0 0 10px var(--neon-green);
+        }
+        
+        .cyber-btn.success:hover {
+            background: var(--neon-green);
+            box-shadow: 0 0 20px var(--neon-green);
+        }
+        
+        /* Input Fields */
+        .cyber-input {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1rem;
+            color: var(--neon-cyan);
+            background: rgba(0, 255, 255, 0.05);
+            border: 2px solid var(--neon-cyan);
+            border-radius: 5px;
+            outline: none;
+            transition: all 0.3s;
+        }
+        
+        .cyber-input:focus {
+            background: rgba(0, 255, 255, 0.1);
+            box-shadow: 0 0 15px var(--neon-cyan);
+        }
+        
+        .cyber-input::placeholder {
+            color: rgba(0, 255, 255, 0.5);
+        }
+        
+        /* Card/Panel */
+        .cyber-panel {
+            background: rgba(10, 14, 39, 0.9);
+            border: 2px solid var(--neon-cyan);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+        }
+        
+        /* Trinity System Display */
+        .trinity-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .resource-bar {
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid;
+            border-radius: 10px;
+            padding: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .resource-bar.ram {
+            border-color: var(--neon-cyan);
+        }
+        
+        .resource-bar.trace {
+            border-color: var(--neon-pink);
+        }
+        
+        .resource-label {
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .resource-progress {
+            height: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .resource-fill {
+            height: 100%;
+            transition: width 0.5s ease;
+            position: relative;
+        }
+        
+        .resource-fill.ram-fill {
+            background: linear-gradient(90deg, var(--neon-cyan), #00cccc);
+            box-shadow: 0 0 10px var(--neon-cyan);
+        }
+        
+        .resource-fill.trace-fill {
+            background: linear-gradient(90deg, var(--neon-pink), #cc00cc);
+            box-shadow: 0 0 10px var(--neon-pink);
+        }
+        
+        /* Player List */
+        .player-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .player-card {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid var(--neon-cyan);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .player-card:hover {
+            border-color: var(--neon-pink);
+            box-shadow: 0 0 15px var(--neon-pink);
+            transform: translateX(-5px);
+        }
+        
+        .player-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .player-name {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--neon-green);
+        }
+        
+        .player-credits {
+            color: var(--neon-yellow);
+            font-family: 'Share Tech Mono', monospace;
+        }
+        
+        /* Shop Items */
+        .shop-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+        
+        .shop-item {
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid var(--neon-green);
+            border-radius: 8px;
+            padding: 15px;
+            transition: all 0.3s;
+        }
+        
+        .shop-item:hover {
+            border-color: var(--neon-yellow);
+            box-shadow: 0 0 15px var(--neon-yellow);
+        }
+        
+        .item-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--neon-green);
+            margin-bottom: 5px;
+        }
+        
+        .item-description {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 10px;
+        }
+        
+        .item-price {
+            font-size: 1.2rem;
+            color: var(--neon-yellow);
+            font-family: 'Share Tech Mono', monospace;
+        }
+        
+        /* Alert/Notification */
+        .alert {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+            font-weight: 700;
+            text-align: center;
+        }
+        
+        .alert.error {
+            background: rgba(255, 0, 255, 0.2);
+            border: 2px solid var(--neon-pink);
+            color: var(--neon-pink);
+        }
+        
+        .alert.success {
+            background: rgba(57, 255, 20, 0.2);
+            border: 2px solid var(--neon-green);
+            color: var(--neon-green);
+        }
+        
+        .alert.warning {
+            background: rgba(255, 255, 0, 0.2);
+            border: 2px solid var(--neon-yellow);
+            color: var(--neon-yellow);
+        }
+        
+        /* Footer Credit */
+        .footer-credit {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            font-size: 0.9rem;
+            color: var(--neon-cyan);
+            border-top: 1px solid var(--grid-color);
+        }
+        
+        .footer-credit a {
+            color: var(--neon-pink);
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .footer-credit a:hover {
+            color: var(--neon-yellow);
+            text-shadow: 0 0 10px var(--neon-yellow);
+        }
+        
+        /* Loading Spinner */
+        .loading {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(0, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--neon-cyan);
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Admin Dashboard Styles */
+        .admin-panel {
+            background: rgba(255, 0, 255, 0.1);
+            border: 2px solid var(--neon-pink);
+        }
+        
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-card {
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid var(--neon-cyan);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--neon-yellow);
+        }
+        
+        .stat-label {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 5px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 480px) {
+            .game-title {
+                font-size: 1.8rem;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+        }
+        
+        /* Hide scrollbar but keep functionality */
+        .player-list::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .player-list::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        .player-list::-webkit-scrollbar-thumb {
+            background: var(--neon-cyan);
+            border-radius: 4px;
         }
     </style>
 </head>
 <body>
-
-<div id="ui-layer">
-    <div id="msg-area">
-         <div id="jammed-msg" class="jammed-text">WEAPON JAMMED!<br><span style="font-size:14px; color:white;">COOLING DOWN...</span></div>
-    </div>
-    <div id="toast">MSG</div>
-    <div id="combo-display"></div>
-
-    <div style="position: absolute; bottom: 5px; right: 5px; font-size: 10px; color: #333; pointer-events: none;">DEV: OrelAi | v7.0 MEGA</div>
-    <div id="fps-counter" style="position: absolute; top: 5px; left: 5px; font-size: 10px; color: #555;">FPS: 60</div>
-        <!-- RELEASE NOTES OVERLAY -->
-    <div id="release-notes-overlay" onclick="ui.closeReleaseNotes()"></div>
-    <div id="release-notes-modal">
-        <h2 style="color: var(--main);">📋 RELEASE NOTES</h2>
-        <div id="release-notes-content" style="white-space: pre-wrap; text-align: left; line-height: 1.8;"></div>
-        <button onclick="ui.closeReleaseNotes()" class="gold" style="margin-top: 20px;">CLOSE</button>
-    </div>
-
-    <!-- PAUSE MENU -->
-    <div id="screen-pause" class="screen">
-        <div class="box">
-            <h2>SYSTEM PAUSED</h2>
-            <button onclick="game.togglePause()">RESUME MISSION</button>
-            <button onclick="app.toLobby()" class="red">ABORT MISSION</button>
-            <hr style="border-color: #333">
-            <button onclick="document.getElementById('screen-settings').style.display='flex'">SECURITY SETTINGS</button>
-        </div>
-    </div>
-    
-    <!-- SETTINGS -->
-    <div id="screen-settings" class="screen" style="z-index: 110;">
-        <div class="box">
-            <h2>SECURITY SETTINGS</h2>
-            <input type="password" id="cp-old" placeholder="CURRENT CODE">
-            <input type="password" id="cp-new" placeholder="NEW CODE">
-            <button onclick="auth.changePassword()">UPDATE</button>
-            <button onclick="this.parentElement.parentElement.style.display='none'" class="red">CANCEL</button>
-        </div>
-    </div>
-
-    <!-- DISPLAY NAME CHANGE -->
-    <div id="screen-display-name" class="screen" style="z-index: 110;">
-        <div class="box">
-            <h2>CHANGE DISPLAY NAME</h2>
-            <p style="font-size: 12px; color: #aaa;" id="name-change-info">First change is FREE!</p>
-            <input type="text" id="new-display-name" placeholder="NEW DISPLAY NAME" maxlength="20">
-            <button onclick="auth.changeDisplayName()">CONFIRM</button>
-            <button onclick="this.parentElement.parentElement.style.display='none'" class="red">CANCEL</button>
-        </div>
-    </div>
-
-    <!-- HUD -->
-    <div id="hud">
-        <div class="hud-panel" id="top-bar">
-            <div>
-                HP (HULL INTEGRITY)
-                <div class="bar-container"><div class="bar-fill hp-fill" id="bar-hp"></div></div>
-            </div>
-            <div style="text-align: right;">
-                HEAT
-                <div class="bar-container"><div class="bar-fill heat-fill" id="bar-heat"></div></div>
-                <div id="overdrive-msg" style="color:var(--danger); display:none; font-size:12px;">SYSTEM OVERDRIVE ACTIVE!</div>
-            </div>
+    <div class="container">
+        <!-- Header -->
+        <div class="game-header">
+            <h1 class="game-title glitch-text">CYBER-NEXUS</h1>
+            <p class="game-subtitle">::: Protocol Active :::</p>
         </div>
         
-        <div id="boss-hp-container">
-            <div id="boss-hp-bar">
-                <div id="boss-hp-fill" style="width: 100%;"></div>
+        <!-- ============================================================================ -->
+        <!-- Login Screen -->
+        <!-- ============================================================================ -->
+        <div id="loginScreen" class="screen active">
+            <div class="cyber-panel">
+                <h2 style="text-align: center; margin-bottom: 20px;">ACCESS TERMINAL</h2>
+                
+                <div id="loginAlert"></div>
+                
+                <input type="text" id="loginUsername" class="cyber-input" placeholder="USERNAME" autocomplete="username">
+                <input type="password" id="loginPassword" class="cyber-input" placeholder="PASSWORD" autocomplete="current-password">
+                
+                <button class="cyber-btn success" onclick="login()">
+                    <span id="loginBtnText">LOGIN</span>
+                </button>
+                
+                <button class="cyber-btn" onclick="showRegister()">
+                    CREATE NEW ACCOUNT
+                </button>
             </div>
-            <div id="boss-name">BOSS</div>
-        </div>
-        
-        <div class="hud-panel" style="top: 50px; left: 10px;">
-            <div id="score-disp" style="font-size: 24px;">0</div>
-            <div id="wave-disp" style="font-size: 16px; color: #aaa;">WAVE 1</div>
-            <div id="mode-disp" style="font-size: 12px; color: #777;">(CLASSIC)</div>
-            <div id="combo-info" style="font-size: 14px; color: gold; margin-top: 5px;">COMBO: x1</div>
-            <div style="margin-top:10px; font-size:12px; color:#555;">[ESC] TO PAUSE</div>
-        </div>
-        
-        <div class="hud-panel" id="bottom-bar"></div>
-
-        <div id="mobile-controls">
-            <div id="joystick-area">
-                <div id="joystick-stick"></div>
-            </div>
-            <div id="fire-btn">🔥</div>
-        </div>
-    </div>
-
-    <!-- GAME OVER -->
-    <div id="screen-over" class="screen">
-        <div class="box">
-            <h1 style="color:var(--danger); font-size: 60px;">x_x</h1>
-            <h2 id="final-score">0</h2>
-            <p id="final-wave">WAVE 1</p>
-            <p id="final-combo" style="font-size: 14px; color: gold;">MAX COMBO: x1</p>
-            <p id="death-reason" style="font-size: 12px; color: #888;">HULL BREACH!</p>
-            <button onclick="app.startGame()">RE-ENGAGE</button>
-            <button onclick="app.toLobby()">BASE</button>
-        </div>
-    </div>
-
-    <!-- BOSS WARNING -->
-    <div id="boss-warning" class="screen" style="background: rgba(50,0,0,0.4); display: none;">
-        <h1 style="color: red; font-size: 50px; text-shadow: 0 0 20px red; animation: pulse 0.5s infinite;">⚠️ WARNING: BOSS DETECTED ⚠️</h1>
-    </div>
-
-    <!-- LOGIN SCREEN -->
-    <div id="screen-login" class="screen">
-        <h1 style="font-size:90px; margin:0; text-shadow:0 0 40px var(--main);">BRIGAGAME</h1>
-        
-        <div class="box" id="login-box">
-            <h3 style="color:var(--main);">PILOT IDENTIFICATION</h3>
-            <input type="text" id="inp-u" placeholder="PILOT ID" onkeypress="if(event.key==='Enter') auth.login()"><br>
-            <input type="password" id="inp-p" placeholder="ACCESS CODE" onkeypress="if(event.key==='Enter') auth.login()"><br>
-            <button onclick="auth.login()" style="width:100%; margin-top:10px;">LOGIN</button>
             
-            <div style="margin-top:15px; font-size:12px; color:#777; cursor:pointer; text-decoration:underline;" onclick="auth.toggleMode('register')">
-                New Pilot? Join Protocol >
+            <div class="footer-credit">
+                Created by OrelAI | <a href="mailto:ubriga@gmail.com">ubriga@gmail.com</a>
             </div>
         </div>
-
-        <div class="box" id="register-box" style="display:none;">
-             <h3 style="color:var(--warn);">NEW RECRUITMENT</h3>
-             <input type="text" id="reg-u" placeholder="CHOOSE ID" onkeypress="if(event.key==='Enter') document.getElementById('reg-p').focus()"><br>
-             <input type="password" id="reg-p" placeholder="SET CODE" onkeypress="if(event.key==='Enter') auth.register()"><br>
-             
-             <div class="g-recaptcha" data-sitekey="6LfrGyssAAAAALIPZmJmhTJlcTvLzx2VHK6c06ZL" style="margin: 15px auto; display: inline-block;"></div>
-             <br>
-             
-             <button onclick="auth.register()" class="gold" style="width:100%;">REGISTER</button>
-             <div style="margin-top:15px; font-size:12px; color:#777; cursor:pointer; text-decoration:underline;" onclick="auth.toggleMode('login')">
-                < Back to Login
-             </div>
+        
+        <!-- ============================================================================ -->
+        <!-- Register Screen -->
+        <!-- ============================================================================ -->
+        <div id="registerScreen" class="screen">
+            <div class="cyber-panel">
+                <h2 style="text-align: center; margin-bottom: 20px;">NEW OPERATIVE</h2>
+                
+                <div id="registerAlert"></div>
+                
+                <input type="text" id="registerUsername" class="cyber-input" placeholder="USERNAME (3-20 chars)" autocomplete="username">
+                <input type="password" id="registerPassword" class="cyber-input" placeholder="PASSWORD (min 6 chars)" autocomplete="new-password">
+                <input type="password" id="registerConfirm" class="cyber-input" placeholder="CONFIRM PASSWORD" autocomplete="new-password">
+                
+                <button class="cyber-btn success" onclick="register()">
+                    <span id="registerBtnText">REGISTER</span>
+                </button>
+                
+                <button class="cyber-btn" onclick="showLogin()">
+                    BACK TO LOGIN
+                </button>
+            </div>
+            
+            <div class="footer-credit">
+                Created by OrelAI | <a href="mailto:ubriga@gmail.com">ubriga@gmail.com</a>
+            </div>
         </div>
-    </div>
-
-    <!-- LOBBY -->
-    <div id="screen-lobby" class="screen">
-        <div style="display: flex; gap: 20px; width: 90%; height: 90%;">
-            <div class="box" style="width: 250px; display: flex; flex-direction: column; text-align: left;">
-                <div style="display:flex; align-items:center; gap:10px; margin-bottom: 20px;">
-                    <div style="width:40px; height:40px; background:var(--main); border-radius:50%; display:flex; align-items:center; justify-content:center; color:black; font-weight:bold; font-size:20px;" id="u-avatar">?</div>
-                    <div>
-                        <div id="u-name" style="font-weight:bold;">User</div>
-                        <div id="u-display-name" style="font-size:10px; color:#777;">@username</div>
-                        <div id="u-rank" style="font-size:12px; color:#aaa;">PRIVATE</div>
+        
+        <!-- ============================================================================ -->
+        <!-- Lobby/Dashboard Screen -->
+        <!-- ============================================================================ -->
+        <div id="lobbyScreen" class="screen">
+            <div class="cyber-panel">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2>OPERATIVE: <span id="usernameDisplay" style="color: var(--neon-green);"></span></h2>
+                    <button class="cyber-btn danger" onclick="logout()" style="width: auto; padding: 10px 20px; margin: 0;">LOGOUT</button>
+                </div>
+                
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7);">SEASON <span id="seasonNumber">1</span></div>
+                    <div style="font-size: 2.5rem; font-weight: 900; color: var(--neon-yellow); font-family: 'Share Tech Mono', monospace;">
+                        ¢ <span id="creditsDisplay">0</span>
                     </div>
                 </div>
                 
-                <button onclick="document.getElementById('screen-display-name').style.display='flex'" style="font-size:12px; padding:5px;">CHANGE NAME</button>
-                
-                <div style="background:#111; padding:10px; margin:10px 0; border:1px solid #333;">
-                    <div style="font-size:12px; color:#777;">CREDITS</div>
-                    <div id="u-credits" style="font-size:20px; color:var(--warn);">0</div>
-                </div>
-
-                <button onclick="auth.logout()" class="red" style="margin-top:auto;">LOGOUT</button>
-            </div>
-
-            <div style="flex: 1; display: flex; flex-direction: column; gap: 20px;">
-                <div class="box" style="width:auto; padding: 10px; display: flex; justify-content: space-between; align-items: center;">
-                    <div style="font-weight:bold;">BRIGAGAME <span style="font-size:10px; background:var(--main); color:black; padding:2px;">v7.0</span></div>
-                    <div id="news-ticker" style="font-size:12px; color:#aaa; cursor:pointer;" onclick="ui.showReleaseNotes()">📋 Click for Update Notes</div>
-                </div>
-
-                <div style="display:flex; gap:10px;">
-                    <button class="tab-btn active" onclick="ui.tab('ops')">OPERATIONS</button>
-                    <button class="tab-btn" onclick="ui.tab('armory')">ARMORY</button>
-                    <button class="tab-btn" onclick="ui.tab('hangar')">HANGAR</button>
-                    <button class="tab-btn" onclick="ui.tab('leaderboard')">LEADERS</button>
-                    <button class="tab-btn" onclick="ui.tab('admin')" id="btn-admin" style="display:none;">ADMIN</button>
-                </div>
-
-                <div class="box" style="width:auto; flex:1; overflow:hidden; position:relative;">
+                <!-- Trinity System -->
+                <div class="trinity-container">
+                    <div class="resource-bar ram">
+                        <div class="resource-label">
+                            <span>RAM</span>
+                            <span id="ramDisplay">100/100</span>
+                        </div>
+                        <div class="resource-progress">
+                            <div class="resource-fill ram-fill" id="ramBar" style="width: 100%;"></div>
+                        </div>
+                    </div>
                     
-                    <div id="tab-ops" style="height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:20px;">
-                        <h2>MISSION PROTOCOL</h2>
-                        
-                        <div style="display:flex; gap:20px; align-items:center;">
-                            <label>MODE:</label>
-                            <select id="mode-select" style="width:200px;">
-                                <option value="Classic" selected>CLASSIC (INVADERS)</option>
-                                <option value="Meteor">METEOR STORM (SURVIVAL)</option>
-                            </select>
+                    <div class="resource-bar trace">
+                        <div class="resource-label">
+                            <span>TRACE</span>
+                            <span id="traceDisplay">0/100</span>
                         </div>
-
-                        <div style="display:flex; gap:20px; align-items:center;">
-                            <label>THREAT LEVEL:</label>
-                            <select id="diff-select" style="width:200px;">
-                                <option value="Recruit">RECRUIT (EASY)</option>
-                                <option value="Soldier" selected>SOLDIER (NORMAL)</option>
-                                <option value="Veteran">VETERAN (HARD)</option>
-                                <option value="Elite">ELITE (INSANE)</option>
-                                <option value="Legend">LEGEND (IMPOSSIBLE)</option>
-                            </select>
-                        </div>
-
-                        <div style="display:flex; gap:20px;">
-                            <label><input type="checkbox" id="chk-autofire" style="width:auto;"> AUTO FIRE</label>
-                            <div style="font-size:12px; color:#777;">MANUAL (SPACE)</div>
-                        </div>
-
-                        <button onclick="app.startGame()" style="font-size:24px; padding: 20px 60px;" class="gold">LAUNCH</button>
-
-                        <div style="margin-top: 30px; border-top: 1px solid #333; padding-top: 20px; width: 80%;">
-                            <input type="text" id="coupon-code" placeholder="REDEEM CODE" style="width: 200px;" onkeypress="if(event.key==='Enter') shop.redeem()">
-                            <button onclick="shop.redeem()">SUPPLY</button>
+                        <div class="resource-progress">
+                            <div class="resource-fill trace-fill" id="traceBar" style="width: 0%;"></div>
                         </div>
                     </div>
-
-                    <div id="tab-armory" style="display:none; height:100%; overflow-y:auto;">
-                        <div id="armory-content" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; padding: 10px;">
-                            <div style="grid-column: 1/-1; text-align:center; padding:20px; color:#555;">Loading Arsenal...</div>
-                        </div>
-                    </div>
-
-                    <div id="tab-hangar" style="display:none; height:100%; overflow-y:auto;">
-                        <h3>CONSUMABLES</h3>
-                        <div id="hangar-consumables" style="padding:10px; border:1px solid #333; margin-bottom:10px;"></div>
-
-                        <h3>SKINS</h3>
-                        <div id="hangar-skins" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px;"></div>
-                    </div>
-
-                    <div id="tab-leaderboard" style="display:none; height:100%;">
-                        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                            <h3>TOP PILOTS</h3>
-                            <button onclick="app.loadLeaderboard()">REFRESH</button>
-                        </div>
-                        <div class="scroll-box">
-                            <table id="lb-table">
-                                <thead><tr><th>RANK</th><th>PILOT</th><th>SCORE</th><th>WAVE</th><th>DIFF</th></tr></thead>
-                                <tbody></tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <div id="tab-admin" style="display:none; height:100%; overflow-y:auto;">
-                        <div id="admin-login-panel">
-                            <h3>SECURE ACCESS</h3>
-                            <input type="password" id="admin-pin" placeholder="PIN CODE" onkeypress="if(event.key==='Enter') admin.verify()">
-                            <button onclick="admin.verify()">ACCESS</button>
-                        </div>
-                        
-                        <div id="admin-panel" style="display:none;">
-                            <div style="display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap;">
-                                <button onclick="ui.subTab('users')">USERS</button>
-                                <button onclick="ui.subTab('items')">SHOP ITEMS</button>
-                                <button onclick="ui.subTab('coupons')">COUPONS</button>
-                                <button onclick="ui.subTab('config')">RELEASE NOTES</button>
-                                <button onclick="admin.refresh()" class="gold">REFRESH</button>
-                                <button onclick="admin.lock()" class="red">LOCK</button>
-                            </div>
-
-                            <div id="sub-users" class="admin-sub">
-                                <div class="scroll-box">
-                                    <table style="font-size:10px;">
-                                        <thead><tr><th>ID</th><th>USER</th><th>DISPLAY</th><th>XP</th><th>STATUS</th><th>ACT</th></tr></thead>
-                                        <tbody id="adm-users-list"></tbody>
-                                    </table>
-                                </div>
-                            </div>
-
-                            <div id="sub-items" class="admin-sub" style="display:none;">
-                                <div class="scroll-box">
-                                    <table style="font-size:10px;">
-                                        <thead><tr><th>ICON</th><th>NAME</th><th>TYPE</th><th>BASE</th><th>STEP</th><th>GRAYED</th><th>ACT</th></tr></thead>
-                                        <tbody id="adm-items-list"></tbody>
-                                    </table>
-                                </div>
-                            </div>
-
-                            <div id="sub-coupons" class="admin-sub" style="display:none;">
-                                <div style="border:1px solid #333; padding:10px; margin-bottom:10px;">
-                                    <h4>CREATE COUPON</h4>
-                                    <input id="new-c-code" placeholder="CODE"> <button onclick="document.getElementById('new-c-code').value='CP'+Math.floor(Math.random()*10000)">RND</button><br>
-                                    <input id="new-c-val" type="number" placeholder="VALUE"><br>
-                                    <input id="new-c-uses" type="number" placeholder="MAX USES (-1 infinite)"><br>
-                                    <input id="new-c-hours" type="number" placeholder="HOURS VALID"><br>
-                                    <button onclick="admin.createCoupon()">CREATE</button>
-                                </div>
-                                <div class="scroll-box">
-                                    <table>
-                                        <thead><tr><th>CODE</th><th>VAL</th><th>USES</th><th>EXP</th><th>ACT</th></tr></thead>
-                                        <tbody id="adm-coupons-list"></tbody>
-                                    </table>
-                                </div>
-                            </div>
-                            
-                            <div id="sub-config" class="admin-sub" style="display:none;">
-                                <label>RELEASE NOTES (HTML/Markdown supported)</label><br>
-                                <textarea id="conf-notes" style="width:90%; height:200px; background:black; color:white; text-align:left;"></textarea>
-                                
-                                <button onclick="admin.saveConfig()" class="gold" style="margin-top:10px;">SAVE CHANGES</button>
-                            </div>
-                        </div>
-                    </div>
-
                 </div>
+                
+                <div id="traceWarning"></div>
+                
+                <button class="cyber-btn" onclick="showAttackScreen()">
+                    SCAN TARGETS
+                </button>
+                
+                <button class="cyber-btn success" onclick="showShopScreen()">
+                    BLACK MARKET
+                </button>
+                
+                <button id="adminBtn" class="cyber-btn" onclick="showAdminPinScreen()" style="display: none;">
+                    🛑 ADMIN PANEL
+                </button>
+            </div>
+            
+            <div class="footer-credit">
+                Created by OrelAI | <a href="mailto:ubriga@gmail.com">ubriga@gmail.com</a>
             </div>
         </div>
+        
+        <!-- ============================================================================ -->
+        <!-- Attack Screen -->
+        <!-- ============================================================================ -->
+        <div id="attackScreen" class="screen">
+            <div class="cyber-panel">
+                <h2 style="text-align: center; margin-bottom: 20px;">TARGET ACQUISITION</h2>
+                
+                <button class="cyber-btn" onclick="scanTargets()">
+                    <span id="scanBtnText">REFRESH SCAN</span>
+                </button>
+                
+                <div id="targetList" class="player-list"></div>
+                
+                <button class="cyber-btn danger" onclick="showLobby()">
+                    ABORT
+                </button>
+            </div>
+            
+            <div class="footer-credit">
+                Created by OrelAI | <a href="mailto:ubriga@gmail.com">ubriga@gmail.com</a>
+            </div>
+        </div>
+        
+        <!-- ============================================================================ -->
+        <!-- Attack Execution Screen -->
+        <!-- ============================================================================ -->
+        <div id="executeAttackScreen" class="screen">
+            <div class="cyber-panel">
+                <h2 style="text-align: center; margin-bottom: 20px;">ATTACK VECTOR</h2>
+                
+                <div id="targetInfo" style="text-align: center; margin: 20px 0;"></div>
+                
+                <div id="attackResult"></div>
+                
+                <h3 style="margin: 20px 0 10px 0; color: var(--neon-green);">SELECT TOOLS:</h3>
+                
+                <div id="toolSelection">
+                    <label class="cyber-panel" style="cursor: pointer; display: flex; align-items: center; padding: 10px;">
+                        <input type="checkbox" value="ddos" style="margin-left: 10px; width: 20px; height: 20px;">
+                        <span style="margin-right: 10px;">DDoS Attack</span>
+                    </label>
+                    <label class="cyber-panel" style="cursor: pointer; display: flex; align-items: center; padding: 10px;">
+                        <input type="checkbox" value="exploit" style="margin-left: 10px; width: 20px; height: 20px;">
+                        <span style="margin-right: 10px;">Exploit Kit</span>
+                    </label>
+                    <label class="cyber-panel" style="cursor: pointer; display: flex; align-items: center; padding: 10px;">
+                        <input type="checkbox" value="brute_force" style="margin-left: 10px; width: 20px; height: 20px;">
+                        <span style="margin-right: 10px;">Brute Force</span>
+                    </label>
+                </div>
+                
+                <button class="cyber-btn success" onclick="executeAttack()">
+                    <span id="attackBtnText">EXECUTE ATTACK</span>
+                </button>
+                
+                <button class="cyber-btn danger" onclick="showAttackScreen()">
+                    CANCEL
+                </button>
+            </div>
+            
+            <div class="footer-credit">
+                Created by OrelAI | <a href="mailto:ubriga@gmail.com">ubriga@gmail.com</a>
+            </div>
+        </div>
+        
+        <!-- ============================================================================ -->
+        <!-- Shop Screen -->
+        <!-- ============================================================================ -->
+        <div id="shopScreen" class="screen">
+            <div class="cyber-panel">
+                <h2 style="text-align: center; margin-bottom: 20px;">BLACK MARKET</h2>
+                
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <span style="font-size: 1.5rem; color: var(--neon-yellow);">¢ <span id="shopCreditsDisplay">0</span></span>
+                </div>
+                
+                <div id="shopAlert"></div>
+                
+                <div class="shop-grid" id="shopItems">
+                    <!-- Hardware -->
+                    <div class="shop-item">
+                        <div class="item-name">HARDWARE UPGRADE</div>
+                        <div class="item-description">Increase RAM capacity</div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span class="item-price">¢ 1000</span>
+                            <button class="cyber-btn success" style="width: auto; padding: 8px 20px; margin: 0;" onclick="buyItem('hardware', 'RAM Upgrade', 1000)">BUY</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Defense Systems -->
+                    <div class="shop-item">
+                        <div class="item-name">FIREWALL</div>
+                        <div class="item-description">Block DDoS attacks</div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span class="item-price">¢ 800</span>
+                            <button class="cyber-btn success" style="width: auto; padding: 8px 20px; margin: 0;" onclick="buyItem('defense', 'firewall', 800)">BUY</button>
+                        </div>
+                    </div>
+                    
+                    <div class="shop-item">
+                        <div class="item-name">ANTIVIRUS</div>
+                        <div class="item-description">Detect exploits</div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span class="item-price">¢ 700</span>
+                            <button class="cyber-btn success" style="width: auto; padding: 8px 20px; margin: 0;" onclick="buyItem('defense', 'antivirus', 700)">BUY</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Attack Tools -->
+                    <div class="shop-item">
+                        <div class="item-name">ROOTKIT</div>
+                        <div class="item-description">Advanced persistent threat</div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span class="item-price">¢ 1200</span>
+                            <button class="cyber-btn success" style="width: auto; padding: 8px 20px; margin: 0;" onclick="buyItem('software', 'rootkit', 1200)">BUY</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="cyber-btn danger" onclick="showLobby()">
+                    EXIT MARKET
+                </button>
+            </div>
+            
+            <div class="footer-credit">
+                Created by OrelAI | <a href="mailto:ubriga@gmail.com">ubriga@gmail.com</a>
+            </div>
+        </div>
+        
+        <!-- ============================================================================ -->
+        <!-- 🛑 ADMIN ZONE - DO NOT MODIFY 🛑 -->
+        <!-- Admin PIN Screen -->
+        <!-- ============================================================================ -->
+        <div id="adminPinScreen" class="screen">
+            <div class="cyber-panel admin-panel">
+                <h2 style="text-align: center; margin-bottom: 20px;">🛑 ADMIN AUTHENTICATION</h2>
+                
+                <div id="pinAlert"></div>
+                
+                <input type="password" id="adminPin" class="cyber-input" placeholder="ENTER ADMIN PIN" autocomplete="off">
+                
+                <button class="cyber-btn success" onclick="verifyAdminPin()">
+                    <span id="pinBtnText">VERIFY</span>
+                </button>
+                
+                <button class="cyber-btn danger" onclick="showLobby()">
+                    CANCEL
+                </button>
+            </div>
+            
+            <div class="footer-credit">
+                Created by OrelAI | <a href="mailto:ubriga@gmail.com">ubriga@gmail.com</a>
+            </div>
+        </div>
+        
+        <!-- ============================================================================ -->
+        <!-- Admin Dashboard Screen -->
+        <!-- ============================================================================ -->
+        <div id="adminScreen" class="screen">
+            <div class="cyber-panel admin-panel">
+                <h2 style="text-align: center; margin-bottom: 20px;">🛑 ADMIN CONTROL PANEL</h2>
+                
+                <div class="stat-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="adminTotalUsers">0</div>
+                        <div class="stat-label">Total Users</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="adminCurrentSeason">1</div>
+                        <div class="stat-label">Current Season</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="adminTotalAttacks">0</div>
+                        <div class="stat-label">Total Attacks</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">ACTIVE</div>
+                        <div class="stat-label">System Status</div>
+                    </div>
+                </div>
+                
+                <div id="adminAlert"></div>
+                
+                <h3 style="margin: 20px 0 10px 0;">SEASON MANAGEMENT</h3>
+                <button class="cyber-btn danger" onclick="endSeason()">
+                    END CURRENT SEASON & RESET
+                </button>
+                
+                <h3 style="margin: 20px 0 10px 0;">USER SEARCH</h3>
+                <input type="text" id="adminUserSearch" class="cyber-input" placeholder="Search username...">
+                <button class="cyber-btn" onclick="searchUsers()">SEARCH</button>
+                
+                <div id="adminUserList" style="margin-top: 20px;"></div>
+                
+                <button class="cyber-btn" onclick="showLobby()">
+                    EXIT ADMIN PANEL
+                </button>
+            </div>
+            
+            <div class="footer-credit">
+                Created by OrelAI | <a href="mailto:ubriga@gmail.com">ubriga@gmail.com</a>
+            </div>
+        </div>
+        <!-- 🛑 END ADMIN ZONE 🛑 -->
+        <!-- ============================================================================ -->
     </div>
-</div>
-
-<canvas id="gameCanvas"></canvas>
- <script>
-/** BRIGAGAME v7.0 - MEGA UPDATE **/
-const API = "https://ubriga.pythonanywhere.com";
-var USER=null, TOKEN=localStorage.getItem('px_token');
-var KEYS = {}; 
-var ADMIN_UNLOCKED = false;
-var SHOP_ITEMS = [];
-
-const RANKS = [
-    {xp:0, name:"Private"}, {xp:1000, name:"Private 2"}, {xp:2500, name:"Private 1st Class"},
-    {xp:5000, name:"Specialist"}, {xp:10000, name:"Corporal"}, {xp:20000, name:"Sergeant"},
-    {xp:35000, name:"Staff Sergeant"}, {xp:50000, name:"Sergeant 1st Class"}, {xp:75000, name:"Master Sergeant"},
-    {xp:100000, name:"First Sergeant"}, {xp:150000, name:"Sergeant Major"}, {xp:200000, name:"Command Sgt Major"},
-    {xp:300000, name:"2nd Lieutenant"}, {xp:400000, name:"1st Lieutenant"}, {xp:500000, name:"Captain"},
-    {xp:650000, name:"Major"}, {xp:800000, name:"Lt Colonel"}, {xp:1000000, name:"Colonel"},
-    {xp:1500000, name:"Brigadier General"}, {xp:2000000, name:"Major General"}, {xp:3000000, name:"Lt General"},
-    {xp:5000000, name:"General"}, {xp:10000000, name:"General of the Army"}
-];
-
-const v = (id) => document.getElementById(id).value;
-const toast = (msg) => {
-    let t = document.getElementById('toast');
-    t.innerText = msg; t.style.opacity = 1; t.style.bottom = "50px";
-    setTimeout(() => { t.style.opacity = 0; t.style.bottom = "30px"; }, 3000);
-}
-
-// ========================================
-// 🔐 AUTH MODULE
-// ========================================
-const auth = {
-    toggleMode: (mode) => {
-        document.getElementById('login-box').style.display = mode === 'login' ? 'block' : 'none';
-        document.getElementById('register-box').style.display = mode === 'register' ? 'block' : 'none';
-    },
-
-    login: async () => {
-        const u = v('inp-u'), p = v('inp-p');
-        if(!u || !p) return toast("MISSING INFO");
-        try {
-            const res = await fetch(`${API}/login`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({username:u,password:p})});
-            const d = await res.json();
-            if(d.error) return toast(d.error);
-            USER = d.user; TOKEN = d.token;
-            localStorage.setItem('px_token', TOKEN);
-            ADMIN_UNLOCKED = false;
-            app.toLobby();
-        } catch(e) { toast("Connection Error"); }
-    },
     
-    register: async () => {
-        const u = v('reg-u'), p = v('reg-p');
-        if(!u || !p) return toast("MISSING INFO");
-
-        const token = grecaptcha.getResponse();
-        if(token.length === 0) {
-            return toast("PLEASE CONFIRM YOU ARE NOT A ROBOT");
+    <script>
+        // ============================================================================
+        // Configuration
+        // ============================================================================
+        const API_URL = 'https://ubriga.pythonanywhere.com//api';
+        const RECAPTCHA_SITE_KEY = '6LfrGyssAAAAALIPZmJmhTJlcTvLzx2VHK6c06ZL';
+        
+        let authToken = localStorage.getItem('authToken') || null;
+        let currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+        let selectedTargetId = null;
+        let playerState = {};
+        
+        // ============================================================================
+        // Screen Navigation
+        // ============================================================================
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
         }
-
-        try {
-            const res = await fetch(`${API}/register`, {
-                method:'POST', 
-                headers:{'Content-Type':'application/json'}, 
-                body:JSON.stringify({username:u, password:p, recaptcha_token: token})
-            });
-            const d = await res.json();
-            
-            if(d.status === 'success') {
-                toast(d.message);
-                grecaptcha.reset();
-                auth.toggleMode('login');
-            } else {
-                toast(d.message || d.error);
-                grecaptcha.reset();
-            }
-        } catch(e) { toast("Error"); }
-    },
-
-    changePassword: async () => {
-        const oldP = v('cp-old'), newP = v('cp-new');
-        if(!oldP || !newP) return toast("FILL FIELDS");
-        try {
-            const res = await fetch(`${API}/change_password`, {
-                method:'POST', headers:{'Authorization':`Bearer ${TOKEN}`, 'Content-Type':'application/json'},
-                body:JSON.stringify({old_password:oldP, new_password:newP})
-            });
-            const d = await res.json();
-            toast(d.message || d.error);
-            if(d.status==='success') document.getElementById('screen-settings').style.display='none';
-        } catch(e) { toast("Error"); }
-    },
-    
-    changeDisplayName: async () => {
-        const newName = document.getElementById('new-display-name').value.trim();
-        if(!newName || newName.length < 3) return toast("Name must be at least 3 characters");
         
-        try {
-            const res = await fetch(`${API}/change_display_name`, {
-                method:'POST', 
-                headers:{'Authorization':`Bearer ${TOKEN}`, 'Content-Type':'application/json'},
-                body:JSON.stringify({display_name: newName})
-            });
-            const d = await res.json();
-            
-            if(d.status === 'success') {
-                USER.display_name = newName;
-                USER.display_name_changes = d.changes;
-                document.getElementById('screen-display-name').style.display='none';
-                app.updateLobbyUI();
-                toast("Display name updated!");
-            } else {
-                toast(d.error);
-            }
-        } catch(e) { toast("Error"); }
-    },
-    
-    logout: () => {
-        USER=null; TOKEN=null; localStorage.removeItem('px_token');
-        
-        document.getElementById('inp-u').value = "";
-        document.getElementById('inp-p').value = "";
-        document.getElementById('admin-pin').value = ""; 
-
-        ADMIN_UNLOCKED = false;
-        document.getElementById('btn-admin').style.display = 'none';
-        document.getElementById('admin-panel').style.display = 'none';
-        document.getElementById('admin-login-panel').style.display = 'block';
-
-        document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
-        document.getElementById('screen-login').style.display='flex';
-        auth.toggleMode('login');
-    }
-};
-
-// ========================================
-// 🎨 UI MANAGER
-// ========================================
-const ui = {
-    tab: (t) => {
-        document.querySelectorAll('[id^="tab-"]').forEach(d=>d.style.display='none');
-        document.getElementById(`tab-${t}`).style.display = t==='ops'?'flex':'block';
-        document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-        event.target.classList.add('active');
-        if(t==='armory') shop.render();
-        if(t==='hangar') shop.renderHangar();
-        if(t==='leaderboard') app.loadLeaderboard();
-        
-        if(t==='admin') {
-             if(ADMIN_UNLOCKED) {
-                 document.getElementById('admin-login-panel').style.display = 'none';
-                 document.getElementById('admin-panel').style.display = 'block';
-                 admin.refresh();
-             } else {
-                 document.getElementById('admin-login-panel').style.display = 'block';
-                 document.getElementById('admin-panel').style.display = 'none';
-             }
+        function showLogin() {
+            showScreen('loginScreen');
         }
-    },
-    subTab: (t) => {
-        document.querySelectorAll('.admin-sub').forEach(d=>d.style.display='none');
-        document.getElementById(`sub-${t}`).style.display='block';
-    },
-    showReleaseNotes: () => {
-        document.getElementById('release-notes-overlay').style.display = 'block';
-        document.getElementById('release-notes-modal').style.display = 'block';
-    },
-    closeReleaseNotes: () => {
-        document.getElementById('release-notes-overlay').style.display = 'none';
-        document.getElementById('release-notes-modal').style.display = 'none';
-    }
-};
-
-// ========================================
-// 🛒 SHOP & ECONOMY
-// ========================================
-const shop = {
-    loadItems: async () => {
-        try {
-            const res = await fetch(`${API}/get_shop_items`);
-            SHOP_ITEMS = await res.json();
-        } catch(e) { console.error("Failed to load shop items"); }
-    },
-    
-    getConfig: async () => {
-        try {
-            const res = await fetch(`${API}/get_config`);
-            const d = await res.json();
-            if(d.release_notes) {
-                document.getElementById('release-notes-content').innerText = d.release_notes;
-            }
-        } catch(e) {}
-    },
-
-    getCost: (item) => {
-        if(item.type === 'skin' || item.type === 'consumable') return item.base_price;
-        if(item.type === 'upgrade') {
-            const lvl = (USER.inventory[item.id] || 0);
-            return item.base_price + (lvl * item.step_price);
+        
+        function showRegister() {
+            showScreen('registerScreen');
         }
-        return 0;
-    },
-
-    buy: async (item) => {
-        const cost = shop.getCost(item);
-        if(USER.credits < cost) return toast("INSUFFICIENT FUNDS");
         
-        USER.credits -= cost;
-        app.updateLobbyUI();
+        function showLobby() {
+            showScreen('lobbyScreen');
+            loadPlayerState();
+        }
         
-        try {
-            const res = await fetch(`${API}/shop/buy`, {
-                method:'POST', headers:{'Authorization':`Bearer ${TOKEN}`, 'Content-Type':'application/json'},
-                body:JSON.stringify({item_id:item.id, cost:cost})
-            });
-            const d = await res.json();
-            if(d.status === 'ok') {
-                if(item.type === 'upgrade') USER.inventory[item.id] = (USER.inventory[item.id]||0)+1;
-                else if(item.type === 'skin') USER.inventory[item.id] = true;
-                else if(item.type === 'consumable') {
-                     if(!USER.consumables) USER.consumables = {};
-                     USER.consumables[item.id] = (USER.consumables[item.id]||0)+1;
+        function showAttackScreen() {
+            showScreen('attackScreen');
+            scanTargets();
+        }
+        
+        function showShopScreen() {
+            showScreen('shopScreen');
+            document.getElementById('shopCreditsDisplay').textContent = playerState.credits || 0;
+        }
+        
+        function showAdminPinScreen() {
+            showScreen('adminPinScreen');
+        }
+        
+        function showAdminDashboard() {
+            showScreen('adminScreen');
+            loadAdminStats();
+        }
+        
+        // ============================================================================
+        // Utility Functions
+        // ============================================================================
+        function showAlert(elementId, message, type = 'error') {
+            const alertEl = document.getElementById(elementId);
+            alertEl.innerHTML = `<div class="alert ${type}">${message}</div>`;
+            setTimeout(() => alertEl.innerHTML = '', 5000);
+        }
+        
+        async function apiCall(endpoint, method = 'GET', data = null) {
+            const options = {
+                method,
+                headers: {
+                    'Content-Type': 'application/json'
                 }
-                toast("✅ ACQUIRED!");
-                shop.render(); shop.renderHangar();
-            } else {
-                toast(d.error);
-                USER.credits += cost;
-                app.updateLobbyUI();
+            };
+            
+            if (authToken) {
+                options.headers['Authorization'] = authToken;
             }
-        } catch(e) { USER.credits+=cost; toast("Error"); app.updateLobbyUI(); }
-    },
-
-    equip: async (id) => {
-        try {
-            const res = await fetch(`${API}/shop/equip`, {
-                method:'POST', headers:{'Authorization':`Bearer ${TOKEN}`, 'Content-Type':'application/json'},
-                body:JSON.stringify({skin_id:id})
-            });
-            if((await res.json()).status === 'ok') {
-                USER.inventory.active_skin = id;
-                toast("EQUIPPED");
-                shop.renderHangar();
+            
+            if (data) {
+                options.body = JSON.stringify(data);
             }
-        } catch(e){}
-    },
-
-    redeem: async () => {
-        const c = document.getElementById('coupon-code').value;
-        if(!c) return;
-        try {
-            const res = await fetch(`${API}/redeem_coupon`, {
-                method:'POST', headers:{'Authorization':`Bearer ${TOKEN}`, 'Content-Type':'application/json'},
-                body:JSON.stringify({code:c})
-            });
-            const d = await res.json();
-            if(d.status === 'ok') {
-                toast(`✅ ADDED ${d.added} CR!`);
-                USER.credits += d.added;
-                app.updateLobbyUI();
-                document.getElementById('coupon-code').value = "";
-            } else toast(d.error);
-        } catch(e){ toast("Error"); }
-    },
-
-    render: () => {
-        const con = document.getElementById('armory-content');
-        con.innerHTML = "";
-        
-        if(SHOP_ITEMS.length === 0) {
-            con.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding:20px; color:#555;">No items available</div>';
-            return;
-        }
-        
-        // Group by category
-        const categories = {
-            weapon: [], defense: [], utility: [], special: [], cosmetic: [], support: []
-        };
-        
-        SHOP_ITEMS.forEach(item => {
-            const cat = item.category || 'support';
-            if(categories[cat]) categories[cat].push(item);
-        });
-        
-        Object.keys(categories).forEach(cat => {
-            if(categories[cat].length === 0) return;
             
-            const header = document.createElement('h3');
-            header.style.cssText = 'grid-column: 1/-1; color: var(--main); margin: 10px 0 5px 0; text-transform: uppercase;';
-            header.innerText = cat;
-            con.appendChild(header);
+            const response = await fetch(`${API_URL}${endpoint}`, options);
+            const result = await response.json();
             
-            categories[cat].forEach(item => {
-                const owned = item.type==='skin' && USER.inventory[item.id];
-                const lvl = USER.inventory[item.id] || 0;
-                const cost = shop.getCost(item);
-                
-                const card = document.createElement('div');
-                card.className = "upgrade-card";
-                card.innerHTML = `
-                    <div class="upgrade-icon">${item.icon}</div>
-                    <div style="font-weight:bold; font-size:14px; color:var(--main);">${item.name}</div>
-                    <div style="font-size:10px; color:#aaa; margin:5px 0; min-height:30px;">${item.description}</div>
-                    ${item.type==='upgrade' ? `<div style="color:white; font-size:12px;">LVL: ${lvl}</div>` : ''}
-                    ${owned ? 
-                        `<button disabled class="grayed">OWNED</button>` : 
-                        `<button onclick='shop.buy(${JSON.stringify(item).replace(/'/g, "&apos;")})'>${cost.toLocaleString()} CR</button>`
-                    }
-                `;
-                con.appendChild(card);
-            });
-        });
-    },
-
-    renderHangar: () => {
-        // Consumables
-        const consDiv = document.getElementById('hangar-consumables');
-        consDiv.innerHTML = "";
-        
-        const consumableItems = SHOP_ITEMS.filter(i => i.type === 'consumable');
-        consumableItems.forEach(item => {
-            const qty = (USER.consumables && USER.consumables[item.id]) || 0;
-            const div = document.createElement('div');
-            div.style.cssText = 'display:flex; justify-content:space-between; align-items:center; background:#111; padding:10px; margin:5px 0;';
-            div.innerHTML = `
-                <div>${item.icon} ${item.name}</div>
-                <button onclick='shop.buy(${JSON.stringify(item).replace(/'/g, "&apos;")})'>BUY (${item.base_price})</button>
-                <div>OWNED: ${qty}</div>
-            `;
-            consDiv.appendChild(div);
-        });
-
-        // Skins
-        const con = document.getElementById('hangar-skins');
-        con.innerHTML = "";
-        
-        let dBtn = document.createElement('div');
-        dBtn.className = "box";
-        dBtn.style.cssText = 'padding:10px; font-size:12px;';
-        dBtn.innerHTML = `<div>DEFAULT</div><button onclick="shop.equip('default')">EQUIP</button>`;
-        if(USER.inventory.active_skin === 'default') dBtn.style.borderColor = "var(--warn)";
-        con.appendChild(dBtn);
-
-        SHOP_ITEMS.filter(i=>i.type==='skin' && USER.inventory[i.id]).forEach(item => {
-            let div = document.createElement('div');
-            div.className = "box";
-            div.style.cssText = 'padding:10px; font-size:12px;';
-            div.innerHTML = `<div>${item.icon} ${item.name}</div><button onclick="shop.equip('${item.id}')">EQUIP</button>`;
-            if(USER.inventory.active_skin === item.id) div.style.borderColor = "var(--warn)";
-            con.appendChild(div);
-        });
-    }
-};
-
-// ========================================
-// 👑 ADMIN MODULE
-// ========================================
-const admin = {
-    verify: async () => {
-        const pin = document.getElementById('admin-pin').value;
-        try {
-            const res = await fetch(`${API}/admin/verify_pin`, {
-                method:'POST', headers:{'Authorization':`Bearer ${TOKEN}`, 'Content-Type':'application/json'},
-                body:JSON.stringify({pin:pin})
-            });
-            if((await res.json()).status === 'success') {
-                document.getElementById('admin-pin').value = "";
-                document.getElementById('admin-login-panel').style.display='none';
-                document.getElementById('admin-panel').style.display='block';
-                ADMIN_UNLOCKED = true;
-                admin.refresh();
-            } else toast("ACCESS DENIED");
-        } catch(e) { toast("Error"); }
-    },
-    
-    lock: () => {
-        ADMIN_UNLOCKED = false;
-        document.getElementById('admin-panel').style.display='none';
-        document.getElementById('admin-login-panel').style.display='block';
-        toast("ADMIN LOCKED");
-    },
-    
-    refresh: async () => {
-        if(!ADMIN_UNLOCKED) return;
-        try {
-            const res = await fetch(`${API}/admin/dashboard`, {headers:{'Authorization':`Bearer ${TOKEN}`}});
-            const d = await res.json();
-            
-            // Users
-            const ub = document.getElementById('adm-users-list'); ub.innerHTML="";
-            d.users.forEach(u => {
-                ub.innerHTML += `
-                <tr>
-                    <td>${u.id}</td>
-                    <td>${u.username}</td>
-                    <td>${u.display_name}</td>
-                    <td>${u.xp}</td>
-                    <td>${u.banned?'🚫':(u.approved?'✅':'⏳')}</td>
-                    <td style="font-size:9px;">
-                        ${!u.approved ? `<button onclick="admin.act('approve_user', ${u.id})">✅</button>` : ''}
-                        <button onclick="admin.act('ban_user', ${u.id}, ${!u.banned})">${u.banned?'UNBAN':'BAN'}</button>
-                        <button onclick="admin.act('gift_name_change', ${u.id})">📝</button>
-                        <button onclick="admin.act('reset_pass', ${u.id})">🔑</button>
-                        <button onclick="admin.act('delete_user', ${u.id})" class="red">❌</button>
-                    </td>
-                </tr>`;
-            });
-
-            // Shop Items
-            const ib = document.getElementById('adm-items-list'); ib.innerHTML="";
-            d.items.forEach(item => {
-                ib.innerHTML += `
-                <tr>
-                    <td>${item.icon}</td>
-                    <td>${item.name}</td>
-                    <td>${item.type}</td>
-                    <td><input id="price-base-${item.id}" value="${item.base_price}" style="width:60px;"></td>
-                    <td><input id="price-step-${item.id}" value="${item.step_price}" style="width:60px;"></td>
-                    <td><button onclick="admin.act('toggle_item_grayed', null, null, null, '${item.id}')" class="${item.is_grayed_out?'red':'gold'}">${item.is_grayed_out?'🚫':'✅'}</button></td>
-                    <td><button onclick="admin.updateItemPrice('${item.id}')">💾</button></td>
-                </tr>`;
-            });
-
-            // Coupons
-            const cb = document.getElementById('adm-coupons-list'); cb.innerHTML="";
-            d.coupons.forEach(c => {
-                cb.innerHTML += `<tr>
-                    <td>${c.code}</td>
-                    <td>${c.value}</td>
-                    <td>${c.uses}</td>
-                    <td>${c.expires||'-'}</td>
-                    <td><button onclick="admin.act('delete_coupon', null, null, ${c.id})" class="red">❌</button></td>
-                </tr>`;
-            });
-            
-            // Config
-            if(d.config && d.config.release_notes) {
-                document.getElementById('conf-notes').value = d.config.release_notes;
+            if (!response.ok) {
+                throw new Error(result.error || 'Request failed');
             }
-
-        } catch(e){ console.error(e); }
-    },
-    
-    act: async (action, uid, banState, cid, itemId) => {
-        if(!ADMIN_UNLOCKED) return;
-        if(!confirm("CONFIRM ACTION?")) return;
-        await fetch(`${API}/admin/action`, {
-            method:'POST', headers:{'Authorization':`Bearer ${TOKEN}`, 'Content-Type':'application/json'},
-            body:JSON.stringify({action:action, user_id:uid, ban:banState, id:cid, item_id:itemId})
-        });
-        admin.refresh();
-    },
-    
-    updateItemPrice: async (itemId) => {
-        if(!ADMIN_UNLOCKED) return;
-        const baseEl = document.getElementById(`price-base-${itemId}`);
-        const stepEl = document.getElementById(`price-step-${itemId}`);
-        
-        if(!baseEl || !stepEl) return;
-        
-        try {
-            await fetch(`${API}/admin/action`, {
-                method:'POST', 
-                headers:{'Authorization':`Bearer ${TOKEN}`, 'Content-Type':'application/json'},
-                body:JSON.stringify({
-                    action: 'update_item_price',
-                    item_id: itemId,
-                    base_price: parseInt(baseEl.value),
-                    step_price: parseInt(stepEl.value)
-                })
-            });
-            toast("Price updated!");
-        } catch(e) { toast("Error"); }
-    },
-    
-    createCoupon: async () => {
-        if(!ADMIN_UNLOCKED) return;
-        await fetch(`${API}/admin/action`, {
-            method:'POST', headers:{'Authorization':`Bearer ${TOKEN}`, 'Content-Type':'application/json'},
-            body:JSON.stringify({
-                action:'create_coupon',
-                code: v('new-c-code'),
-                value: v('new-c-val'),
-                uses: v('new-c-uses'),
-                hours: v('new-c-hours')
-            })
-        });
-        admin.refresh();
-    },
-    
-    saveConfig: async () => {
-        if(!ADMIN_UNLOCKED) return;
-        const notes = document.getElementById('conf-notes').value;
-
-        await fetch(`${API}/admin/save_config`, {
-            method:'POST', headers:{'Authorization':`Bearer ${TOKEN}`, 'Content-Type':'application/json'},
-            body:JSON.stringify({release_notes: notes})
-        });
-        
-        document.getElementById('release-notes-content').innerText = notes;
-        toast("CONFIG SAVED");
-    }
-};
-
-// ========================================
-// 🎮 APP CORE
-// ========================================
-const app = {
-    canvas: document.getElementById('gameCanvas'),
-    ctx: document.getElementById('gameCanvas').getContext('2d'),
-    
-    init: async () => {
-        window.addEventListener('resize', app.resize);
-        app.resize();
-        
-        // ENTER KEY SUPPORT EVERYWHERE
-        window.addEventListener('keydown', e => { 
-            KEYS[e.code] = true; 
-            if(e.code==='Escape') game.togglePause(); 
-            if(e.code==='Space') game.shoot();
-            if(e.code==='KeyR' && game.jammed) game.vent();
             
-            // ENTER in game over screen
-            if(e.code === 'Enter' && document.getElementById('screen-over').style.display === 'flex') {
-                app.startGame();
-            }
-            // ENTER in pause screen
-            if(e.code === 'Enter' && document.getElementById('screen-pause').style.display === 'flex') {
-                game.togglePause();
-            }
-        });
-        window.addEventListener('keyup', e => KEYS[e.code] = false);
-
-        // Mobile Controls
-        if('ontouchstart' in window) {
-            document.getElementById('mobile-controls').style.display='block';
-            
-            const joyArea = document.getElementById('joystick-area');
-            const joyStick = document.getElementById('joystick-stick');
-            let joyActive = false;
-            let joyCenter = {x:0, y:0};
-            
-            joyArea.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                joyActive = true;
-                const rect = joyArea.getBoundingClientRect();
-                joyCenter = {x: rect.left + rect.width/2, y: rect.top + rect.height/2};
-            });
-            
-            joyArea.addEventListener('touchmove', (e) => {
-                if(!joyActive) return;
-                e.preventDefault();
-                const touch = e.touches[0];
-                const dx = touch.clientX - joyCenter.x;
-                const dy = touch.clientY - joyCenter.y;
-                const dist = Math.min(Math.sqrt(dx*dx + dy*dy), 40);
-                const angle = Math.atan2(dy, dx);
-                
-                joyStick.style.left = `calc(50% + ${Math.cos(angle) * dist}px)`;
-                joyStick.style.top = `calc(50% + ${Math.sin(angle) * dist}px)`;
-                
-                if(game.running && !game.paused) {
-                    game.player.x += Math.cos(angle) * dist * 0.3;
-                    game.player.y += Math.sin(angle) * dist * 0.3;
-                }
-            });
-            
-            joyArea.addEventListener('touchend', () => {
-                joyActive = false;
-                joyStick.style.left = '50%';
-                joyStick.style.top = '50%';
-            });
-            
-            const fireBtn = document.getElementById('fire-btn');
-            fireBtn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                KEYS['Space'] = true;
-            });
-            fireBtn.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                KEYS['Space'] = false;
-            });
-        } else {
-             app.canvas.addEventListener('mousemove', e => {
-                if(!game.paused && !game.over && game.running) {
-                    game.player.x = e.clientX;
-                    game.player.y = e.clientY;
-                }
-            });
+            return result;
         }
         
-        await shop.loadItems();
-        await shop.getConfig();
-        document.getElementById('screen-login').style.display='flex';
-        app.loop();
-    },
-
-    resize: () => {
-        app.canvas.width = window.innerWidth;
-        app.canvas.height = window.innerHeight;
-    },
-
-    toLobby: () => {
-        game.running = false;
-        document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
-        document.getElementById('hud').style.display='none';
-        document.getElementById('screen-lobby').style.display='flex';
-        app.updateLobbyUI();
-    },
-    
-    updateLobbyUI: () => {
-        if(!USER) return;
-        document.getElementById('u-name').innerText = USER.display_name || USER.username;
-        document.getElementById('u-display-name').innerText = `@${USER.username}`;
-        document.getElementById('u-credits').innerText = USER.credits.toLocaleString();
-        
-        const changes = USER.display_name_changes || 0;
-        const nameTokens = (USER.consumables && USER.consumables['name_change']) || 0;
-        
-        if(changes === 0) {
-            document.getElementById('name-change-info').innerText = "First change is FREE!";
-        } else {
-            document.getElementById('name-change-info').innerText = `You have ${nameTokens} name change token(s)`;
-        }
-        
-        let r = RANKS.slice().reverse().find(x => USER.total_xp >= x.xp) || RANKS[0];
-        document.getElementById('u-rank').innerText = r.name.toUpperCase();
-        document.getElementById('u-avatar').innerText = USER.username.charAt(0).toUpperCase();
-
-        if(USER.is_admin) {
-            document.getElementById('btn-admin').style.display='block';
-        }
-    },
-
-    loadLeaderboard: async () => {
-        const res = await fetch(`${API}/leaderboard`);
-        const data = await res.json();
-        const tb = document.querySelector('#lb-table tbody');
-        tb.innerHTML = "";
-        data.forEach((r, i) => {
-            const isMe = r.player === (USER.display_name || USER.username);
-            tb.innerHTML += `<tr style="${isMe?'color:var(--main);font-weight:bold;':''}">
-                <td>#${i+1}</td><td>${r.player}</td><td>${r.score.toLocaleString()}</td><td>${r.wave}</td><td>${r.diff}</td>
-            </tr>`;
-        });
-    },
-
-    startGame: () => {
-        document.querySelectorAll('.screen').forEach(s=>s.style.display='none');
-        document.getElementById('hud').style.display='block';
-        game.start();
-    },
-
-    loop: () => {
-        requestAnimationFrame(app.loop);
-        if(!USER) return;
-        game.update();
-        game.draw();
-    }
-};
-
-// ========================================
-// 🎮 GAME ENGINE (ENHANCED with DYNAMIC AI)
-// ========================================
-const game = {
-    running: false,
-    paused: false,
-    over: false,
-    jammed: false,
-    lastTime: 0,
-    screenShake: 0,
-    
-    player: {x:0, y:0, hp:100, maxHp:100, heat:0, score:0, invincible:0},
-    bullets: [],
-    enemyBullets: [],
-    enemies: [],
-    particles: [],
-    bonuses: [],
-    drones: [],
-    damageNumbers: [],
-    
-    wave: 0,
-    waveTimer: 0,
-    difficulty: 'Soldier',
-    mode: 'Classic',
-    
-    combo: 0,
-    comboTimer: 0,
-    maxCombo: 0,
-    
-    boss: null,
-    
-    start: () => {
-        game.running = true;
-        game.paused = false;
-        game.over = false;
-        game.jammed = false;
-        game.difficulty = document.getElementById('diff-select').value;
-        game.mode = document.getElementById('mode-select').value;
-        
-        document.getElementById('mode-disp').innerText = `(${game.mode.toUpperCase()})`;
-        
-        const inv = USER.inventory;
-        game.player.maxHp = 100 + ((inv['hull']||0) * 20);
-        game.player.hp = game.player.maxHp;
-        game.player.heat = 0;
-        game.player.score = 0;
-        game.player.invincible = 0;
-        game.player.x = app.canvas.width / 2;
-        game.player.y = app.canvas.height - 100;
-        
-        game.fireRate = Math.max(5, 20 - (inv['fire_rate']||0));
-        game.damage = 10 + ((inv['damage']||0) * 5);
-        game.doubleShot = (inv['double_shot']||0);
-        game.tripleShot = (inv['triple_shot']||0);
-        
-        game.bullets = [];
-        game.enemyBullets = [];
-        game.enemies = [];
-        game.particles = [];
-        game.bonuses = [];
-        game.drones = [];
-        game.damageNumbers = [];
-        game.boss = null;
-        
-        game.combo = 0;
-        game.comboTimer = 0;
-        game.maxCombo = 0;
-        
-        game.wave = 0;
-        game.nextWave();
-        
-        document.getElementById('boss-hp-container').style.display = 'none';
-    },
-
-    togglePause: () => {
-        if(!game.running || game.over) return;
-        game.paused = !game.paused;
-        document.getElementById('screen-pause').style.display = game.paused ? 'flex' : 'none';
-    },
-
-    nextWave: () => {
-        game.wave++;
-        game.waveTimer = game.mode === 'Meteor' ? 600 : 300;
-        
-        // BOSS WAVE
-        if(game.mode === 'Classic' && game.wave % 5 === 0) {
-            document.getElementById('boss-warning').style.display='flex';
-            setTimeout(()=>document.getElementById('boss-warning').style.display='none', 3000);
-            game.spawnBoss();
-            return;
-        }
-
-        // BONUS WAVE
-        if(game.wave % 10 === 0) {
-            toast("💎 BONUS WAVE! 💎");
-            game.spawnBonusWave();
-            return;
-        }
-
-        // NORMAL WAVE
-        let count = 5 + (game.wave * 2);
-        let speedMult = 1;
-        if(game.difficulty === 'Veteran') { count *= 1.5; speedMult=1.2; }
-        if(game.difficulty === 'Elite') { count *= 2; speedMult=1.5; }
-        if(game.difficulty === 'Legend') { count *= 3; speedMult=2; }
-        
-        if(game.mode === 'Meteor') count *= 2;
-
-        for(let i=0; i<count; i++) {
-            if(game.mode === 'Meteor') {
-                game.spawnEnemy('meteor', speedMult);
-            } else {
-                let rand = Math.random();
-                if(rand < 0.4) game.spawnEnemy('grunt', speedMult);
-                else if(rand < 0.65) game.spawnEnemy('scout', speedMult);
-                else if(rand < 0.85) game.spawnEnemy('tank', speedMult);
-                else game.spawnEnemy('shooter', speedMult);
-            }
-        }
-        
-        toast(`${game.mode.toUpperCase()} WAVE ${game.wave}`);
-    },
-
-    spawnEnemy: (type, speedMult=1) => {
-        let enemy = {
-            x: Math.random() * app.canvas.width,
-            y: -Math.random() * (game.mode==='Meteor'?2000:1000),
-            w: 30, 
-            h: 30,
-            speed: (2 + Math.random() * 2) * speedMult,
-            type: type,
-            shootTimer: 0,
-            targetX: Math.random() * app.canvas.width,
-            moveTimer: 0
-        };
-
-        switch(type) {
-            case 'meteor':
-                enemy.hp = 10 + game.wave * 5;
-                enemy.maxHp = enemy.hp;
-                enemy.color = ['#555', '#666', '#777', '#888'][game.wave % 4];
-                break;
-            case 'scout':
-                enemy.hp = 5 + game.wave * 2;
-                enemy.maxHp = enemy.hp;
-                enemy.speed *= 1.5;
-                enemy.color = ['orange', '#ff8800', '#ffaa00'][game.wave % 3];
-                enemy.w = 20; enemy.h = 20;
-                break;
-            case 'tank':
-                enemy.hp = 30 + game.wave * 10;
-                enemy.maxHp = enemy.hp;
-                enemy.speed *= 0.5;
-                enemy.color = ['green', '#00aa00', '#00cc00'][game.wave % 3];
-                enemy.w = 40; enemy.h = 40;
-                break;
-            case 'shooter':
-                enemy.hp = 15 + game.wave * 5;
-                enemy.maxHp = enemy.hp;
-                enemy.color = ['purple', '#aa00aa', '#cc00cc'][game.wave % 3];
-                break;
-            default:
-                enemy.hp = 10 + game.wave * 5;
-                enemy.maxHp = enemy.hp;
-                enemy.color = ['red', '#ff0000', '#cc0000', '#aa0000'][game.wave % 4];
-        }
-
-        game.enemies.push(enemy);
-    },
-
-    spawnBoss: () => {
-        game.boss = {
-            x: app.canvas.width / 2,
-            y: -150,
-            w: 100,
-            h: 100,
-            hp: 1000 + game.wave * 200,
-            maxHp: 1000 + game.wave * 200,
-            speed: 2,
-            type: 'boss',
-            pattern: Math.floor(Math.random() * 3),
-            angle: 0,
-            phase: 1,
-            shootTimer: 0,
-            minions: []
-        };
-        game.enemies.push(game.boss);
-        
-        document.getElementById('boss-hp-container').style.display = 'block';
-        document.getElementById('boss-name').innerText = `⚠️ BOSS WAVE ${game.wave/5} ⚠️`;
-    },
-
-    spawnBonusWave: () => {
-        for(let i=0; i<20; i++) {
-            setTimeout(() => {
-                game.bonuses.push({
-                    x: Math.random() * app.canvas.width,
-                    y: -50,
-                    type: ['shield', 'rapid', 'triple', 'multiplier'][Math.floor(Math.random() * 4)]
+        async function getRecaptchaToken() {
+            return new Promise((resolve) => {
+                grecaptcha.ready(() => {
+                    grecaptcha.execute(RECAPTCHA_SITE_KEY, { action: 'submit' }).then(resolve);
                 });
-            }, i * 200);
-        }
-    },
-
-    shoot: () => {
-        if(game.jammed) return;
-        if(game.player.heat >= 100) {
-            game.jam();
-            return;
-        }
-        
-        game.player.heat += 5;
-        game.bullets.push({x:game.player.x, y:game.player.y, vx:0, vy:-15, dmg:game.damage});
-        
-        if(game.tripleShot > 0) {
-             game.bullets.push({x:game.player.x-15, y:game.player.y+5, vx:-3, vy:-14, dmg:game.damage});
-             game.bullets.push({x:game.player.x+15, y:game.player.y+5, vx:3, vy:-14, dmg:game.damage});
-             game.bullets.push({x:game.player.x-8, y:game.player.y+3, vx:-1.5, vy:-14.5, dmg:game.damage});
-             game.bullets.push({x:game.player.x+8, y:game.player.y+3, vx:1.5, vy:-14.5, dmg:game.damage});
-        } else if(game.doubleShot > 0) {
-             game.bullets.push({x:game.player.x-10, y:game.player.y+5, vx:-2, vy:-14, dmg:game.damage});
-             game.bullets.push({x:game.player.x+10, y:game.player.y+5, vx:2, vy:-14, dmg:game.damage});
-        }
-    },
-
-    jam: () => {
-        game.jammed = true;
-        game.player.heat = 100;
-        document.getElementById('jammed-msg').style.display = 'block';
-        let auto = document.getElementById('chk-autofire').checked;
-        if(!auto) document.getElementById('jammed-msg').innerHTML = "WEAPON JAMMED!<br>PRESS [R] TO VENT";
-        else setTimeout(()=>game.vent(), 3000);
-    },
-
-    vent: () => {
-        game.jammed = false;
-        game.player.heat = 50;
-        document.getElementById('jammed-msg').style.display = 'none';
-        toast("WEAPON VENTED");
-    },
-
-    addDamageNumber: (x, y, dmg) => {
-        game.damageNumbers.push({
-            x: x,
-            y: y,
-            text: Math.floor(dmg),
-            life: 60,
-            color: dmg > 50 ? 'red' : 'white'
-        });
-    },
-
-    screenShakeEffect: (amount) => {
-        game.screenShake = amount;
-    },
-
-    update: () => {
-        if(!game.running || game.paused || game.over) return;
-        
-        const W = app.canvas.width, H = app.canvas.height;
-        
-        // Player Heat
-        if(!game.jammed && game.player.heat > 0) game.player.heat -= 0.5;
-        if(game.player.invincible > 0) game.player.invincible--;
-        
-        // Keyboard Movement
-        const moveSpeed = 8;
-        if(KEYS['ArrowLeft'] || KEYS['KeyA']) game.player.x -= moveSpeed;
-        if(KEYS['ArrowRight'] || KEYS['KeyD']) game.player.x += moveSpeed;
-        if(KEYS['ArrowUp'] || KEYS['KeyW']) game.player.y -= moveSpeed;
-        if(KEYS['ArrowDown'] || KEYS['KeyS']) game.player.y += moveSpeed;
-        
-        // Boundary
-        game.player.x = Math.max(20, Math.min(W-20, game.player.x));
-        game.player.y = Math.max(20, Math.min(H-20, game.player.y));
-        
-        // Auto Fire
-        if(document.getElementById('chk-autofire').checked && !game.jammed && game.player.heat < 80) {
-             if(game.lastTime % game.fireRate === 0) game.shoot();
-        }
-        game.lastTime++;
-
-        // Combo Timer
-        if(game.comboTimer > 0) {
-            game.comboTimer--;
-            if(game.comboTimer === 0) game.combo = 0;
-        }
-
-        // Drones
-        game.drones.forEach(d => {
-            d.angle += 0.05;
-            d.x = game.player.x + Math.cos(d.angle)*60;
-            d.y = game.player.y + Math.sin(d.angle)*60;
-            if(game.lastTime % 30 === 0) {
-                game.bullets.push({x:d.x, y:d.y, vx:0, vy:-10, dmg:game.damage/2, color:'#ffcc00'});
-            }
-        });
-
-        // Bullets
-        for(let i=game.bullets.length-1; i>=0; i--) {
-            let b = game.bullets[i];
-            b.x += b.vx; b.y += b.vy;
-            if(b.y < -50) game.bullets.splice(i, 1);
-        }
-
-        // Enemy Bullets
-        for(let i=game.enemyBullets.length-1; i>=0; i--) {
-            let b = game.enemyBullets[i];
-            b.x += b.vx; b.y += b.vy;
-            
-            if(game.player.invincible === 0 && Math.abs(b.x - game.player.x) < 20 && Math.abs(b.y - game.player.y) < 20) {
-                game.player.hp -= 10;
-                game.screenShakeEffect(10);
-                game.createParticles(b.x, b.y, 5, 'red');
-                game.enemyBullets.splice(i, 1);
-                continue;
-            }
-            
-            if(b.y > H + 50) game.enemyBullets.splice(i, 1);
-        }
-
-        // DYNAMIC ENEMY AI
-        let activeEnemies = 0;
-        for(let i=game.enemies.length-1; i>=0; i--) {
-            let e = game.enemies[i];
-            activeEnemies++;
-            
-            if(e.type === 'boss') {
-                // Boss AI (unchanged, working well)
-                switch(e.pattern) {
-                    case 0:
-                        e.angle += 0.02;
-                        e.x = W/2 + Math.cos(e.angle) * 200;
-                        e.y = 150 + Math.sin(e.angle * 2) * 50;
-                        break;
-                    case 1:
-                        e.x += Math.sin(game.lastTime * 0.05) * 3;
-                        if(e.y < 150) e.y += 1;
-                        break;
-                    case 2:
-                        if(game.lastTime % 180 < 90) {
-                            if(e.y < 150) e.y += 2;
-                        } else {
-                            let dx = game.player.x - e.x;
-                            e.x += Math.sign(dx) * 4;
-                            e.y += 3;
-                            if(e.y > H - 100) e.y = 100;
-                        }
-                        break;
-                }
-                
-                e.shootTimer++;
-                if(e.shootTimer > 60) {
-                    e.shootTimer = 0;
-                    for(let j=-2; j<=2; j++) {
-                        let angle = Math.PI/2 + j * 0.3;
-                        game.enemyBullets.push({
-                            x: e.x,
-                            y: e.y,
-                            vx: Math.cos(angle) * 4,
-                            vy: Math.sin(angle) * 4
-                        });
-                    }
-                }
-                
-                if(e.hp < e.maxHp / 2 && e.phase === 1) {
-                    e.phase = 2;
-                    toast("⚠️ BOSS PHASE 2! ⚠️");
-                    for(let j=0; j<5; j++) {
-                        game.spawnEnemy('grunt', 1.5);
-                    }
-                }
-                
-                let hpPercent = (e.hp / e.maxHp) * 100;
-                document.getElementById('boss-hp-fill').style.width = hpPercent + '%';
-                
-            } else {
-                // ENHANCED DYNAMIC AI
-                e.y += e.speed;
-                
-                // Horizontal tracking movement
-                e.moveTimer++;
-                if(e.moveTimer > 30) {
-                    e.moveTimer = 0;
-                    e.targetX = game.player.x + (Math.random() - 0.5) * 200;
-                }
-                
-                // Move towards target
-                if(e.y > 50 && e.y < H - 100) {
-                    let dx = e.targetX - e.x;
-                    if(Math.abs(dx) > 5) {
-                        e.x += Math.sign(dx) * Math.min(3, e.speed);
-                    }
-                }
-                
-                // Keep in bounds
-                e.x = Math.max(30, Math.min(W-30, e.x));
-                
-                // Shooter AI
-                if(e.type === 'shooter' && e.y > 50 && e.y < H - 200) {
-                    e.shootTimer++;
-                    if(e.shootTimer > 120) {
-                        e.shootTimer = 0;
-                        let dx = game.player.x - e.x;
-                        let dy = game.player.y - e.y;
-                        let dist = Math.sqrt(dx*dx + dy*dy);
-                        game.enemyBullets.push({
-                            x: e.x,
-                            y: e.y,
-                            vx: (dx / dist) * 3,
-                            vy: (dy / dist) * 3
-                        });
-                    }
-                }
-            }
-
-            // Player Collision
-            if(game.player.invincible === 0 && Math.abs(e.x - game.player.x) < 30 && Math.abs(e.y - game.player.y) < 30) {
-                let dmg = (e.type==='meteor' ? 30 : (e.type==='boss' ? 50 : 10));
-                game.player.hp -= dmg;
-                game.screenShakeEffect(15);
-                game.createParticles(e.x, e.y, 10, 'red');
-                if(e.type !== 'boss') {
-                    game.enemies.splice(i, 1);
-                    activeEnemies--;
-                }
-                continue;
-            }
-
-            // Bullet Collision
-            for(let j=game.bullets.length-1; j>=0; j--) {
-                let b = game.bullets[j];
-                if(Math.abs(e.x - b.x) < e.w && Math.abs(e.y - b.y) < e.h) {
-                    e.hp -= b.dmg;
-                    game.bullets.splice(j, 1);
-                    game.createParticles(b.x, b.y, 3, 'cyan');
-                    game.addDamageNumber(e.x, e.y, b.dmg);
-                    
-                    if(e.hp <= 0) {
-                        game.combo++;
-                        game.comboTimer = 180;
-                        if(game.combo > game.maxCombo) game.maxCombo = game.combo;
-                        
-                        let scoreGain = (e.type==='boss'?500:50) * game.combo;
-                        game.player.score += scoreGain;
-                        
-                        game.createParticles(e.x, e.y, 20, 'orange');
-                        
-                        let dropChance = e.type === 'boss' ? 1.0 : 0.15;
-                        if(Math.random() < dropChance) {
-                            let bonusType = ['shield', 'rapid', 'triple', 'multiplier'][Math.floor(Math.random() * 4)];
-                            game.bonuses.push({x:e.x, y:e.y, type: bonusType});
-                        }
-
-                        if(e.type === 'boss') {
-                            game.boss = null;
-                            document.getElementById('boss-hp-container').style.display = 'none';
-                            toast("🏆 BOSS DEFEATED! 🏆");
-                        }
-
-                        game.enemies.splice(i, 1);
-                        activeEnemies--;
-                        break;
-                    }
-                }
-            }
-            
-            // Enemy Escaped
-            if(e.y > H + 100) { 
-                if(game.mode === 'Classic' && e.type !== 'boss') {
-                    let pen = Math.min(20, 5 + game.wave);
-                    game.player.hp -= pen;
-                    toast(`ENEMY BREACH! -${pen} HP`);
-                }
-                if(e.type === 'boss') {
-                    game.boss = null;
-                    document.getElementById('boss-hp-container').style.display = 'none';
-                }
-                game.enemies.splice(i, 1); 
-                activeEnemies--; 
-            }
-        }
-
-        // Bonuses
-        for(let i=game.bonuses.length-1; i>=0; i--) {
-            let b = game.bonuses[i];
-            b.y += 2;
-            if(Math.abs(b.x - game.player.x) < 30 && Math.abs(b.y - game.player.y) < 30) {
-                toast(`💎 ${b.type.toUpperCase()} ACQUIRED!`);
-                if(b.type==='shield') game.player.hp = Math.min(game.player.maxHp, game.player.hp+30);
-                if(b.type==='rapid') { 
-                    let oldRate = game.fireRate;
-                    game.fireRate = 2; 
-                    setTimeout(()=>game.fireRate=oldRate, 5000); 
-                }
-                if(b.type==='triple') {
-                    let oldShot = game.doubleShot;
-                    game.doubleShot = 2;
-                    setTimeout(()=>game.doubleShot=oldShot, 5000);
-                }
-                if(b.type==='multiplier') {
-                    game.combo = Math.max(game.combo, 5);
-                    game.comboTimer = 300;
-                }
-                game.bonuses.splice(i, 1);
-            }
-            if(b.y > H) game.bonuses.splice(i, 1);
-        }
-
-        if(activeEnemies === 0 && game.waveTimer-- <= 0) game.nextWave();
-
-        if(game.mode === 'Meteor' && game.lastTime % 60 === 0) game.player.score += 10;
-
-        if(game.player.hp <= 0) game.endGame();
-
-        game.particles.forEach((p,i) => {
-            p.x += p.vx; p.y += p.vy; p.life--;
-            if(p.life<=0) game.particles.splice(i,1);
-        });
-
-        game.damageNumbers.forEach((d, i) => {
-            d.life--;
-            d.y -= 1;
-            if(d.life <= 0) game.damageNumbers.splice(i, 1);
-        });
-
-        if(game.screenShake > 0) game.screenShake--;
-        
-        // HUD Updates
-        document.getElementById('bar-hp').style.width = Math.max(0, (game.player.hp / game.player.maxHp * 100)) + "%";
-        let hPer = (game.player.heat);
-        document.getElementById('bar-heat').style.width = hPer + "%";
-        document.getElementById('score-disp').innerText = game.player.score.toLocaleString();
-        document.getElementById('wave-disp').innerText = `WAVE ${game.wave}`;
-        document.getElementById('combo-info').innerText = `COMBO: x${game.combo || 1}`;
-        
-        if(game.combo >= 5) {
-            document.getElementById('combo-display').style.display = 'block';
-            document.getElementById('combo-display').innerText = `x${game.combo}`;
-        } else {
-            document.getElementById('combo-display').style.display = 'none';
-        }
-        
-        if(game.jammed) document.querySelector('.heat-fill').style.background = 'white';
-        else document.querySelector('.heat-fill').style.background = 'var(--danger)';
-
-        if(game.player.heat > 90) document.getElementById('overdrive-msg').style.display='block';
-        else document.getElementById('overdrive-msg').style.display='none';
-    },
-
-    draw: () => {
-        if(!USER) return;
-        
-        const ctx = app.ctx;
-        ctx.save();
-        
-        if(game.screenShake > 0) {
-            ctx.translate(
-                (Math.random() - 0.5) * game.screenShake,
-                (Math.random() - 0.5) * game.screenShake
-            );
-        }
-        
-        ctx.clearRect(0, 0, app.canvas.width, app.canvas.height);
-        
-        // Background Grid
-        ctx.strokeStyle = "rgba(0, 255, 204, 0.1)";
-        ctx.lineWidth = 1;
-        let off = (game.lastTime * (game.mode==='Meteor'?10:2)) % 50;
-        for(let i=0; i<app.canvas.width/50; i++) { 
-            ctx.beginPath(); 
-            ctx.moveTo(i*50, 0); 
-            ctx.lineTo(i*50, app.canvas.height); 
-            ctx.stroke(); 
-        }
-        for(let i=0; i<app.canvas.height/50; i++) { 
-            ctx.beginPath(); 
-            ctx.moveTo(0, i*50+off); 
-            ctx.lineTo(app.canvas.width, i*50+off); 
-            ctx.stroke(); 
-        }
-
-        // Player (Fighter Jet)
-        ctx.save();
-        ctx.translate(game.player.x, game.player.y);
-        
-        let skin = USER.inventory.active_skin;
-        if(skin === 'skin_neon') { ctx.shadowBlur = 20; ctx.shadowColor = 'cyan'; }
-        if(skin === 'skin_gold') { ctx.fillStyle = 'gold'; } else { ctx.fillStyle = '#111'; }
-        
-        if(game.player.invincible > 0 && game.player.invincible % 10 < 5) {
-            ctx.globalAlpha = 0.5;
-        }
-        
-        ctx.strokeStyle = varColor(skin);
-        ctx.lineWidth = 2;
-        
-        // Fighter jet shape (pointing UP)
-        ctx.beginPath(); 
-        ctx.moveTo(0, -20);  // Nose (top)
-        ctx.lineTo(-8, 0);   // Left wing
-        ctx.lineTo(-5, 5);   // Left body
-        ctx.lineTo(-8, 15);  // Left tail
-        ctx.lineTo(-3, 15);  // Left tail inner
-        ctx.lineTo(0, 8);    // Center
-        ctx.lineTo(3, 15);   // Right tail inner
-        ctx.lineTo(8, 15);   // Right tail
-        ctx.lineTo(5, 5);    // Right body
-        ctx.lineTo(8, 0);    // Right wing
-        ctx.closePath();
-        ctx.fill(); 
-        ctx.stroke();
-        
-        // Engine Flames
-        if(game.lastTime % 4 < 2) {
-            ctx.fillStyle = `rgba(255, 100, 0, ${0.7 + Math.random()*0.3})`;
-            ctx.beginPath();
-            ctx.moveTo(-3, 15);
-            ctx.lineTo(3, 15);
-            ctx.lineTo(0, 22 + Math.random()*5);
-            ctx.closePath();
-            ctx.fill();
-        }
-        
-        ctx.restore();
-
-        // Drones
-        game.drones.forEach(d => {
-            ctx.fillStyle = "#0ff";
-            ctx.strokeStyle = "#0ff";
-            ctx.lineWidth = 1;
-            ctx.beginPath(); 
-            ctx.arc(d.x, d.y, 6, 0, Math.PI*2); 
-            ctx.fill();
-            ctx.stroke();
-        });
-
-        // Bonuses
-        game.bonuses.forEach(b => {
-            let colors = {shield:'blue', rapid:'yellow', triple:'green', multiplier:'gold'};
-            let symbols = {shield:'🛡️', rapid:'⚡', triple:'🔱', multiplier:'💰'};
-            
-            ctx.fillStyle = colors[b.type];
-            ctx.beginPath(); ctx.arc(b.x, b.y, 12, 0, Math.PI*2); ctx.fill();
-            ctx.font='16px Arial'; 
-            ctx.fillText(symbols[b.type], b.x-8, b.y+5);
-        });
-
-        // Bullets
-        game.bullets.forEach(b => {
-            ctx.fillStyle = b.color || varColor(skin);
-            ctx.fillRect(b.x-2, b.y-8, 4, 12);
-        });
-
-        // Enemy Bullets
-        game.enemyBullets.forEach(b => {
-            ctx.fillStyle = 'red';
-            ctx.beginPath();
-            ctx.arc(b.x, b.y, 4, 0, Math.PI*2);
-            ctx.fill();
-        });
-
-        // Enemies
-        game.enemies.forEach(e => {
-            ctx.save();
-            ctx.translate(e.x, e.y);
-            
-            if(e.type === 'meteor') {
-                ctx.fillStyle = e.color; 
-                ctx.strokeStyle = '#aaa';
-                ctx.beginPath(); 
-                ctx.arc(0,0, 15, 0, Math.PI*2); 
-                ctx.fill(); 
-                ctx.stroke();
-            } else if(e.type === 'boss') {
-                ctx.fillStyle = 'red'; 
-                ctx.strokeStyle = 'orange';
-                ctx.lineWidth = 3;
-                ctx.shadowBlur = 20;
-                ctx.shadowColor = 'red';
-                ctx.beginPath(); 
-                ctx.arc(0,0, e.w/2, 0, Math.PI*2);
-                ctx.fill(); 
-                ctx.stroke();
-                
-                ctx.fillStyle = 'yellow';
-                ctx.beginPath();
-                ctx.arc(-15, -10, 8, 0, Math.PI*2);
-                ctx.arc(15, -10, 8, 0, Math.PI*2);
-                ctx.fill();
-            } else {
-                // Enemy ships (pointing DOWN)
-                ctx.fillStyle = e.color || '#330000';
-                ctx.strokeStyle = e.type==='shooter' ? 'purple' : e.color;
-                ctx.lineWidth = 2;
-                ctx.beginPath(); 
-                ctx.moveTo(0, 12);    // Bottom nose
-                ctx.lineTo(-10, -8);  // Left wing
-                ctx.lineTo(-3, -8);   // Left inner
-                ctx.lineTo(0, -3);    // Center
-                ctx.lineTo(3, -8);    // Right inner
-                ctx.lineTo(10, -8);   // Right wing
-                ctx.closePath();
-                ctx.fill(); 
-                ctx.stroke();
-            }
-            
-            ctx.restore();
-        });
-        
-        // Particles
-        game.particles.forEach(p => {
-            ctx.fillStyle = p.c;
-            ctx.globalAlpha = p.life / 20;
-            ctx.fillRect(p.x, p.y, 3, 3);
-            ctx.globalAlpha = 1;
-        });
-        
-        ctx.restore();
-        
-        // Damage Numbers
-        game.damageNumbers.forEach(d => {
-            ctx.fillStyle = d.color;
-            ctx.font = 'bold 20px monospace';
-            ctx.globalAlpha = d.life / 60;
-            ctx.fillText(d.text, d.x, d.y);
-            ctx.globalAlpha = 1;
-        });
-    },
-
-    createParticles: (x, y, count, color) => {
-        for(let i=0; i<count; i++) {
-            game.particles.push({
-                x:x, y:y, 
-                vx:(Math.random()-0.5)*10, 
-                vy:(Math.random()-0.5)*10,
-                life: 20 + Math.random()*20,
-                c: color
             });
         }
-    },
-
-    endGame: async () => {
-        game.over = true;
-        document.getElementById('screen-over').style.display='flex';
-        document.getElementById('final-score').innerText = game.player.score.toLocaleString();
-        document.getElementById('final-wave').innerText = `REACHED WAVE ${game.wave} (${game.difficulty})`;
-        document.getElementById('final-combo').innerText = `MAX COMBO: x${game.maxCombo}`;
         
-        await fetch(`${API}/submit_score`, {
-            method:'POST', 
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({
-                player: USER.username, 
-                display_name: USER.display_name || USER.username,
-                score: game.player.score, 
-                wave: game.wave, 
-                difficulty: game.difficulty
-            })
-        });
-    }
-};
-
-function varColor(s) {
-    if(s==='skin_neon') return '#00ffff';
-    if(s==='skin_gold') return '#ffd700';
-    if(s==='skin_stealth') return '#333';
-    return '#00ffcc';
-}
-
-window.onload = app.init;
-</script>
+        // ============================================================================
+        // Authentication
+        // ============================================================================
+        async function register() {
+            const username = document.getElementById('registerUsername').value.trim();
+            const password = document.getElementById('registerPassword').value;
+            const confirm = document.getElementById('registerConfirm').value;
+            
+            if (password !== confirm) {
+                showAlert('registerAlert', 'Passwords do not match', 'error');
+                return;
+            }
+            
+            const btn = document.getElementById('registerBtnText');
+            btn.innerHTML = '<span class="loading"></span>';
+            
+            try {
+                const recaptchaToken = await getRecaptchaToken();
+                const result = await apiCall('/register', 'POST', {
+                    username,
+                    password,
+                    recaptcha_token: recaptchaToken
+                });
+                
+                showAlert('registerAlert', 'Registration successful! Please login.', 'success');
+                setTimeout(() => showLogin(), 2000);
+            } catch (error) {
+                showAlert('registerAlert', error.message, 'error');
+            } finally {
+                btn.textContent = 'REGISTER';
+            }
+        }
+        
+        async function login() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            
+            const btn = document.getElementById('loginBtnText');
+            btn.innerHTML = '<span class="loading"></span>';
+            
+            try {
+                const result = await apiCall('/login', 'POST', { username, password });
+                
+                authToken = result.token;
+                currentUser = {
+                    username: result.username,
+                    isAdmin: result.is_admin
+                };
+                
+                localStorage.setItem('authToken', authToken);
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                
+                document.getElementById('usernameDisplay').textContent = currentUser.username;
+                
+                if (currentUser.isAdmin) {
+                    document.getElementById('adminBtn').style.display = 'block';
+                }
+                
+                showLobby();
+            } catch (error) {
+                showAlert('loginAlert', error.message, 'error');
+            } finally {
+                btn.textContent = 'LOGIN';
+            }
+        }
+        
+        function logout() {
+            apiCall('/logout', 'POST').catch(() => {});
+            authToken = null;
+            currentUser = {};
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('currentUser');
+            showLogin();
+        }
+        
+        // ============================================================================
+        // Game State
+        // ============================================================================
+        async function loadPlayerState() {
+            try {
+                playerState = await apiCall('/player/state');
+                
+                // Update UI
+                document.getElementById('creditsDisplay').textContent = playerState.credits.toLocaleString();
+                document.getElementById('seasonNumber').textContent = playerState.current_season;
+                
+                // Update RAM
+                const ramPercent = (playerState.current_ram / playerState.max_ram) * 100;
+                document.getElementById('ramDisplay').textContent = `${playerState.current_ram}/${playerState.max_ram}`;
+                document.getElementById('ramBar').style.width = `${ramPercent}%`;
+                
+                // Update Trace
+                const tracePercent = (playerState.current_trace / playerState.max_trace) * 100;
+                document.getElementById('traceDisplay').textContent = `${playerState.current_trace}/${playerState.max_trace}`;
+                document.getElementById('traceBar').style.width = `${tracePercent}%`;
+                
+                // Trace warnings
+                const warningEl = document.getElementById('traceWarning');
+                if (playerState.current_trace >= 100) {
+                    warningEl.innerHTML = '<div class="alert error">⚠️ SYSTEM LOCKOUT - Cannot attack!</div>';
+                } else if (playerState.current_trace >= 80) {
+                    warningEl.innerHTML = '<div class="alert warning">⚠️ HIGH TRACE - Income frozen!</div>';
+                } else if (playerState.current_trace >= 40) {
+                    warningEl.innerHTML = '<div class="alert warning">⚠️ TRACE DETECTED - Vulnerable to attacks!</div>';
+                } else {
+                    warningEl.innerHTML = '';
+                }
+                
+            } catch (error) {
+                console.error('Failed to load player state:', error);
+            }
+        }
+        
+        // ============================================================================
+        // Attack System
+        // ============================================================================
+        async function scanTargets() {
+            const btn = document.getElementById('scanBtnText');
+            btn.innerHTML = '<span class="loading"></span>';
+            
+            try {
+                const result = await apiCall('/players/scan');
+                
+                const listEl = document.getElementById('targetList');
+                listEl.innerHTML = '';
+                
+                if (result.targets.length === 0) {
+                    listEl.innerHTML = '<div class="alert warning">No targets available</div>';
+                    return;
+                }
+                
+                result.targets.forEach(target => {
+                    const card = document.createElement('div');
+                    card.className = 'player-card';
+                    card.onclick = () => selectTarget(target.id, target.username, target.credits);
+                    
+                    card.innerHTML = `
+                        <div class="player-info">
+                            <div>
+                                <div class="player-name">${target.username}</div>
+                                <div style="font-size: 0.85rem; color: rgba(255,255,255,0.6);">
+                                    Defenses: ${target.defense_count} | Trace: ${target.trace_level}%
+                                </div>
+                            </div>
+                            <div class="player-credits">¢ ${target.credits.toLocaleString()}</div>
+                        </div>
+                    `;
+                    
+                    listEl.appendChild(card);
+                });
+            } catch (error) {
+                showAlert('targetList', error.message, 'error');
+            } finally {
+                btn.textContent = 'REFRESH SCAN';
+            }
+        }
+        
+        function selectTarget(id, username, credits) {
+            selectedTargetId = id;
+            showScreen('executeAttackScreen');
+            
+            document.getElementById('targetInfo').innerHTML = `
+                <div style="font-size: 1.5rem; color: var(--neon-pink);">${username}</div>
+                <div style="font-size: 1.2rem; color: var(--neon-yellow); margin-top: 10px;">¢ ${credits.toLocaleString()}</div>
+            `;
+            
+            document.getElementById('attackResult').innerHTML = '';
+        }
+        
+        async function executeAttack() {
+            const checkboxes = document.querySelectorAll('#toolSelection input[type="checkbox"]:checked');
+            const tools = Array.from(checkboxes).map(cb => cb.value);
+            
+            if (tools.length === 0) {
+                showAlert('attackResult', 'Select at least one tool', 'error');
+                return;
+            }
+            
+            const btn = document.getElementById('attackBtnText');
+            btn.innerHTML = '<span class="loading"></span>';
+            
+            try {
+                const result = await apiCall('/attack', 'POST', {
+                    target_id: selectedTargetId,
+                    tools: tools
+                });
+                
+                const alertType = result.success ? 'success' : 'error';
+                let message = result.message;
+                
+                if (result.success) {
+                    message += `<br>Credits Stolen: ¢${result.credits_stolen}`;
+                    if (result.miner_planted) {
+                        message += '<br>🎯 Miner Planted!';
+                    }
+                }
+                
+                message += `<br>Your Trace: ${result.new_trace}%`;
+                
+                showAlert('attackResult', message, alertType);
+                
+                // Uncheck all tools
+                checkboxes.forEach(cb => cb.checked = false);
+                
+                // Reload state after 2 seconds
+                setTimeout(() => loadPlayerState(), 2000);
+                
+            } catch (error) {
+                showAlert('attackResult', error.message, 'error');
+            } finally {
+                btn.textContent = 'EXECUTE ATTACK';
+            }
+        }
+        
+        // ============================================================================
+        // Shop
+        // ============================================================================
+        async function buyItem(itemType, itemName, price) {
+            try {
+                const result = await apiCall('/shop/buy', 'POST', {
+                    item_type: itemType,
+                    item_name: itemName,
+                    price: price
+                });
+                
+                showAlert('shopAlert', result.message, 'success');
+                
+                // Reload state
+                await loadPlayerState();
+                document.getElementById('shopCreditsDisplay').textContent = playerState.credits.toLocaleString();
+                
+            } catch (error) {
+                showAlert('shopAlert', error.message, 'error');
+            }
+        }
+        
+        // ============================================================================
+        // 🛑 ADMIN ZONE - DO NOT MODIFY 🛑
+        // Admin Functions
+        // ============================================================================
+        
+        async function verifyAdminPin() {
+            const pin = document.getElementById('adminPin').value;
+            const btn = document.getElementById('pinBtnText');
+            btn.innerHTML = '<span class="loading"></span>';
+            
+            try {
+                await apiCall('/admin/verify-pin', 'POST', { pin });
+                showAdminDashboard();
+            } catch (error) {
+                showAlert('pinAlert', error.message, 'error');
+            } finally {
+                btn.textContent = 'VERIFY';
+                document.getElementById('adminPin').value = '';
+            }
+        }
+        
+        async function loadAdminStats() {
+            try {
+                const stats = await apiCall('/admin/stats');
+                
+                document.getElementById('adminTotalUsers').textContent = stats.total_users;
+                document.getElementById('adminCurrentSeason').textContent = stats.current_season;
+                document.getElementById('adminTotalAttacks').textContent = stats.total_attacks;
+                
+            } catch (error) {
+                showAlert('adminAlert', 'Failed to load stats', 'error');
+            }
+        }
+        
+        async function searchUsers() {
+            const query = document.getElementById('adminUserSearch').value;
+            
+            try {
+                const result = await apiCall(`/admin/users/search?q=${encodeURIComponent(query)}`);
+                
+                const listEl = document.getElementById('adminUserList');
+                listEl.innerHTML = '';
+                
+                result.users.forEach(user => {
+                    const userCard = document.createElement('div');
+                    userCard.className = 'cyber-panel';
+                    userCard.style.marginBottom = '10px';
+                    
+                    userCard.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-weight: 700; color: var(--neon-green);">${user.username}</div>
+                                <div style="font-size: 0.85rem; color: rgba(255,255,255,0.6);">
+                                    Credits: ¢${user.credits || 0} | Level: ${user.hardware_level || 1}
+                                    ${user.is_banned ? ' | <span style="color: var(--neon-pink);">BANNED</span>' : ''}
+                                </div>
+                            </div>
+                            <div>
+                                <button class="cyber-btn danger" style="width: auto; padding: 8px 15px; margin: 0 5px;" onclick="banUser(${user.id}, ${!user.is_banned})">
+                                    ${user.is_banned ? 'UNBAN' : 'BAN'}
+                                </button>
+                                <button class="cyber-btn success" style="width: auto; padding: 8px 15px; margin: 0;" onclick="compensateUser(${user.id})">
+                                    +¢
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    listEl.appendChild(userCard);
+                });
+                
+            } catch (error) {
+                showAlert('adminAlert', error.message, 'error');
+            }
+        }
+        
+        async function banUser(userId, banStatus) {
+            try {
+                await apiCall('/admin/users/ban', 'POST', {
+                    user_id: userId,
+                    ban: banStatus
+                });
+                showAlert('adminAlert', banStatus ? 'User banned' : 'User unbanned', 'success');
+                searchUsers();
+            } catch (error) {
+                showAlert('adminAlert', error.message, 'error');
+            }
+        }
+        
+        async function compensateUser(userId) {
+            const amount = prompt('Enter credits to add:');
+            if (!amount || isNaN(amount)) return;
+            
+            try {
+                await apiCall('/admin/users/compensate', 'POST', {
+                    user_id: userId,
+                    amount: parseInt(amount)
+                });
+                showAlert('adminAlert', 'Credits added successfully', 'success');
+                searchUsers();
+            } catch (error) {
+                showAlert('adminAlert', error.message, 'error');
+            }
+        }
+        
+        async function endSeason() {
+            if (!confirm('⚠️ END SEASON? This will reset ALL player progress!')) return;
+            
+            try {
+                const result = await apiCall('/admin/season/end', 'POST');
+                showAlert('adminAlert', result.message, 'success');
+                loadAdminStats();
+            } catch (error) {
+                showAlert('adminAlert', error.message, 'error');
+            }
+        }
+        
+        // 🛑 END ADMIN ZONE 🛑
+        // ============================================================================
+        
+        // ============================================================================
+        // Auto-refresh resources
+        // ============================================================================
+        setInterval(() => {
+            if (authToken && document.getElementById('lobbyScreen').classList.contains('active')) {
+                loadPlayerState();
+            }
+        }, 30000); // Every 30 seconds
+        
+        // ============================================================================
+        // Initialize on page load
+        // ============================================================================
+        window.onload = () => {
+            if (authToken && currentUser.username) {
+                document.getElementById('usernameDisplay').textContent = currentUser.username;
+                if (currentUser.isAdmin) {
+                    document.getElementById('adminBtn').style.display = 'block';
+                }
+                showLobby();
+            } else {
+                showLogin();
+            }
+        };
+    </script>
 </body>
 </html>
-   
