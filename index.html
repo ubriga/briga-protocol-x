@@ -269,6 +269,41 @@
                 <button class="cyber-btn" onclick="showScreen('dashboardScreen')">EXIT</button>
             </div>
         </div>
+
+        <!-- ADMIN SCREEN (RESTORED & UPGRADED) -->
+        <div id="adminScreen" class="screen">
+            <div class="cyber-panel" style="border-color: var(--neon-yellow);">
+                <h3 style="color: var(--neon-yellow);">🛑 ADMIN CONTROL</h3>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+                    <div class="cyber-panel" style="text-align: center;">
+                        <div style="font-size: 0.8rem;">USERS</div>
+                        <div id="admUsers" style="font-size: 1.5rem; font-weight: bold;">0</div>
+                    </div>
+                    <div class="cyber-panel" style="text-align: center;">
+                        <div style="font-size: 0.8rem;">SEASON</div>
+                        <div id="admSeason" style="font-size: 1.5rem; font-weight: bold;">1</div>
+                    </div>
+                </div>
+
+                <h4>POLICIES (The Enforcer)</h4>
+                <div class="cyber-panel">
+                    <label style="display: flex; align-items: center; justify-content: space-between;">
+                        <span>Wealth Cap Tax (20%)</span>
+                        <input type="checkbox" id="policyWealth" onchange="togglePolicy('wealth_cap', this.checked)">
+                    </label>
+                </div>
+
+                <h4>USER MANAGEMENT</h4>
+                <input type="text" id="admSearch" class="cyber-input" placeholder="Search User...">
+                <button class="cyber-btn" onclick="adminSearch()">SEARCH</button>
+                <div id="admResults" style="margin-top: 10px;"></div>
+
+                <hr style="border-color: #333; margin: 20px 0;">
+                <button class="cyber-btn danger" onclick="endSeason()">⚠️ END SEASON</button>
+                <button class="cyber-btn" onclick="showScreen('dashboardScreen')">EXIT</button>
+            </div>
+        </div>
     </div>
 
     <!-- NOTIFICATIONS MODAL -->
@@ -283,7 +318,7 @@
     <script>
         // CONFIG
         const API_URL = 'https://ubriga.pythonanywhere.com';
-        const RECAPTCHA_SITE_KEY = '6LdEx0EsAAAAAGSZTwV0nb9taF5yq4P3Fuf3XLv3'; // <--- CHANGE THIS!
+        const RECAPTCHA_SITE_KEY = '6LdEx0EsAAAAAGSZTwV0nb9taF5yq4P3Fuf3XLv3'; // YOUR KEY
         
         // STATE
         let token = localStorage.getItem('token');
@@ -357,44 +392,36 @@
                 const res = await fetch(`${API_URL}/api/v2/dashboard`, {
                     headers: {'Authorization': token}
                 });
+                if(res.status === 401) return logout(); // Auto logout on invalid token
+                
                 const data = await res.json();
                 
-                // 1. Update State
                 updateHUD(data.state);
                 
-                // 2. Update Ticker
                 if(data.ticker.length > 0) {
                     const text = data.ticker.map(e => `[${e.event_type.toUpperCase()}] ${e.message}`).join(' ••• ');
                     document.getElementById('globalTicker').innerText = text + " ••• " + text;
                 }
 
-                // 3. Update Notifications
                 const notifs = data.notifications || [];
                 const badge = document.getElementById('bellBadge');
                 if(notifs.length > 0) {
                     badge.style.display = 'flex';
                     badge.innerText = notifs.length;
-                    if(notifs.length > lastNotifCount) {
-                        // Play sound or animate?
-                    }
                 } else {
                     badge.style.display = 'none';
                 }
                 lastNotifCount = notifs.length;
-                window.currentNotifs = notifs; // Store for modal
+                window.currentNotifs = notifs; 
 
             } catch(e) { console.log("Polling error", e); }
         }
 
         function updateHUD(state) {
             document.getElementById('displayCredits').innerText = state.credits.toLocaleString();
-            
-            // RAM
-            const ramPct = Math.min(100, (state.ram / 100) * 100); // Assuming 100 max for now
+            const ramPct = Math.min(100, (state.ram / 100) * 100);
             document.getElementById('ramBar').style.width = `${ramPct}%`;
             document.getElementById('ramText').innerText = state.ram;
-            
-            // TRACE
             document.getElementById('traceBar').style.width = `${state.trace}%`;
             document.getElementById('traceText').innerText = `${state.trace}%`;
             
@@ -409,17 +436,12 @@
             const list = document.getElementById('notifList');
             list.innerHTML = '';
             const notifs = window.currentNotifs || [];
-            
             if(notifs.length === 0) list.innerHTML = '<div style="padding:10px; color:#666;">No new messages.</div>';
             
             notifs.forEach(n => {
                 const item = document.createElement('div');
                 item.className = `notif-item ${n.type}`;
-                item.innerHTML = `
-                    <div>${n.message}</div>
-                    <button onclick="markRead(${n.id})" style="background:none; border:none; color:#666; cursor:pointer;">✖</button>
-                `;
-                // Add Revenge Button if attack
+                item.innerHTML = `<div>${n.message}</div><button onclick="markRead(${n.id})" style="background:none; border:none; color:#666; cursor:pointer;">✖</button>`;
                 if(n.type === 'attack' && n.data_json) {
                     try {
                         const data = JSON.parse(n.data_json);
@@ -427,11 +449,10 @@
                             const btn = document.createElement('button');
                             btn.className = 'cyber-btn danger';
                             btn.style.fontSize = '0.7rem';
-                            btn.style.padding = '5px';
                             btn.innerText = 'REVENGE';
                             btn.onclick = () => {
                                 document.getElementById('notifModal').style.display='none';
-                                openAttack(data.attacker_id); // Implement direct attack later
+                                openAttack(data.attacker_id);
                             };
                             item.appendChild(btn);
                         }
@@ -439,7 +460,6 @@
                 }
                 list.appendChild(item);
             });
-            
             document.getElementById('notifModal').style.display = 'flex';
         }
 
@@ -448,19 +468,29 @@
                 method: 'POST', headers: {'Authorization': token, 'Content-Type': 'application/json'},
                 body: JSON.stringify({id: id})
             });
-            fetchDashboardData(); // Refresh
-            openNotifications(); // Re-render
+            fetchDashboardData(); openNotifications();
         }
 
         function closeNotifications(e) {
             if(e.target.id === 'notifModal') document.getElementById('notifModal').style.display = 'none';
         }
 
-        // --- SHOP & ATTACK (Simplified for V2) ---
+        // --- SHOP & ATTACK ---
         function openShop() { showScreen('shopScreen'); }
         function showShopTab(tab) {
             document.querySelectorAll('.shop-tab').forEach(el => el.style.display = 'none');
             document.getElementById('shop' + tab.charAt(0).toUpperCase() + tab.slice(1)).style.display = 'block';
+        }
+
+        // MISSING FUNCTION RESTORED
+        async function buyItem(type, name, price) {
+            const res = await fetch(`${API_URL}/api/shop/buy`, { // Legacy endpoint for hardware
+                method: 'POST', headers: {'Authorization': token, 'Content-Type': 'application/json'},
+                body: JSON.stringify({item_type: type, item_name: name, price: price})
+            });
+            const data = await res.json();
+            alert(data.message || data.error);
+            fetchDashboardData();
         }
 
         async function buyConsumable(item) {
@@ -473,25 +503,29 @@
             fetchDashboardData();
         }
 
-        function openAttack() { showScreen('attackScreen'); scanTargets(); }
+        function openAttack(targetId = null) {
+            showScreen('attackScreen');
+            if(targetId) {
+                // Direct revenge attack logic if needed, or just scan
+                // For now, scan to keep it simple, or we could add direct attack endpoint
+                scanTargets(); 
+            } else {
+                scanTargets();
+            }
+        }
         
         async function scanTargets() {
             const list = document.getElementById('targetList');
             list.innerHTML = '<div class="cyber-panel">Scanning...</div>';
-            
             const res = await fetch(`${API_URL}/api/players/scan`, { headers: {'Authorization': token} });
             const data = await res.json();
-            
             list.innerHTML = '';
             data.targets.forEach(t => {
                 const el = document.createElement('div');
                 el.className = 'cyber-panel';
                 el.innerHTML = `
-                    <div style="display:flex; justify-content:space-between;">
-                        <b>${t.username}</b>
-                        <span style="color:var(--neon-yellow);">¢${t.credits}</span>
-                    </div>
-                    <div style="font-size:0.8rem; color:#888;">Defense: ${t.defense_count} | Trace: ${t.trace_level}%</div>
+                    <div style="display:flex; justify-content:space-between;"><b>${t.username}</b><span style="color:var(--neon-yellow);">¢${t.credits}</span></div>
+                    <div style="font-size:0.8rem; color:#888;">Trace: ${t.trace_level}%</div>
                     <button class="cyber-btn danger" style="margin-top:5px;" onclick="executeAttack(${t.id})">HACK</button>
                 `;
                 list.appendChild(el);
@@ -500,20 +534,69 @@
 
         async function executeAttack(targetId) {
             if(!confirm("Launch Attack? Costs 20 RAM.")) return;
-            
             const res = await fetch(`${API_URL}/api/v2/attack`, {
                 method: 'POST', headers: {'Authorization': token, 'Content-Type': 'application/json'},
-                body: JSON.stringify({target_id: targetId, tools: ['brute_force']}) // Default tool for now
+                body: JSON.stringify({target_id: targetId, tools: ['brute_force']})
             });
             const data = await res.json();
-            
-            if(data.success) {
-                alert(`SUCCESS! Stole ¢${data.stolen}`);
-            } else {
-                alert(data.error || "Attack Failed.");
+            if(data.success) alert(`SUCCESS! Stole ¢${data.stolen}`);
+            else alert(data.error || "Attack Failed.");
+            fetchDashboardData(); showScreen('dashboardScreen');
+        }
+
+        // --- ADMIN (RESTORED) ---
+        function openAdmin() {
+            const pin = prompt("ENTER ADMIN PIN:");
+            if(!pin) return;
+            fetch(`${API_URL}/api/admin/verify-pin`, {
+                method: 'POST', headers: {'Authorization': token, 'Content-Type': 'application/json'},
+                body: JSON.stringify({pin: pin})
+            }).then(res => res.json()).then(data => {
+                if(data.success) { showScreen('adminScreen'); loadAdminStats(); }
+                else alert("ACCESS DENIED");
+            });
+        }
+
+        function loadAdminStats() {
+            fetch(`${API_URL}/api/admin/stats`, {headers: {'Authorization': token}}).then(res => res.json()).then(data => {
+                document.getElementById('admUsers').innerText = data.total_users;
+                document.getElementById('admSeason').innerText = data.current_season;
+            });
+            fetch(`${API_URL}/api/v2/admin/policies`, {headers: {'Authorization': token}}).then(res => res.json()).then(data => {
+                const p = data.find(x => x.policy_key === 'wealth_cap');
+                if(p) document.getElementById('policyWealth').checked = p.is_active;
+            });
+        }
+
+        function togglePolicy(key, active) {
+            fetch(`${API_URL}/api/v2/admin/policies`, {
+                method: 'POST', headers: {'Authorization': token, 'Content-Type': 'application/json'},
+                body: JSON.stringify({key: key, is_active: active ? 1 : 0, parameters: {threshold_multiplier: 5, tax_rate: 0.2}})
+            });
+        }
+
+        function adminSearch() {
+            const q = document.getElementById('admSearch').value;
+            fetch(`${API_URL}/api/admin/users/search?q=${q}`, {headers: {'Authorization': token}}).then(res => res.json()).then(data => {
+                const div = document.getElementById('admResults'); div.innerHTML = '';
+                data.users.forEach(u => {
+                    div.innerHTML += `<div class="cyber-panel" style="font-size:0.8rem;"><b>${u.username}</b> (¢${u.credits}) <br>Is Banned: ${u.is_banned ? 'YES' : 'NO'}<button class="cyber-btn danger" style="padding:5px; margin-top:5px;" onclick="banUser(${u.id}, ${!u.is_banned})">TOGGLE BAN</button></div>`;
+                });
+            });
+        }
+        
+        function banUser(id, status) {
+            fetch(`${API_URL}/api/admin/users/ban`, {
+                method: 'POST', headers: {'Authorization': token, 'Content-Type': 'application/json'},
+                body: JSON.stringify({user_id: id, ban: status})
+            }).then(() => adminSearch());
+        }
+
+        function endSeason() {
+            if(confirm("ARE YOU SURE? This resets everything!")) {
+                fetch(`${API_URL}/api/admin/season/end`, { method: 'POST', headers: {'Authorization': token} })
+                .then(res => res.json()).then(d => alert(d.message));
             }
-            fetchDashboardData();
-            showScreen('dashboardScreen');
         }
 
         // --- UTILS ---
@@ -528,4 +611,3 @@
     </script>
 </body>
 </html>
-
