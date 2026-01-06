@@ -3,1271 +3,528 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CYBER-NEXUS: Protocol</title>
+    <title>CYBER-NEXUS: Protocol v2</title>
     
     <!-- Google reCAPTCHA v3 -->
     <script src="https://www.google.com/recaptcha/api.js?render=6LdEx0EsAAAAAGSZTwV0nb9taF5yq4P3Fuf3XLv3"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
         
         :root {
             --neon-cyan: #00ffff;
             --neon-pink: #ff00ff;
             --neon-green: #39ff14;
             --neon-yellow: #ffff00;
-            --dark-bg: #0a0e27;
-            --darker-bg: #050811;
-            --grid-color: rgba(0, 255, 255, 0.1);
+            --neon-red: #ff3333;
+            --dark-bg: #050811;
+            --panel-bg: rgba(10, 14, 39, 0.95);
         }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         
         body {
             font-family: 'Orbitron', sans-serif;
-            background: var(--darker-bg);
+            background: var(--dark-bg);
             color: var(--neon-cyan);
-            overflow-x: hidden;
-            position: relative;
             min-height: 100vh;
+            overflow-x: hidden;
+            padding-bottom: 50px; /* Space for ticker */
         }
-        
-        /* Cyberpunk Grid Background */
+
+        /* Grid Background */
         body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: 
-                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px),
-                linear-gradient(var(--grid-color) 1px, transparent 1px);
-            background-size: 50px 50px;
-            pointer-events: none;
-            z-index: -1;
-            animation: gridScroll 20s linear infinite;
+            content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(90deg, rgba(0,255,255,0.03) 1px, transparent 1px),
+                        linear-gradient(rgba(0,255,255,0.03) 1px, transparent 1px);
+            background-size: 40px 40px; z-index: -1;
         }
-        
-        @keyframes gridScroll {
-            0% { transform: translateY(0); }
-            100% { transform: translateY(50px); }
-        }
-        
-        /* Glitch Animation */
-        @keyframes glitch {
-            0%, 100% { transform: translate(0); }
-            20% { transform: translate(-2px, 2px); }
-            40% { transform: translate(-2px, -2px); }
-            60% { transform: translate(2px, 2px); }
-            80% { transform: translate(2px, -2px); }
-        }
-        
-        .glitch-text {
-            animation: glitch 0.3s infinite;
-        }
-        
-        /* Container */
-        .container {
-            max-width: 480px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
-        /* Header */
-        .game-header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding: 20px;
-            background: linear-gradient(135deg, rgba(0,255,255,0.1), rgba(255,0,255,0.1));
-            border: 2px solid var(--neon-cyan);
-            border-radius: 10px;
-            box-shadow: 0 0 20px var(--neon-cyan);
-        }
-        
-        .game-title {
-            font-size: 2.5rem;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            text-shadow: 0 0 10px var(--neon-cyan), 0 0 20px var(--neon-pink);
-            margin-bottom: 10px;
-        }
-        
-        .game-subtitle {
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 0.9rem;
-            color: var(--neon-green);
-            text-shadow: 0 0 5px var(--neon-green);
-        }
-        
-        /* Screen System */
-        .screen {
-            display: none;
-            animation: fadeIn 0.3s ease;
-        }
-        
-        .screen.active {
-            display: block;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        /* Cyberpunk Button */
-        .cyber-btn {
-            position: relative;
-            padding: 15px 30px;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            color: var(--neon-cyan);
-            background: transparent;
-            border: 2px solid var(--neon-cyan);
-            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
-            cursor: pointer;
-            transition: all 0.3s;
-            width: 100%;
-            margin: 10px 0;
-            box-shadow: 0 0 10px var(--neon-cyan);
-        }
-        
-        .cyber-btn:hover {
-            background: var(--neon-cyan);
-            color: var(--dark-bg);
-            box-shadow: 0 0 20px var(--neon-cyan), 0 0 40px var(--neon-cyan);
-            transform: translateY(-2px);
-        }
-        
-        .cyber-btn:active {
-            transform: translateY(0);
-        }
-        
-        .cyber-btn.danger {
-            border-color: var(--neon-pink);
-            color: var(--neon-pink);
-            box-shadow: 0 0 10px var(--neon-pink);
-        }
-        
-        .cyber-btn.danger:hover {
-            background: var(--neon-pink);
-            color: var(--dark-bg);
-            box-shadow: 0 0 20px var(--neon-pink);
-        }
-        
-        .cyber-btn.success {
-            border-color: var(--neon-green);
-            color: var(--neon-green);
-            box-shadow: 0 0 10px var(--neon-green);
-        }
-        
-        .cyber-btn.success:hover {
-            background: var(--neon-green);
-            box-shadow: 0 0 20px var(--neon-green);
-        }
-        
-        /* Input Fields */
-        .cyber-input {
-            width: 100%;
-            padding: 15px;
-            margin: 10px 0;
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 1rem;
-            color: var(--neon-cyan);
-            background: rgba(0, 255, 255, 0.05);
-            border: 2px solid var(--neon-cyan);
-            border-radius: 5px;
-            outline: none;
-            transition: all 0.3s;
-        }
-        
-        .cyber-input:focus {
-            background: rgba(0, 255, 255, 0.1);
-            box-shadow: 0 0 15px var(--neon-cyan);
-        }
-        
-        .cyber-input::placeholder {
-            color: rgba(0, 255, 255, 0.5);
-        }
-        
-        /* Card/Panel */
+
+        .container { max-width: 500px; margin: 0 auto; padding: 15px; }
+
+        /* Components */
         .cyber-panel {
-            background: rgba(10, 14, 39, 0.9);
-            border: 2px solid var(--neon-cyan);
-            border-radius: 10px;
-            padding: 20px;
-            margin: 15px 0;
-            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
-        }
-        
-        /* Trinity System Display */
-        .trinity-container {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 15px;
-            margin: 20px 0;
-        }
-        
-        .resource-bar {
-            background: rgba(0, 0, 0, 0.5);
-            border: 2px solid;
-            border-radius: 10px;
-            padding: 15px;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .resource-bar.ram {
-            border-color: var(--neon-cyan);
-        }
-        
-        .resource-bar.trace {
-            border-color: var(--neon-pink);
-        }
-        
-        .resource-label {
-            font-size: 0.9rem;
-            font-weight: 700;
-            margin-bottom: 8px;
-            display: flex;
-            justify-content: space-between;
-        }
-        
-        .resource-progress {
-            height: 20px;
-            background: rgba(0, 0, 0, 0.7);
-            border-radius: 10px;
-            overflow: hidden;
-            position: relative;
-        }
-        
-        .resource-fill {
-            height: 100%;
-            transition: width 0.5s ease;
-            position: relative;
-        }
-        
-        .resource-fill.ram-fill {
-            background: linear-gradient(90deg, var(--neon-cyan), #00cccc);
-            box-shadow: 0 0 10px var(--neon-cyan);
-        }
-        
-        .resource-fill.trace-fill {
-            background: linear-gradient(90deg, var(--neon-pink), #cc00cc);
-            box-shadow: 0 0 10px var(--neon-pink);
-        }
-        
-        /* Player List */
-        .player-list {
-            max-height: 400px;
-            overflow-y: auto;
-        }
-        
-        .player-card {
-            background: rgba(0, 0, 0, 0.6);
+            background: var(--panel-bg);
             border: 1px solid var(--neon-cyan);
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.1);
             border-radius: 8px;
             padding: 15px;
-            margin: 10px 0;
-            cursor: pointer;
-            transition: all 0.3s;
+            margin-bottom: 15px;
+            position: relative;
         }
-        
-        .player-card:hover {
-            border-color: var(--neon-pink);
-            box-shadow: 0 0 15px var(--neon-pink);
-            transform: translateX(-5px);
-        }
-        
-        .player-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .player-name {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: var(--neon-green);
-        }
-        
-        .player-credits {
-            color: var(--neon-yellow);
-            font-family: 'Share Tech Mono', monospace;
-        }
-        
-        /* Shop Items */
-        .shop-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 15px;
-        }
-        
-        .shop-item {
-            background: rgba(0, 0, 0, 0.6);
-            border: 2px solid var(--neon-green);
-            border-radius: 8px;
-            padding: 15px;
-            transition: all 0.3s;
-        }
-        
-        .shop-item:hover {
-            border-color: var(--neon-yellow);
-            box-shadow: 0 0 15px var(--neon-yellow);
-        }
-        
-        .item-name {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: var(--neon-green);
-            margin-bottom: 5px;
-        }
-        
-        .item-description {
-            font-size: 0.85rem;
-            color: rgba(255, 255, 255, 0.7);
-            margin-bottom: 10px;
-        }
-        
-        .item-price {
-            font-size: 1.2rem;
-            color: var(--neon-yellow);
-            font-family: 'Share Tech Mono', monospace;
-        }
-        
-        /* Alert/Notification */
-        .alert {
-            padding: 15px;
-            margin: 15px 0;
-            border-radius: 8px;
-            font-weight: 700;
-            text-align: center;
-        }
-        
-        .alert.error {
-            background: rgba(255, 0, 255, 0.2);
-            border: 2px solid var(--neon-pink);
-            color: var(--neon-pink);
-        }
-        
-        .alert.success {
-            background: rgba(57, 255, 20, 0.2);
-            border: 2px solid var(--neon-green);
-            color: var(--neon-green);
-        }
-        
-        .alert.warning {
-            background: rgba(255, 255, 0, 0.2);
-            border: 2px solid var(--neon-yellow);
-            color: var(--neon-yellow);
-        }
-        
-        /* Footer Credit */
-        .footer-credit {
-            text-align: center;
-            margin-top: 30px;
-            padding: 20px;
-            font-size: 0.9rem;
+
+        .cyber-btn {
+            background: transparent;
+            border: 1px solid var(--neon-cyan);
             color: var(--neon-cyan);
-            border-top: 1px solid var(--grid-color);
+            padding: 12px;
+            width: 100%;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 10px;
+            transition: 0.2s;
+            text-transform: uppercase;
         }
         
-        .footer-credit a {
-            color: var(--neon-pink);
-            text-decoration: none;
-            transition: all 0.3s;
-        }
-        
-        .footer-credit a:hover {
-            color: var(--neon-yellow);
-            text-shadow: 0 0 10px var(--neon-yellow);
-        }
-        
-        /* Loading Spinner */
-        .loading {
-            display: inline-block;
-            width: 30px;
-            height: 30px;
-            border: 3px solid rgba(0, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: var(--neon-cyan);
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        /* Admin Dashboard Styles */
-        .admin-panel {
-            background: rgba(255, 0, 255, 0.1);
-            border: 2px solid var(--neon-pink);
-        }
-        
-        .stat-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin: 20px 0;
-        }
-        
-        .stat-card {
-            background: rgba(0, 0, 0, 0.7);
+        .cyber-btn:hover { background: rgba(0, 255, 255, 0.1); box-shadow: 0 0 15px var(--neon-cyan); }
+        .cyber-btn.danger { border-color: var(--neon-pink); color: var(--neon-pink); }
+        .cyber-btn.danger:hover { background: rgba(255, 0, 255, 0.1); box-shadow: 0 0 15px var(--neon-pink); }
+        .cyber-btn.success { border-color: var(--neon-green); color: var(--neon-green); }
+
+        .cyber-input {
+            background: rgba(0,0,0,0.5);
             border: 1px solid var(--neon-cyan);
-            border-radius: 8px;
-            padding: 15px;
-            text-align: center;
+            color: white;
+            padding: 10px;
+            width: 100%;
+            margin-bottom: 10px;
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        /* HUD & Resources */
+        .hud-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 15px; border-bottom: 1px solid rgba(0,255,255,0.3);
+            padding-bottom: 10px;
         }
         
-        .stat-value {
-            font-size: 2rem;
-            font-weight: 900;
-            color: var(--neon-yellow);
+        .bell-btn {
+            position: relative; font-size: 1.5rem; cursor: pointer;
         }
         
-        .stat-label {
-            font-size: 0.85rem;
-            color: rgba(255, 255, 255, 0.7);
-            margin-top: 5px;
+        .bell-badge {
+            position: absolute; top: -5px; right: -5px;
+            background: var(--neon-red); color: white;
+            border-radius: 50%; width: 18px; height: 18px;
+            font-size: 10px; display: flex; justify-content: center; align-items: center;
+            display: none;
+        }
+
+        .resource-bar {
+            height: 6px; background: #333; margin: 5px 0 15px 0;
+            position: relative; border-radius: 3px;
         }
         
-        /* Responsive */
-        @media (max-width: 480px) {
-            .game-title {
-                font-size: 1.8rem;
-            }
-            
-            .container {
-                padding: 15px;
-            }
+        .bar-fill { height: 100%; transition: width 0.5s ease; border-radius: 3px; }
+        .bar-ram { background: var(--neon-cyan); box-shadow: 0 0 10px var(--neon-cyan); }
+        .bar-trace { background: var(--neon-pink); box-shadow: 0 0 10px var(--neon-pink); }
+
+        /* Ticker Footer */
+        .ticker-wrap {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background: rgba(0, 0, 0, 0.9); border-top: 1px solid var(--neon-green);
+            height: 30px; overflow: hidden; white-space: nowrap;
+            z-index: 1000; display: flex; align-items: center;
         }
         
-        /* Hide scrollbar but keep functionality */
-        .player-list::-webkit-scrollbar {
-            width: 8px;
+        .ticker {
+            display: inline-block; padding-left: 100%;
+            animation: ticker 30s linear infinite;
+            font-family: 'Share Tech Mono', monospace; font-size: 0.9rem;
+            color: var(--neon-green);
         }
         
-        .player-list::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.3);
+        @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
+
+        /* Notifications Modal */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 2000; display: none;
+            justify-content: center; align-items: center;
         }
         
-        .player-list::-webkit-scrollbar-thumb {
-            background: var(--neon-cyan);
-            border-radius: 4px;
+        .modal-content {
+            width: 90%; max-width: 400px; max-height: 80vh; overflow-y: auto;
+            background: var(--dark-bg); border: 1px solid var(--neon-cyan);
+            padding: 20px; box-shadow: 0 0 30px rgba(0,255,255,0.2);
         }
+
+        .notif-item {
+            padding: 10px; border-bottom: 1px solid #333; margin-bottom: 5px;
+            font-size: 0.9rem; display: flex; justify-content: space-between;
+        }
+        .notif-item.attack { border-left: 3px solid var(--neon-red); }
+        .notif-item.system { border-left: 3px solid var(--neon-cyan); }
+
+        /* Screens */
+        .screen { display: none; }
+        .screen.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
     </style>
 </head>
 <body>
+
+    <!-- NEWS TICKER -->
+    <div class="ticker-wrap">
+        <div class="ticker" id="globalTicker">::: SYSTEM ONLINE ::: CONNECTING TO GLOBAL NETWORK :::</div>
+    </div>
+
     <div class="container">
-        <!-- Header -->
-        <div class="game-header">
-            <h1 class="game-title glitch-text">CYBER-NEXUS</h1>
-            <p class="game-subtitle">::: Protocol Active :::</p>
+        <!-- HEADER -->
+        <div style="text-align: center; margin-bottom: 20px;">
+            <h1 style="font-size: 2rem; text-shadow: 0 0 10px var(--neon-cyan);">CYBER-NEXUS</h1>
+            <div style="font-size: 0.8rem; color: #666;">PROTOCOL V2.0</div>
         </div>
-        
-        <!-- ============================================================================ -->
-        <!-- Login Screen -->
-        <!-- ============================================================================ -->
+
+        <!-- AUTH SCREENS -->
         <div id="loginScreen" class="screen active">
             <div class="cyber-panel">
-                <h2 style="text-align: center; margin-bottom: 20px;">ACCESS TERMINAL</h2>
-                
-                <div id="loginAlert"></div>
-                
-                <input type="text" id="loginUsername" class="cyber-input" placeholder="USERNAME" autocomplete="username">
-                <input type="password" id="loginPassword" class="cyber-input" placeholder="PASSWORD" autocomplete="current-password">
-                
-                <button class="cyber-btn success" onclick="login()">
-                    <span id="loginBtnText">LOGIN</span>
-                </button>
-                
-                <button class="cyber-btn" onclick="showRegister()">
-                    CREATE NEW ACCOUNT
-                </button>
-            </div>
-            
-            <div class="footer-credit">
-                Created by OrelAI | <a href="mailto:ubriga@gmail.com">ubriga@gmail.com</a>
+                <h3>// AUTHENTICATION</h3>
+                <input type="text" id="loginUser" class="cyber-input" placeholder="OPERATIVE ID">
+                <input type="password" id="loginPass" class="cyber-input" placeholder="ACCESS CODE">
+                <button class="cyber-btn success" onclick="handleLogin()">LOGIN</button>
+                <button class="cyber-btn" onclick="showScreen('registerScreen')">NEW OPERATIVE</button>
+                <div id="loginError" style="color: var(--neon-pink); font-size: 0.8rem; margin-top: 10px;"></div>
             </div>
         </div>
-        
-        <!-- ============================================================================ -->
-        <!-- Register Screen -->
-        <!-- ============================================================================ -->
+
         <div id="registerScreen" class="screen">
             <div class="cyber-panel">
-                <h2 style="text-align: center; margin-bottom: 20px;">NEW OPERATIVE</h2>
-                
-                <div id="registerAlert"></div>
-                
-                <input type="text" id="registerUsername" class="cyber-input" placeholder="USERNAME (3-20 chars)" autocomplete="username">
-                <input type="password" id="registerPassword" class="cyber-input" placeholder="PASSWORD (min 6 chars)" autocomplete="new-password">
-                <input type="password" id="registerConfirm" class="cyber-input" placeholder="CONFIRM PASSWORD" autocomplete="new-password">
-                
-                <button class="cyber-btn success" onclick="register()">
-                    <span id="registerBtnText">REGISTER</span>
-                </button>
-                
-                <button class="cyber-btn" onclick="showLogin()">
-                    BACK TO LOGIN
-                </button>
-            </div>
-            
-            <div class="footer-credit">
-                Created by OrelAI | <a href="mailto:ubriga@gmail.com">ubriga@gmail.com</a>
+                <h3>// NEW IDENTITY</h3>
+                <input type="text" id="regUser" class="cyber-input" placeholder="CHOOSE ID">
+                <input type="password" id="regPass" class="cyber-input" placeholder="PASSWORD">
+                <button class="cyber-btn success" onclick="handleRegister()">INITIALIZE</button>
+                <button class="cyber-btn" onclick="showScreen('loginScreen')">BACK</button>
             </div>
         </div>
-        
-        <!-- ============================================================================ -->
-        <!-- Lobby/Dashboard Screen -->
-        <!-- ============================================================================ -->
-        <div id="lobbyScreen" class="screen">
+
+        <!-- MAIN DASHBOARD -->
+        <div id="dashboardScreen" class="screen">
+            <!-- HUD -->
             <div class="cyber-panel">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h2>OPERATIVE: <span id="usernameDisplay" style="color: var(--neon-green);"></span></h2>
-                    <button class="cyber-btn danger" onclick="logout()" style="width: auto; padding: 10px 20px; margin: 0;">LOGOUT</button>
-                </div>
-                
-                <div style="text-align: center; margin-bottom: 20px;">
-                    <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7);">SEASON <span id="seasonNumber">1</span></div>
-                    <div style="font-size: 2.5rem; font-weight: 900; color: var(--neon-yellow); font-family: 'Share Tech Mono', monospace;">
-                        ¢ <span id="creditsDisplay">0</span>
+                <div class="hud-header">
+                    <div>
+                        <span id="displayUsername" style="color: white; font-weight: bold;">User</span>
+                        <div style="font-family: 'Share Tech Mono'; color: var(--neon-yellow);">¢ <span id="displayCredits">0</span></div>
+                    </div>
+                    <div class="bell-btn" onclick="openNotifications()">
+                        🔔
+                        <div id="bellBadge" class="bell-badge">0</div>
                     </div>
                 </div>
+
+                <div style="font-size: 0.8rem;">RAM <span id="ramText" style="float:left;">100/100</span></div>
+                <div class="resource-bar"><div id="ramBar" class="bar-fill bar-ram" style="width: 100%"></div></div>
+
+                <div style="font-size: 0.8rem;">TRACE <span id="traceText" style="float:left;">0%</span></div>
+                <div class="resource-bar"><div id="traceBar" class="bar-fill bar-trace" style="width: 0%"></div></div>
                 
-                <!-- Trinity System -->
-                <div class="trinity-container">
-                    <div class="resource-bar ram">
-                        <div class="resource-label">
-                            <span>RAM</span>
-                            <span id="ramDisplay">100/100</span>
-                        </div>
-                        <div class="resource-progress">
-                            <div class="resource-fill ram-fill" id="ramBar" style="width: 100%;"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="resource-bar trace">
-                        <div class="resource-label">
-                            <span>TRACE</span>
-                            <span id="traceDisplay">0/100</span>
-                        </div>
-                        <div class="resource-progress">
-                            <div class="resource-fill trace-fill" id="traceBar" style="width: 0%;"></div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div id="traceWarning"></div>
-                
-                <button class="cyber-btn" onclick="showAttackScreen()">
-                    SCAN TARGETS
-                </button>
-                
-                <button class="cyber-btn success" onclick="showShopScreen()">
-                    BLACK MARKET
-                </button>
-                
-                <button id="adminBtn" class="cyber-btn" onclick="showAdminPinScreen()" style="display: none;">
-                    🛑 ADMIN PANEL
-                </button>
+                <div id="traceWarning" style="color: var(--neon-red); font-weight: bold; font-size: 0.9rem; text-align: center; height: 20px;"></div>
+            </div>
+
+            <!-- ACTIONS -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <button class="cyber-btn danger" onclick="openAttack()">⚔️ ATTACK</button>
+                <button class="cyber-btn" onclick="openShop()">🛒 BLACK MARKET</button>
             </div>
             
-            <div class="footer-credit">
-                Created by OrelAI | <a href="mailto:ubriga@gmail.com">ubriga@gmail.com</a>
-            </div>
+            <button id="adminBtn" class="cyber-btn" style="border-color: var(--neon-yellow); color: var(--neon-yellow); display: none;" onclick="openAdmin()">🛑 ADMIN TERMINAL</button>
+            
+            <button class="cyber-btn" onclick="logout()" style="margin-top: 20px; font-size: 0.8rem;">LOGOUT</button>
         </div>
-        
-        <!-- ============================================================================ -->
-        <!-- Attack Screen -->
-        <!-- ============================================================================ -->
+
+        <!-- ATTACK SCREEN -->
         <div id="attackScreen" class="screen">
             <div class="cyber-panel">
-                <h2 style="text-align: center; margin-bottom: 20px;">TARGET ACQUISITION</h2>
-                
-                <button class="cyber-btn" onclick="scanTargets()">
-                    <span id="scanBtnText">REFRESH SCAN</span>
-                </button>
-                
-                <div id="targetList" class="player-list"></div>
-                
-                <button class="cyber-btn danger" onclick="showLobby()">
-                    ABORT
-                </button>
-            </div>
-            
-            <div class="footer-credit">
-                Created by OrelAI | <a href="mailto:ubriga@gmail.com">ubriga@gmail.com</a>
+                <h3>// TARGET LIST</h3>
+                <button class="cyber-btn" onclick="scanTargets()">REFRESH SCAN</button>
+                <div id="targetList" style="max-height: 300px; overflow-y: auto;"></div>
+                <button class="cyber-btn danger" onclick="showScreen('dashboardScreen')">ABORT</button>
             </div>
         </div>
-        
-        <!-- ============================================================================ -->
-        <!-- Attack Execution Screen -->
-        <!-- ============================================================================ -->
-        <div id="executeAttackScreen" class="screen">
-            <div class="cyber-panel">
-                <h2 style="text-align: center; margin-bottom: 20px;">ATTACK VECTOR</h2>
-                
-                <div id="targetInfo" style="text-align: center; margin: 20px 0;"></div>
-                
-                <div id="attackResult"></div>
-                
-                <h3 style="margin: 20px 0 10px 0; color: var(--neon-green);">SELECT TOOLS:</h3>
-                
-                <div id="toolSelection">
-                    <label class="cyber-panel" style="cursor: pointer; display: flex; align-items: center; padding: 10px;">
-                        <input type="checkbox" value="ddos" style="margin-left: 10px; width: 20px; height: 20px;">
-                        <span style="margin-right: 10px;">DDoS Attack</span>
-                    </label>
-                    <label class="cyber-panel" style="cursor: pointer; display: flex; align-items: center; padding: 10px;">
-                        <input type="checkbox" value="exploit" style="margin-left: 10px; width: 20px; height: 20px;">
-                        <span style="margin-right: 10px;">Exploit Kit</span>
-                    </label>
-                    <label class="cyber-panel" style="cursor: pointer; display: flex; align-items: center; padding: 10px;">
-                        <input type="checkbox" value="brute_force" style="margin-left: 10px; width: 20px; height: 20px;">
-                        <span style="margin-right: 10px;">Brute Force</span>
-                    </label>
-                </div>
-                
-                <button class="cyber-btn success" onclick="executeAttack()">
-                    <span id="attackBtnText">EXECUTE ATTACK</span>
-                </button>
-                
-                <button class="cyber-btn danger" onclick="showAttackScreen()">
-                    CANCEL
-                </button>
-            </div>
-            
-            <div class="footer-credit">
-                Created by OrelAI | <a href="mailto:ubriga@gmail.com">ubriga@gmail.com</a>
-            </div>
-        </div>
-        
-        <!-- ============================================================================ -->
-        <!-- Shop Screen -->
-        <!-- ============================================================================ -->
+
+        <!-- SHOP SCREEN -->
         <div id="shopScreen" class="screen">
             <div class="cyber-panel">
-                <h2 style="text-align: center; margin-bottom: 20px;">BLACK MARKET</h2>
-                
-                <div style="text-align: center; margin-bottom: 20px;">
-                    <span style="font-size: 1.5rem; color: var(--neon-yellow);">¢ <span id="shopCreditsDisplay">0</span></span>
+                <h3>// BLACK MARKET</h3>
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <button class="cyber-btn" onclick="showShopTab('hardware')">HARDWARE</button>
+                    <button class="cyber-btn" onclick="showShopTab('consumable')">CONSUMABLES</button>
                 </div>
-                
-                <div id="shopAlert"></div>
-                
-                <div class="shop-grid" id="shopItems">
-                    <!-- Hardware -->
-                    <div class="shop-item">
-                        <div class="item-name">HARDWARE UPGRADE</div>
-                        <div class="item-description">Increase RAM capacity</div>
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span class="item-price">¢ 1000</span>
-                            <button class="cyber-btn success" style="width: auto; padding: 8px 20px; margin: 0;" onclick="buyItem('hardware', 'RAM Upgrade', 1000)">BUY</button>
-                        </div>
-                    </div>
-                    
-                    <!-- Defense Systems -->
-                    <div class="shop-item">
-                        <div class="item-name">FIREWALL</div>
-                        <div class="item-description">Block DDoS attacks</div>
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span class="item-price">¢ 800</span>
-                            <button class="cyber-btn success" style="width: auto; padding: 8px 20px; margin: 0;" onclick="buyItem('defense', 'firewall', 800)">BUY</button>
-                        </div>
-                    </div>
-                    
-                    <div class="shop-item">
-                        <div class="item-name">ANTIVIRUS</div>
-                        <div class="item-description">Detect exploits</div>
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span class="item-price">¢ 700</span>
-                            <button class="cyber-btn success" style="width: auto; padding: 8px 20px; margin: 0;" onclick="buyItem('defense', 'antivirus', 700)">BUY</button>
-                        </div>
-                    </div>
-                    
-                    <!-- Attack Tools -->
-                    <div class="shop-item">
-                        <div class="item-name">ROOTKIT</div>
-                        <div class="item-description">Advanced persistent threat</div>
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span class="item-price">¢ 1200</span>
-                            <button class="cyber-btn success" style="width: auto; padding: 8px 20px; margin: 0;" onclick="buyItem('software', 'rootkit', 1200)">BUY</button>
-                        </div>
+
+                <div id="shopHardware" class="shop-tab">
+                    <div class="cyber-panel">
+                        <h4>RAM UPGRADE</h4>
+                        <p>Increase Max RAM capacity.</p>
+                        <button class="cyber-btn success" onclick="buyItem('hardware', 'ram', 1000)">BUY (¢1000)</button>
                     </div>
                 </div>
-                
-                <button class="cyber-btn danger" onclick="showLobby()">
-                    EXIT MARKET
-                </button>
-            </div>
-            
-            <div class="footer-credit">
-                Created by OrelAI | <a href="mailto:ubriga@gmail.com">ubriga@gmail.com</a>
-            </div>
-        </div>
-        
-        <!-- ============================================================================ -->
-        <!-- 🛑 ADMIN ZONE - DO NOT MODIFY 🛑 -->
-        <!-- Admin PIN Screen -->
-        <!-- ============================================================================ -->
-        <div id="adminPinScreen" class="screen">
-            <div class="cyber-panel admin-panel">
-                <h2 style="text-align: center; margin-bottom: 20px;">🛑 ADMIN AUTHENTICATION</h2>
-                
-                <div id="pinAlert"></div>
-                
-                <input type="password" id="adminPin" class="cyber-input" placeholder="ENTER ADMIN PIN" autocomplete="off">
-                
-                <button class="cyber-btn success" onclick="verifyAdminPin()">
-                    <span id="pinBtnText">VERIFY</span>
-                </button>
-                
-                <button class="cyber-btn danger" onclick="showLobby()">
-                    CANCEL
-                </button>
-            </div>
-            
-            <div class="footer-credit">
-                Created by OrelAI | <a href="mailto:ubriga@gmail.com">ubriga@gmail.com</a>
-            </div>
-        </div>
-        
-        <!-- ============================================================================ -->
-        <!-- Admin Dashboard Screen -->
-        <!-- ============================================================================ -->
-        <div id="adminScreen" class="screen">
-            <div class="cyber-panel admin-panel">
-                <h2 style="text-align: center; margin-bottom: 20px;">🛑 ADMIN CONTROL PANEL</h2>
-                
-                <div class="stat-grid">
-                    <div class="stat-card">
-                        <div class="stat-value" id="adminTotalUsers">0</div>
-                        <div class="stat-label">Total Users</div>
+
+                <div id="shopConsumable" class="shop-tab" style="display:none;">
+                    <div class="cyber-panel">
+                        <h4>⚡ ENERGY DRINK</h4>
+                        <p>Instantly restore +30 RAM.</p>
+                        <button class="cyber-btn success" onclick="buyConsumable('energy_drink')">BUY (¢150)</button>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="adminCurrentSeason">1</div>
-                        <div class="stat-label">Current Season</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="adminTotalAttacks">0</div>
-                        <div class="stat-label">Total Attacks</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">ACTIVE</div>
-                        <div class="stat-label">System Status</div>
+                    <div class="cyber-panel">
+                        <h4>🧼 LOG CLEANER</h4>
+                        <p>Instantly reduce Trace by -20%.</p>
+                        <button class="cyber-btn success" onclick="buyConsumable('log_cleaner')">BUY (¢300)</button>
                     </div>
                 </div>
-                
-                <div id="adminAlert"></div>
-                
-                <h3 style="margin: 20px 0 10px 0;">SEASON MANAGEMENT</h3>
-                <button class="cyber-btn danger" onclick="endSeason()">
-                    END CURRENT SEASON & RESET
-                </button>
-                
-                <h3 style="margin: 20px 0 10px 0;">USER SEARCH</h3>
-                <input type="text" id="adminUserSearch" class="cyber-input" placeholder="Search username...">
-                <button class="cyber-btn" onclick="searchUsers()">SEARCH</button>
-                
-                <div id="adminUserList" style="margin-top: 20px;"></div>
-                
-                <button class="cyber-btn" onclick="showLobby()">
-                    EXIT ADMIN PANEL
-                </button>
-            </div>
-            
-            <div class="footer-credit">
-                Created by OrelAI | <a href="mailto:ubriga@gmail.com">ubriga@gmail.com</a>
+
+                <button class="cyber-btn" onclick="showScreen('dashboardScreen')">EXIT</button>
             </div>
         </div>
-        <!-- 🛑 END ADMIN ZONE 🛑 -->
-        <!-- ============================================================================ -->
     </div>
-    
+
+    <!-- NOTIFICATIONS MODAL -->
+    <div id="notifModal" class="modal-overlay" onclick="closeNotifications(event)">
+        <div class="modal-content">
+            <h3>INBOX</h3>
+            <div id="notifList"></div>
+            <button class="cyber-btn" onclick="document.getElementById('notifModal').style.display='none'">CLOSE</button>
+        </div>
+    </div>
+
     <script>
-        // ============================================================================
-        // Configuration
-        // ============================================================================
+        // CONFIG
         const API_URL = 'https://ubriga.pythonanywhere.com';
-        const RECAPTCHA_SITE_KEY = '6LdEx0EsAAAAAGSZTwV0nb9taF5yq4P3Fuf3XLv3';
+        const RECAPTCHA_SITE_KEY = 'YOUR_SITE_KEY_HERE'; // <--- CHANGE THIS!
         
-        let authToken = localStorage.getItem('authToken') || null;
-        let currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
-        let selectedTargetId = null;
-        let playerState = {};
-        
-        // ============================================================================
-        // Screen Navigation
-        // ============================================================================
-        function showScreen(screenId) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(screenId).classList.add('active');
-        }
-        
-        function showLogin() {
-            showScreen('loginScreen');
-        }
-        
-        function showRegister() {
-            showScreen('registerScreen');
-        }
-        
-        function showLobby() {
-            showScreen('lobbyScreen');
-            loadPlayerState();
-        }
-        
-        function showAttackScreen() {
-            showScreen('attackScreen');
-            scanTargets();
-        }
-        
-        function showShopScreen() {
-            showScreen('shopScreen');
-            document.getElementById('shopCreditsDisplay').textContent = playerState.credits || 0;
-        }
-        
-        function showAdminPinScreen() {
-            showScreen('adminPinScreen');
-        }
-        
-        function showAdminDashboard() {
-            showScreen('adminScreen');
-            loadAdminStats();
-        }
-        
-        // ============================================================================
-        // Utility Functions
-        // ============================================================================
-        function showAlert(elementId, message, type = 'error') {
-            const alertEl = document.getElementById(elementId);
-            alertEl.innerHTML = `<div class="alert ${type}">${message}</div>`;
-            setTimeout(() => alertEl.innerHTML = '', 5000);
-        }
-        
-        async function apiCall(endpoint, method = 'GET', data = null) {
-            const options = {
-                method,
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            };
-            
-            if (authToken) {
-                options.headers['Authorization'] = authToken;
-            }
-            
-            if (data) {
-                options.body = JSON.stringify(data);
-            }
-            
-            const response = await fetch(`${API_URL}${endpoint}`, options);
-            const result = await response.json();
-            
-            if (!response.ok) {
-                throw new Error(result.error || 'Request failed');
-            }
-            
-            return result;
-        }
-        
-        async function getRecaptchaToken() {
-            return new Promise((resolve) => {
+        // STATE
+        let token = localStorage.getItem('token');
+        let pollingInterval;
+        let lastNotifCount = 0;
+
+        // --- AUTH ---
+        async function getRecaptcha() {
+            return new Promise(resolve => {
                 grecaptcha.ready(() => {
-                    grecaptcha.execute(RECAPTCHA_SITE_KEY, { action: 'submit' }).then(resolve);
+                    grecaptcha.execute(RECAPTCHA_SITE_KEY, {action: 'submit'}).then(token => resolve(token));
                 });
             });
         }
-        
-        // ============================================================================
-        // Authentication
-        // ============================================================================
-        async function register() {
-            const username = document.getElementById('registerUsername').value.trim();
-            const password = document.getElementById('registerPassword').value;
-            const confirm = document.getElementById('registerConfirm').value;
-            
-            if (password !== confirm) {
-                showAlert('registerAlert', 'Passwords do not match', 'error');
-                return;
-            }
-            
-            const btn = document.getElementById('registerBtnText');
-            btn.innerHTML = '<span class="loading"></span>';
-            
+
+        async function handleLogin() {
+            const user = document.getElementById('loginUser').value;
+            const pass = document.getElementById('loginPass').value;
             try {
-                const recaptchaToken = await getRecaptchaToken();
-                const result = await apiCall('/api/register', 'POST', {
-                    username,
-                    password,
-                    recaptcha_token: recaptchaToken
+                const res = await fetch(`${API_URL}/api/login`, {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({username: user, password: pass})
                 });
-                
-                showAlert('registerAlert', 'Registration successful! Please login.', 'success');
-                setTimeout(() => showLogin(), 2000);
-            } catch (error) {
-                showAlert('registerAlert', error.message, 'error');
-            } finally {
-                btn.textContent = 'REGISTER';
-            }
-        }
-        
-        async function login() {
-            const username = document.getElementById('loginUsername').value.trim();
-            const password = document.getElementById('loginPassword').value;
-            
-            const btn = document.getElementById('loginBtnText');
-            btn.innerHTML = '<span class="loading"></span>';
-            
-            try {
-                const result = await apiCall('/api/login', 'POST', { username, password });
-                
-                authToken = result.token;
-                currentUser = {
-                    username: result.username,
-                    isAdmin: result.is_admin
-                };
-                
-                localStorage.setItem('authToken', authToken);
-                localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                
-                document.getElementById('usernameDisplay').textContent = currentUser.username;
-                
-                if (currentUser.isAdmin) {
-                    document.getElementById('adminBtn').style.display = 'block';
-                }
-                
-                showLobby();
-            } catch (error) {
-                showAlert('loginAlert', error.message, 'error');
-            } finally {
-                btn.textContent = 'LOGIN';
-            }
-        }
-        
-        function logout() {
-            apiCall('/api/logout', 'POST').catch(() => {});
-            authToken = null;
-            currentUser = {};
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('currentUser');
-            showLogin();
-        }
-        
-        // ============================================================================
-        // Game State
-        // ============================================================================
-        async function loadPlayerState() {
-            try {
-                playerState = await apiCall('/api/player/state');
-                
-                // Update UI
-                document.getElementById('creditsDisplay').textContent = playerState.credits.toLocaleString();
-                document.getElementById('seasonNumber').textContent = playerState.current_season;
-                
-                // Update RAM
-                const ramPercent = (playerState.current_ram / playerState.max_ram) * 100;
-                document.getElementById('ramDisplay').textContent = `${playerState.current_ram}/${playerState.max_ram}`;
-                document.getElementById('ramBar').style.width = `${ramPercent}%`;
-                
-                // Update Trace
-                const tracePercent = (playerState.current_trace / playerState.max_trace) * 100;
-                document.getElementById('traceDisplay').textContent = `${playerState.current_trace}/${playerState.max_trace}`;
-                document.getElementById('traceBar').style.width = `${tracePercent}%`;
-                
-                // Trace warnings
-                const warningEl = document.getElementById('traceWarning');
-                if (playerState.current_trace >= 100) {
-                    warningEl.innerHTML = '<div class="alert error">⚠️ SYSTEM LOCKOUT - Cannot attack!</div>';
-                } else if (playerState.current_trace >= 80) {
-                    warningEl.innerHTML = '<div class="alert warning">⚠️ HIGH TRACE - Income frozen!</div>';
-                } else if (playerState.current_trace >= 40) {
-                    warningEl.innerHTML = '<div class="alert warning">⚠️ TRACE DETECTED - Vulnerable to attacks!</div>';
+                const data = await res.json();
+                if(data.success) {
+                    token = data.token;
+                    localStorage.setItem('token', token);
+                    localStorage.setItem('username', data.username);
+                    if(data.is_admin) document.getElementById('adminBtn').style.display = 'block';
+                    startDashboard();
                 } else {
-                    warningEl.innerHTML = '';
+                    alert(data.error);
                 }
-                
-            } catch (error) {
-                console.error('Failed to load player state:', error);
-            }
+            } catch(e) { console.error(e); }
         }
-        
-        // ============================================================================
-        // Attack System
-        // ============================================================================
-        async function scanTargets() {
-            const btn = document.getElementById('scanBtnText');
-            btn.innerHTML = '<span class="loading"></span>';
+
+        async function handleRegister() {
+            const user = document.getElementById('regUser').value;
+            const pass = document.getElementById('regPass').value;
+            const rToken = await getRecaptcha();
             
-            try {
-                const result = await apiCall('/api/players/scan');
-                
-                const listEl = document.getElementById('targetList');
-                listEl.innerHTML = '';
-                
-                if (result.targets.length === 0) {
-                    listEl.innerHTML = '<div class="alert warning">No targets available</div>';
-                    return;
-                }
-                
-                result.targets.forEach(target => {
-                    const card = document.createElement('div');
-                    card.className = 'player-card';
-                    card.onclick = () => selectTarget(target.id, target.username, target.credits);
-                    
-                    card.innerHTML = `
-                        <div class="player-info">
-                            <div>
-                                <div class="player-name">${target.username}</div>
-                                <div style="font-size: 0.85rem; color: rgba(255,255,255,0.6);">
-                                    Defenses: ${target.defense_count} | Trace: ${target.trace_level}%
-                                </div>
-                            </div>
-                            <div class="player-credits">¢ ${target.credits.toLocaleString()}</div>
-                        </div>
-                    `;
-                    
-                    listEl.appendChild(card);
-                });
-            } catch (error) {
-                showAlert('targetList', error.message, 'error');
-            } finally {
-                btn.textContent = 'REFRESH SCAN';
-            }
-        }
-        
-        function selectTarget(id, username, credits) {
-            selectedTargetId = id;
-            showScreen('executeAttackScreen');
-            
-            document.getElementById('targetInfo').innerHTML = `
-                <div style="font-size: 1.5rem; color: var(--neon-pink);">${username}</div>
-                <div style="font-size: 1.2rem; color: var(--neon-yellow); margin-top: 10px;">¢ ${credits.toLocaleString()}</div>
-            `;
-            
-            document.getElementById('attackResult').innerHTML = '';
-        }
-        
-        async function executeAttack() {
-            const checkboxes = document.querySelectorAll('#toolSelection input[type="checkbox"]:checked');
-            const tools = Array.from(checkboxes).map(cb => cb.value);
-            
-            if (tools.length === 0) {
-                showAlert('attackResult', 'Select at least one tool', 'error');
-                return;
-            }
-            
-            const btn = document.getElementById('attackBtnText');
-            btn.innerHTML = '<span class="loading"></span>';
-            
-            try {
-                const result = await apiCall('/api/attack', 'POST', {
-                    target_id: selectedTargetId,
-                    tools: tools
-                });
-                
-                const alertType = result.success ? 'success' : 'error';
-                let message = result.message;
-                
-                if (result.success) {
-                    message += `<br>Credits Stolen: ¢${result.credits_stolen}`;
-                    if (result.miner_planted) {
-                        message += '<br>🎯 Miner Planted!';
-                    }
-                }
-                
-                message += `<br>Your Trace: ${result.new_trace}%`;
-                
-                showAlert('attackResult', message, alertType);
-                
-                // Uncheck all tools
-                checkboxes.forEach(cb => cb.checked = false);
-                
-                // Reload state after 2 seconds
-                setTimeout(() => loadPlayerState(), 2000);
-                
-            } catch (error) {
-                showAlert('attackResult', error.message, 'error');
-            } finally {
-                btn.textContent = 'EXECUTE ATTACK';
-            }
-        }
-        
-        // ============================================================================
-        // Shop
-        // ============================================================================
-        async function buyItem(itemType, itemName, price) {
-            try {
-                const result = await apiCall('/api/shop/buy', 'POST', {
-                    item_type: itemType,
-                    item_name: itemName,
-                    price: price
-                });
-                
-                showAlert('shopAlert', result.message, 'success');
-                
-                // Reload state
-                await loadPlayerState();
-                document.getElementById('shopCreditsDisplay').textContent = playerState.credits.toLocaleString();
-                
-            } catch (error) {
-                showAlert('shopAlert', error.message, 'error');
-            }
-        }
-        
-        // ============================================================================
-        // 🛑 ADMIN ZONE - DO NOT MODIFY 🛑
-        // Admin Functions
-        // ============================================================================
-        
-        async function verifyAdminPin() {
-            const pin = document.getElementById('adminPin').value;
-            const btn = document.getElementById('pinBtnText');
-            btn.innerHTML = '<span class="loading"></span>';
-            
-            try {
-                await apiCall('/api/admin/verify-pin', 'POST', { pin });
-                showAdminDashboard();
-            } catch (error) {
-                showAlert('pinAlert', error.message, 'error');
-            } finally {
-                btn.textContent = 'VERIFY';
-                document.getElementById('adminPin').value = '';
-            }
-        }
-        
-        async function loadAdminStats() {
-            try {
-                const stats = await apiCall('/api/admin/stats');
-                
-                document.getElementById('adminTotalUsers').textContent = stats.total_users;
-                document.getElementById('adminCurrentSeason').textContent = stats.current_season;
-                document.getElementById('adminTotalAttacks').textContent = stats.total_attacks;
-                
-            } catch (error) {
-                showAlert('adminAlert', 'Failed to load stats', 'error');
-            }
-        }
-        
-        async function searchUsers() {
-            const query = document.getElementById('adminUserSearch').value;
-            
-            try {
-                const result = await apiCall(`/api/admin/users/search?q=${encodeURIComponent(query)}`);
-                
-                const listEl = document.getElementById('adminUserList');
-                listEl.innerHTML = '';
-                
-                result.users.forEach(user => {
-                    const userCard = document.createElement('div');
-                    userCard.className = 'cyber-panel';
-                    userCard.style.marginBottom = '10px';
-                    
-                    userCard.innerHTML = `
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <div style="font-weight: 700; color: var(--neon-green);">${user.username}</div>
-                                <div style="font-size: 0.85rem; color: rgba(255,255,255,0.6);">
-                                    Credits: ¢${user.credits || 0} | Level: ${user.hardware_level || 1}
-                                    ${user.is_banned ? ' | <span style="color: var(--neon-pink);">BANNED</span>' : ''}
-                                </div>
-                            </div>
-                            <div>
-                                <button class="cyber-btn danger" style="width: auto; padding: 8px 15px; margin: 0 5px;" onclick="banUser(${user.id}, ${!user.is_banned})">
-                                    ${user.is_banned ? 'UNBAN' : 'BAN'}
-                                </button>
-                                <button class="cyber-btn success" style="width: auto; padding: 8px 15px; margin: 0;" onclick="compensateUser(${user.id})">
-                                    +¢
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                    
-                    listEl.appendChild(userCard);
-                });
-                
-            } catch (error) {
-                showAlert('adminAlert', error.message, 'error');
-            }
-        }
-        
-        async function banUser(userId, banStatus) {
-            try {
-                await apiCall('/api/admin/users/ban', 'POST', {
-                    user_id: userId,
-                    ban: banStatus
-                });
-                showAlert('adminAlert', banStatus ? 'User banned' : 'User unbanned', 'success');
-                searchUsers();
-            } catch (error) {
-                showAlert('adminAlert', error.message, 'error');
-            }
-        }
-        
-        async function compensateUser(userId) {
-            const amount = prompt('Enter credits to add:');
-            if (!amount || isNaN(amount)) return;
-            
-            try {
-                await apiCall('/api/admin/users/compensate', 'POST', {
-                    user_id: userId,
-                    amount: parseInt(amount)
-                });
-                showAlert('adminAlert', 'Credits added successfully', 'success');
-                searchUsers();
-            } catch (error) {
-                showAlert('adminAlert', error.message, 'error');
-            }
-        }
-        
-        async function endSeason() {
-            if (!confirm('⚠️ END SEASON? This will reset ALL player progress!')) return;
-            
-            try {
-                const result = await apiCall('/api/admin/season/end', 'POST');
-                showAlert('adminAlert', result.message, 'success');
-                loadAdminStats();
-            } catch (error) {
-                showAlert('adminAlert', error.message, 'error');
-            }
-        }
-        
-        // 🛑 END ADMIN ZONE 🛑
-        // ============================================================================
-        
-        // ============================================================================
-        // Auto-refresh resources
-        // ============================================================================
-        setInterval(() => {
-            if (authToken && document.getElementById('lobbyScreen').classList.contains('active')) {
-                loadPlayerState();
-            }
-        }, 30000); // Every 30 seconds
-        
-        // ============================================================================
-        // Initialize on page load
-        // ============================================================================
-        window.onload = () => {
-            if (authToken && currentUser.username) {
-                document.getElementById('usernameDisplay').textContent = currentUser.username;
-                if (currentUser.isAdmin) {
-                    document.getElementById('adminBtn').style.display = 'block';
-                }
-                showLobby();
+            const res = await fetch(`${API_URL}/api/register`, {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({username: user, password: pass, recaptcha_token: rToken})
+            });
+            const data = await res.json();
+            if(data.success) {
+                alert('Welcome, Operative. Please Login.');
+                showScreen('loginScreen');
             } else {
-                showLogin();
+                alert(data.error);
             }
-        };
+        }
+
+        function logout() {
+            localStorage.clear();
+            location.reload();
+        }
+
+        // --- DASHBOARD (POLLING) ---
+        function startDashboard() {
+            showScreen('dashboardScreen');
+            document.getElementById('displayUsername').innerText = localStorage.getItem('username');
+            fetchDashboardData();
+            pollingInterval = setInterval(fetchDashboardData, 5000); // Poll every 5s
+        }
+
+        async function fetchDashboardData() {
+            if(!token) return;
+            try {
+                const res = await fetch(`${API_URL}/api/v2/dashboard`, {
+                    headers: {'Authorization': token}
+                });
+                const data = await res.json();
+                
+                // 1. Update State
+                updateHUD(data.state);
+                
+                // 2. Update Ticker
+                if(data.ticker.length > 0) {
+                    const text = data.ticker.map(e => `[${e.event_type.toUpperCase()}] ${e.message}`).join(' ••• ');
+                    document.getElementById('globalTicker').innerText = text + " ••• " + text;
+                }
+
+                // 3. Update Notifications
+                const notifs = data.notifications || [];
+                const badge = document.getElementById('bellBadge');
+                if(notifs.length > 0) {
+                    badge.style.display = 'flex';
+                    badge.innerText = notifs.length;
+                    if(notifs.length > lastNotifCount) {
+                        // Play sound or animate?
+                    }
+                } else {
+                    badge.style.display = 'none';
+                }
+                lastNotifCount = notifs.length;
+                window.currentNotifs = notifs; // Store for modal
+
+            } catch(e) { console.log("Polling error", e); }
+        }
+
+        function updateHUD(state) {
+            document.getElementById('displayCredits').innerText = state.credits.toLocaleString();
+            
+            // RAM
+            const ramPct = Math.min(100, (state.ram / 100) * 100); // Assuming 100 max for now
+            document.getElementById('ramBar').style.width = `${ramPct}%`;
+            document.getElementById('ramText').innerText = state.ram;
+            
+            // TRACE
+            document.getElementById('traceBar').style.width = `${state.trace}%`;
+            document.getElementById('traceText').innerText = `${state.trace}%`;
+            
+            const warn = document.getElementById('traceWarning');
+            if(state.trace >= 100) warn.innerText = "⛔ SYSTEM LOCKED";
+            else if(state.trace >= 80) warn.innerText = "⚠️ DANGER: HIGH TRACE";
+            else warn.innerText = "";
+        }
+
+        // --- ACTIONS ---
+        function openNotifications() {
+            const list = document.getElementById('notifList');
+            list.innerHTML = '';
+            const notifs = window.currentNotifs || [];
+            
+            if(notifs.length === 0) list.innerHTML = '<div style="padding:10px; color:#666;">No new messages.</div>';
+            
+            notifs.forEach(n => {
+                const item = document.createElement('div');
+                item.className = `notif-item ${n.type}`;
+                item.innerHTML = `
+                    <div>${n.message}</div>
+                    <button onclick="markRead(${n.id})" style="background:none; border:none; color:#666; cursor:pointer;">✖</button>
+                `;
+                // Add Revenge Button if attack
+                if(n.type === 'attack' && n.data_json) {
+                    try {
+                        const data = JSON.parse(n.data_json);
+                        if(data.attacker_id) {
+                            const btn = document.createElement('button');
+                            btn.className = 'cyber-btn danger';
+                            btn.style.fontSize = '0.7rem';
+                            btn.style.padding = '5px';
+                            btn.innerText = 'REVENGE';
+                            btn.onclick = () => {
+                                document.getElementById('notifModal').style.display='none';
+                                openAttack(data.attacker_id); // Implement direct attack later
+                            };
+                            item.appendChild(btn);
+                        }
+                    } catch(e){}
+                }
+                list.appendChild(item);
+            });
+            
+            document.getElementById('notifModal').style.display = 'flex';
+        }
+
+        async function markRead(id) {
+            await fetch(`${API_URL}/api/v2/notifications/mark_read`, {
+                method: 'POST', headers: {'Authorization': token, 'Content-Type': 'application/json'},
+                body: JSON.stringify({id: id})
+            });
+            fetchDashboardData(); // Refresh
+            openNotifications(); // Re-render
+        }
+
+        function closeNotifications(e) {
+            if(e.target.id === 'notifModal') document.getElementById('notifModal').style.display = 'none';
+        }
+
+        // --- SHOP & ATTACK (Simplified for V2) ---
+        function openShop() { showScreen('shopScreen'); }
+        function showShopTab(tab) {
+            document.querySelectorAll('.shop-tab').forEach(el => el.style.display = 'none');
+            document.getElementById('shop' + tab.charAt(0).toUpperCase() + tab.slice(1)).style.display = 'block';
+        }
+
+        async function buyConsumable(item) {
+            const res = await fetch(`${API_URL}/api/v2/market/consumable`, {
+                method: 'POST', headers: {'Authorization': token, 'Content-Type': 'application/json'},
+                body: JSON.stringify({item: item})
+            });
+            const data = await res.json();
+            alert(data.message || data.error);
+            fetchDashboardData();
+        }
+
+        function openAttack() { showScreen('attackScreen'); scanTargets(); }
+        
+        async function scanTargets() {
+            const list = document.getElementById('targetList');
+            list.innerHTML = '<div class="cyber-panel">Scanning...</div>';
+            
+            const res = await fetch(`${API_URL}/api/players/scan`, { headers: {'Authorization': token} });
+            const data = await res.json();
+            
+            list.innerHTML = '';
+            data.targets.forEach(t => {
+                const el = document.createElement('div');
+                el.className = 'cyber-panel';
+                el.innerHTML = `
+                    <div style="display:flex; justify-content:space-between;">
+                        <b>${t.username}</b>
+                        <span style="color:var(--neon-yellow);">¢${t.credits}</span>
+                    </div>
+                    <div style="font-size:0.8rem; color:#888;">Defense: ${t.defense_count} | Trace: ${t.trace_level}%</div>
+                    <button class="cyber-btn danger" style="margin-top:5px;" onclick="executeAttack(${t.id})">HACK</button>
+                `;
+                list.appendChild(el);
+            });
+        }
+
+        async function executeAttack(targetId) {
+            if(!confirm("Launch Attack? Costs 20 RAM.")) return;
+            
+            const res = await fetch(`${API_URL}/api/v2/attack`, {
+                method: 'POST', headers: {'Authorization': token, 'Content-Type': 'application/json'},
+                body: JSON.stringify({target_id: targetId, tools: ['brute_force']}) // Default tool for now
+            });
+            const data = await res.json();
+            
+            if(data.success) {
+                alert(`SUCCESS! Stole ¢${data.stolen}`);
+            } else {
+                alert(data.error || "Attack Failed.");
+            }
+            fetchDashboardData();
+            showScreen('dashboardScreen');
+        }
+
+        // --- UTILS ---
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        // Check login on load
+        if(token) startDashboard();
+
     </script>
 </body>
 </html>
-
